@@ -235,7 +235,14 @@ async function send() {
     });
 
     if (!res.ok || !res.body) {
-      throw new Error(`HTTP ${res.status}`);
+      let msg = null;
+      try {
+        const j = await res.json();
+        if (j && j.error) msg = j.error;
+      } catch {}
+      const e = new Error(msg || `HTTP ${res.status}`);
+      if (msg) e.friendly = msg;
+      throw e;
     }
 
     const reader = res.body.getReader();
@@ -263,7 +270,10 @@ async function send() {
     }
   } catch (err) {
     console.error(err);
-    reply = reply || `앗, ${current.name}랑 연결이 잠깐 끊겼어. 다시 말해 줄래?`;
+    reply =
+      reply ||
+      err.friendly ||
+      `앗, ${current.name}랑 연결이 잠깐 끊겼어. 다시 말해 줄래?`;
     bubble.textContent = reply;
   } finally {
     bubble.classList.remove("typing");

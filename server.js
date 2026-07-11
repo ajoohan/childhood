@@ -5,10 +5,67 @@ import Anthropic from "@anthropic-ai/sdk";
 const client = new Anthropic();
 const app = express();
 
+// 호스팅(Render 등) 프록시 뒤에서 실제 접속 IP를 인식하기 위함
+app.set("trust proxy", 1);
+
 app.use(express.json({ limit: "100kb" }));
 app.use(express.static("public"));
 
 const PORT = process.env.PORT || 3000;
+
+// ── 요청 제한 (공개 배포 시 API 키 남용·비용 폭주 방지) ──
+// 환경변수로 조절 가능. 단일 인스턴스 기준 인메모리 카운터.
+const RL_WINDOW_MS = 60_000;
+const RL_PER_MIN = Number(process.env.RL_PER_MIN || 15); // IP당 분당
+const RL_PER_DAY = Number(process.env.RL_PER_DAY || 200); // IP당 하루
+const RL_GLOBAL_PER_DAY = Number(process.env.RL_GLOBAL_PER_DAY || 3000); // 전체 하루
+
+const rlRecent = new Map(); // ip -> number[] (윈도 내 타임스탬프)
+const rlDay = new Map(); // ip -> 하루 누적
+let rlCurrentDay = new Date().toISOString().slice(0, 10);
+let rlGlobalDay = 0;
+
+// 오래된 IP 기록 정리 (메모리 누수 방지)
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, hits] of rlRecent) {
+    const live = hits.filter((t) => now - t < RL_WINDOW_MS);
+    if (live.length) rlRecent.set(ip, live);
+    else rlRecent.delete(ip);
+  }
+}, 5 * RL_WINDOW_MS).unref();
+
+function rateLimit(req, res, next) {
+  const now = Date.now();
+  const day = new Date().toISOString().slice(0, 10);
+  if (day !== rlCurrentDay) {
+    rlCurrentDay = day;
+    rlDay.clear();
+    rlGlobalDay = 0;
+  }
+
+  const ip = req.ip || "unknown";
+
+  const hits = (rlRecent.get(ip) || []).filter((t) => now - t < RL_WINDOW_MS);
+  if (hits.length >= RL_PER_MIN) {
+    return res.status(429).json({ error: "잠깐만 쉬었다가 다시 이야기해 줘! 🌙" });
+  }
+  hits.push(now);
+  rlRecent.set(ip, hits);
+
+  const dc = (rlDay.get(ip) || 0) + 1;
+  rlDay.set(ip, dc);
+  if (dc > RL_PER_DAY) {
+    return res.status(429).json({ error: "오늘은 이야기를 많이 나눴어! 내일 또 만나자 😊" });
+  }
+
+  rlGlobalDay += 1;
+  if (rlGlobalDay > RL_GLOBAL_PER_DAY) {
+    return res.status(503).json({ error: "지금 친구들이 너무 많아! 조금 뒤에 다시 와 줄래?" });
+  }
+
+  next();
+}
 
 // 아이 눈높이 대화는 최고 품질 모델, 안전 사전 분류는 빠른 모델을 사용한다.
 const CHAT_MODEL = "claude-opus-4-8";
@@ -242,7 +299,7 @@ app.get("/api/characters", (req, res) => {
   );
 });
 
-app.post("/api/chat", async (req, res) => {
+app.post("/api/chat", rateLimit, async (req, res) => {
   const messages = sanitizeMessages(req.body?.messages);
   if (!messages) {
     return res.status(400).json({ error: "잘못된 요청이에요." });

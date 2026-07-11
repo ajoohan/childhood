@@ -1,0 +1,22 @@
+# Render.com Blueprint — GitHub 저장소를 연결하면 이 파일대로 자동 배포됩니다.
+# https://render.com > New > Blueprint > 이 저장소 선택
+services:
+  - type: web
+    name: banjjaktalk
+    runtime: node
+    plan: free
+    branch: claude/ai-chat-kids-service-seznwa
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /
+    envVars:
+      # 배포 후 Render 대시보드에서 실제 키 값을 입력하세요 (sync:false = 값 비공개)
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # 요청 제한 (선택) — 필요 시 값 조정
+      - key: RL_PER_MIN
+        value: "15"
+      - key: RL_PER_DAY
+        value: "200"
+      - key: RL_GLOBAL_PER_DAY
+        value: "3000"

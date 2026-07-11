@@ -43,6 +43,40 @@ npm start
 
 브라우저에서 http://localhost:3000 을 열면 됩니다.
 
+## 외부에 공개하기 (다른 사람도 주소로 접속)
+
+이 앱은 Claude API를 호출하는 **서버가 필요**하므로, Node 서버를 실행해 주는 호스팅에 배포해야 공개 URL이 생깁니다. (정적 사이트 호스팅은 불가)
+
+> ⚠️ **공개 전 필독**: 공개 URL에서 오는 대화는 여러분의 API 키로 과금됩니다. 본 서버에는 기본 **요청 제한**(IP당 분당·하루, 전체 하루 한도)이 들어 있으나, 실제 공개 시 한도·비용 알림을 반드시 점검하세요. 환경변수 `RL_PER_MIN`, `RL_PER_DAY`, `RL_GLOBAL_PER_DAY`로 조절합니다.
+
+### 방법 A — Render.com (무료, 가장 간단)
+
+1. 이 저장소를 본인 GitHub 계정으로 fork(또는 push)
+2. [render.com](https://render.com) 가입 후 **New → Blueprint** 선택
+3. 저장소를 고르면 `render.yaml`대로 자동 설정됨
+4. 배포 화면에서 환경변수 **`ANTHROPIC_API_KEY`** 에 실제 키 입력
+5. 배포가 끝나면 `https://<이름>.onrender.com` 주소가 생성됨 → 누구나 접속 가능
+
+무료 플랜은 일정 시간 미사용 시 잠들었다가 첫 요청에 몇십 초 걸릴 수 있습니다.
+
+### 방법 B — Docker (Fly.io, Railway, 직접 서버 등)
+
+`Dockerfile`이 포함되어 있어 컨테이너 호스팅 어디서든 실행됩니다.
+
+```bash
+docker build -t banjjaktalk .
+docker run -p 3000:3000 -e ANTHROPIC_API_KEY=sk-... banjjaktalk
+```
+
+호스팅에서는 `ANTHROPIC_API_KEY` 환경변수만 설정하면 됩니다. 서버는 `PORT` 환경변수를 자동으로 따릅니다.
+
+### 배포 체크리스트
+
+- [ ] `ANTHROPIC_API_KEY`를 호스팅 환경변수로 설정 (코드/깃에 넣지 말 것)
+- [ ] 요청 제한 한도(`RL_*`)를 예상 사용량에 맞게 조정
+- [ ] Anthropic 콘솔에서 사용량·비용 한도(usage limit) 설정
+- [ ] 아동 개인정보 관련 법적 검토 (아래 "운영 전 확인 사항" 참고)
+
 ## 프로젝트 구조
 
 ```
