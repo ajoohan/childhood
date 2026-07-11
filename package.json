@@ -1,0 +1,19 @@
+{
+  "name": "childhood-ai-chat",
+  "version": "0.1.0",
+  "description": "아이들을 위한 안전한 AI 채팅 서비스",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}

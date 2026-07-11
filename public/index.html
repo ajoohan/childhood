@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>별이랑 이야기해요 ⭐</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-star">⭐</div>
+      <div class="header-text">
+        <h1>별이랑 이야기해요</h1>
+        <p>궁금한 걸 물어보고, 재미있게 놀아요!</p>
+      </div>
+      <button class="parent-btn" id="parentBtn">보호자 안내</button>
+    </header>
+
+    <main class="chat" id="chat">
+      <div class="message bot">
+        <div class="avatar">⭐</div>
+        <div class="bubble">
+          안녕! 나는 반짝반짝 별이야 ✨<br />
+          동물, 우주, 공룡 이야기도 좋고, 끝말잇기나 수수께끼도 좋아!
+          오늘은 뭐 하고 놀까?
+        </div>
+      </div>
+    </main>
+
+    <footer class="composer">
+      <input
+        id="input"
+        type="text"
+        maxlength="1000"
+        placeholder="별이에게 하고 싶은 말을 써 봐!"
+        autocomplete="off"
+      />
+      <button id="sendBtn" aria-label="보내기">보내기 🚀</button>
+    </footer>
+  </div>
+
+  <dialog id="parentDialog">
+    <h2>보호자 안내</h2>
+    <ul>
+      <li>이 서비스는 5~12세 어린이를 위한 AI 대화 서비스입니다.</li>
+      <li>AI는 어린이에게 적합한 언어와 주제만 사용하도록 설계되었으며, 모든 메시지는 안전 필터를 거칩니다.</li>
+      <li>AI는 개인정보를 묻지 않으며, 어린이가 개인정보를 공유하려 하면 하지 않도록 안내합니다.</li>
+      <li>위기 신호(괴롭힘, 마음의 어려움 등)가 감지되면 믿을 수 있는 어른과 청소년 상담전화 1388을 안내합니다.</li>
+      <li>AI의 답변은 완벽하지 않을 수 있습니다. 보호자의 관심과 함께 사용해 주세요.</li>
+      <li>대화 내용은 이 브라우저에만 잠시 보관되며, 창을 닫으면 사라집니다.</li>
+    </ul>
+    <button id="closeDialog">닫기</button>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
