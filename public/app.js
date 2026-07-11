@@ -1,15 +1,78 @@
+const selectScreen = document.getElementById("selectScreen");
+const chatScreen = document.getElementById("chatScreen");
+const characterGrid = document.getElementById("characterGrid");
 const chatEl = document.getElementById("chat");
 const inputEl = document.getElementById("input");
 const sendBtn = document.getElementById("sendBtn");
-const parentBtn = document.getElementById("parentBtn");
+const backBtn = document.getElementById("backBtn");
+const headerEmoji = document.getElementById("headerEmoji");
+const headerName = document.getElementById("headerName");
+const headerTagline = document.getElementById("headerTagline");
 const parentDialog = document.getElementById("parentDialog");
-const closeDialog = document.getElementById("closeDialog");
 
-// 대화 기록은 브라우저 메모리에만 보관한다 (창을 닫으면 사라짐).
-const history = [];
+let characters = [];
+let current = null;
 
-parentBtn.addEventListener("click", () => parentDialog.showModal());
-closeDialog.addEventListener("click", () => parentDialog.close());
+// 캐릭터별 대화 기록은 브라우저 메모리에만 보관한다 (창을 닫으면 사라짐).
+const histories = {};
+
+for (const id of ["parentBtn", "parentBtnSelect"]) {
+  document.getElementById(id).addEventListener("click", () => parentDialog.showModal());
+}
+document.getElementById("closeDialog").addEventListener("click", () => parentDialog.close());
+
+async function loadCharacters() {
+  try {
+    const res = await fetch("/api/characters");
+    characters = await res.json();
+  } catch {
+    characters = [
+      {
+        id: "byeori",
+        name: "별이",
+        emoji: "⭐",
+        tagline: "뭐든지 함께하는 반짝이 친구",
+        greeting: "안녕! 나는 반짝반짝 별이야 ✨ 오늘은 뭐 하고 놀까?",
+      },
+    ];
+  }
+
+  characterGrid.innerHTML = "";
+  for (const c of characters) {
+    const card = document.createElement("button");
+    card.className = "character-card";
+    card.innerHTML = `<span class="card-emoji">${c.emoji}</span><span class="card-name">${c.name}</span><span class="card-tagline">${c.tagline}</span>`;
+    card.addEventListener("click", () => openChat(c));
+    characterGrid.appendChild(card);
+  }
+}
+
+function openChat(character) {
+  current = character;
+  headerEmoji.textContent = character.emoji;
+  headerName.textContent = character.name;
+  headerTagline.textContent = character.tagline;
+
+  selectScreen.hidden = true;
+  chatScreen.hidden = false;
+
+  if (!histories[character.id]) histories[character.id] = [];
+  renderHistory();
+  inputEl.focus();
+}
+
+function renderHistory() {
+  chatEl.innerHTML = "";
+  addMessage("bot", current.greeting);
+  for (const m of histories[current.id]) {
+    addMessage(m.role === "user" ? "user" : "bot", m.content);
+  }
+}
+
+backBtn.addEventListener("click", () => {
+  chatScreen.hidden = true;
+  selectScreen.hidden = false;
+});
 
 function addMessage(role, text) {
   const wrap = document.createElement("div");
@@ -17,7 +80,7 @@ function addMessage(role, text) {
 
   const avatar = document.createElement("div");
   avatar.className = "avatar";
-  avatar.textContent = role === "bot" ? "⭐" : "🙂";
+  avatar.textContent = role === "bot" ? current.emoji : "🙂";
 
   const bubble = document.createElement("div");
   bubble.className = "bubble";
@@ -32,12 +95,13 @@ function addMessage(role, text) {
 
 async function send() {
   const text = inputEl.value.trim();
-  if (!text || sendBtn.disabled) return;
+  if (!text || sendBtn.disabled || !current) return;
 
   inputEl.value = "";
   sendBtn.disabled = true;
   inputEl.disabled = true;
 
+  const history = histories[current.id];
   addMessage("user", text);
   history.push({ role: "user", content: text });
 
@@ -49,7 +113,7 @@ async function send() {
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: history }),
+      body: JSON.stringify({ characterId: current.id, messages: history }),
     });
 
     if (!res.ok || !res.body) {
@@ -81,7 +145,7 @@ async function send() {
     }
   } catch (err) {
     console.error(err);
-    reply = reply || "앗, 별이랑 연결이 잠깐 끊겼어. 다시 말해 줄래?";
+    reply = reply || `앗, ${current.name}랑 연결이 잠깐 끊겼어. 다시 말해 줄래?`;
     bubble.textContent = reply;
   } finally {
     bubble.classList.remove("typing");
@@ -96,3 +160,5 @@ sendBtn.addEventListener("click", send);
 inputEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.isComposing) send();
 });
+
+loadCharacters();
