@@ -3,23 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI 친구랑 이야기해요 ⭐</title>
+  <title>반짝톡 — 아이들의 AI 친구 ⭐</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="app">
-    <!-- 캐릭터 선택 화면 -->
-    <section class="select-screen" id="selectScreen">
-      <h1 class="select-title">오늘은 누구랑 놀까?</h1>
-      <p class="select-sub">함께 놀고 싶은 친구를 골라 봐!</p>
-      <div class="character-grid" id="characterGrid"></div>
-      <button class="parent-btn select-parent-btn" id="parentBtnSelect">보호자 안내</button>
+    <!-- 홈 화면 -->
+    <section class="home-screen" id="homeScreen">
+      <header class="top-bar">
+        <div class="logo">반짝<span>톡</span></div>
+        <div class="safe-badge" title="어린이 보호 모드는 항상 켜져 있어요">
+          <span class="safe-toggle"><span class="safe-knob"></span></span>
+          <span class="safe-icon">🛡️</span>
+          <span class="safe-label">세이프</span>
+        </div>
+        <button class="login-btn" id="parentBtnHome">보호자</button>
+      </header>
+
+      <div class="home-scroll">
+        <!-- 히어로 배너 캐러셀 -->
+        <div class="hero" id="hero">
+          <div class="hero-track" id="heroTrack"></div>
+          <div class="hero-controls">
+            <button class="hero-pause" id="heroPause" aria-label="자동 넘김 멈춤">⏸</button>
+            <div class="hero-indicator"><b id="heroIndex">01</b>&nbsp;|&nbsp;<span id="heroTotal">04</span></div>
+          </div>
+        </div>
+
+        <!-- 인기 캐릭터 -->
+        <div class="section-head">
+          <h2>인기 친구들</h2>
+          <button class="more-btn" id="moreBtn">더보기 ›</button>
+        </div>
+        <div class="character-row" id="characterRow"></div>
+      </div>
+
+      <!-- 하단 탭 바 -->
+      <nav class="tab-bar">
+        <button class="tab active" id="tabHome">
+          <span class="tab-icon">🏠</span><span>홈</span>
+        </button>
+        <button class="tab" id="tabChat">
+          <span class="tab-icon">💬</span><span>대화</span>
+        </button>
+        <button class="tab" id="tabParent">
+          <span class="tab-icon">👨‍👩‍👧</span><span>보호자</span>
+        </button>
+      </nav>
     </section>
 
     <!-- 채팅 화면 -->
     <section class="chat-screen" id="chatScreen" hidden>
       <header class="header">
-        <button class="back-btn" id="backBtn" aria-label="친구 바꾸기">←</button>
+        <button class="back-btn" id="backBtn" aria-label="홈으로">←</button>
         <div class="header-star" id="headerEmoji">⭐</div>
         <div class="header-text">
           <h1 id="headerName">별이</h1>
@@ -47,6 +83,7 @@
     <h2>보호자 안내</h2>
     <ul>
       <li>이 서비스는 5~12세 어린이를 위한 AI 대화 서비스입니다.</li>
+      <li>세이프 모드(어린이 보호 모드)는 항상 켜져 있으며 끌 수 없습니다.</li>
       <li>AI는 어린이에게 적합한 언어와 주제만 사용하도록 설계되었으며, 모든 메시지는 안전 필터를 거칩니다.</li>
       <li>모든 캐릭터에 동일한 어린이 보호 원칙이 적용됩니다.</li>
       <li>AI는 개인정보를 묻지 않으며, 어린이가 개인정보를 공유하려 하면 하지 않도록 안내합니다.</li>

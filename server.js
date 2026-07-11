@@ -42,6 +42,9 @@ const CHARACTERS = {
     name: "별이",
     emoji: "⭐",
     tagline: "뭐든지 함께하는 반짝이 친구",
+    quote: "오늘은 무슨 이야기든 반짝반짝하게 만들어 줄게!",
+    theme: ["#FFE29A", "#FFB347"],
+    isNew: false,
     greeting:
       "안녕! 나는 반짝반짝 별이야 ✨\n동물, 우주, 공룡 이야기도 좋고, 끝말잇기나 수수께끼도 좋아! 오늘은 뭐 하고 놀까?",
     persona: `너는 "별이"야. 5~12세 어린이를 위한 다정하고 명랑한 AI 친구야. 반짝이는 별 모양 캐릭터로, 아이들의 호기심을 응원하는 역할을 해.
@@ -58,6 +61,9 @@ const CHARACTERS = {
     name: "디노 박사",
     emoji: "🦕",
     tagline: "공룡과 과학을 아는 척척박사",
+    quote: "크앙~ 공룡 이야기라면 밤새도록 할 수 있어!",
+    theme: ["#B8F2CE", "#6FD08C"],
+    isNew: false,
     greeting:
       "크앙~ 안녕! 나는 디노 박사야 🦕\n공룡, 동물, 곤충, 과학 실험… 궁금한 게 있으면 뭐든지 물어봐!",
     persona: `너는 "디노 박사"야. 5~12세 어린이를 위한 공룡·과학 전문 AI 친구야. 초식공룡처럼 순하고 웃음이 많은 박사 캐릭터로, 가끔 "크앙~" 같은 귀여운 감탄사를 써.
@@ -73,6 +79,9 @@ const CHARACTERS = {
     name: "루나",
     emoji: "🚀",
     tagline: "우주를 여행하는 탐험 대장",
+    quote: "대원! 오늘의 목적지는 어디로 할까?",
+    theme: ["#C3B3FF", "#8FA7FF"],
+    isNew: false,
     greeting:
       "삐빅- 우주선 도킹 완료! 나는 우주 탐험 대장 루나야 🚀\n오늘은 어느 행성으로 떠나 볼까? 달? 화성? 아니면 블랙홀 근처?",
     persona: `너는 "루나"야. 5~12세 어린이를 위한 우주 탐험가 AI 친구야. 씩씩하고 모험심 넘치는 우주선 대장 캐릭터로, 아이를 "대원"이라고 부르며 함께 우주를 탐험하는 놀이를 해.
@@ -88,6 +97,9 @@ const CHARACTERS = {
     name: "모모",
     emoji: "🧚",
     tagline: "이야기를 만드는 꼬마 요정",
+    quote: "주인공만 정해 줘. 나머지는 우리 둘이 만들자!",
+    theme: ["#FFC9E3", "#FF9EC7"],
+    isNew: true,
     greeting:
       "딸랑딸랑~ 나는 이야기 요정 모모야 🧚\n주인공이랑 장소만 정해 주면, 우리 둘이서 멋진 이야기를 만들 수 있어! 어떤 이야기를 지어 볼까?",
     persona: `너는 "모모"야. 5~12세 어린이를 위한 이야기 요정 AI 친구야. 상상력이 풍부하고 장난기 많은 꼬마 요정 캐릭터야.
@@ -186,6 +198,9 @@ app.get("/api/characters", (req, res) => {
       name: c.name,
       emoji: c.emoji,
       tagline: c.tagline,
+      quote: c.quote,
+      theme: c.theme,
+      isNew: c.isNew,
       greeting: c.greeting,
     }))
   );

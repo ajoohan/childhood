@@ -11,6 +11,7 @@
   --user-bubble: #7bc9ff;
   --text: #3a3226;
   --accent: #f4845f;
+  --pink: #ff5d8f;
 }
 
 body {
@@ -27,97 +28,346 @@ body {
   margin: 0 auto;
 }
 
+/* ───────────── 홈 화면 ───────────── */
+
+.home-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #fff;
+}
+
+.home-screen[hidden],
+.chat-screen[hidden] {
+  display: none;
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f0e9db;
+  background: #fff;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--pink);
+  letter-spacing: -1px;
+}
+
+.logo span {
+  color: var(--accent);
+}
+
+.safe-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: help;
+}
+
+.safe-toggle {
+  display: inline-block;
+  width: 44px;
+  height: 26px;
+  background: #2ecc71;
+  border-radius: 999px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.safe-knob {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.safe-icon {
+  font-size: 1rem;
+}
+
+.safe-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #219653;
+}
+
+.login-btn {
+  margin-left: auto;
+  border: 1.5px solid #e5decf;
+  background: #fff;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.home-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 8px;
+}
+
+/* 히어로 배너 캐러셀 */
+
+.hero {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+}
+
+.hero-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.5s ease;
+}
+
+.hero-slide {
+  position: relative;
+  flex: 0 0 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 22px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.hero-emoji {
+  position: absolute;
+  top: 50%;
+  right: 8%;
+  transform: translateY(-58%);
+  font-size: clamp(90px, 24vw, 150px);
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.18));
+}
+
+.hero-new {
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  background: var(--pink);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 8px;
+}
+
+.hero-name {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.hero-quote {
+  margin-top: 4px;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+  max-width: 62%;
+}
+
+.hero-controls {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-pause {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.hero-indicator {
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+}
+
+.hero-indicator b {
+  color: #fff;
+}
+
+/* 인기 친구들 */
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 26px 4px 14px;
+}
+
+.section-head h2 {
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.more-btn {
+  border: none;
+  background: none;
+  font-size: 0.9rem;
+  color: #8a8171;
+  cursor: pointer;
+}
+
+.character-row {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  scrollbar-width: none;
+}
+
+.character-row::-webkit-scrollbar {
+  display: none;
+}
+
+.pop-card {
+  flex: 0 0 46%;
+  max-width: 240px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+}
+
+.pop-thumb {
+  position: relative;
+  border-radius: 18px;
+  aspect-ratio: 4 / 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.12s;
+}
+
+.pop-card:active .pop-thumb {
+  transform: scale(0.96);
+}
+
+.pop-emoji {
+  font-size: clamp(60px, 16vw, 96px);
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.15));
+}
+
+.pop-count {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 0.8rem;
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+
+.pop-new {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--pink);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 4px 9px;
+  border-radius: 6px;
+}
+
+.pop-name {
+  display: block;
+  margin-top: 10px;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.pop-quote {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.83rem;
+  color: #8a8171;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 하단 탭 바 */
+
+.tab-bar {
+  display: flex;
+  border-top: 1px solid #f0e9db;
+  background: #fff;
+  padding: 8px 0 12px;
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border: none;
+  background: none;
+  font-size: 0.72rem;
+  color: #9a917f;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.tab-icon {
+  font-size: 1.35rem;
+  filter: grayscale(1) opacity(0.55);
+}
+
+.tab.active {
+  color: var(--pink);
+  font-weight: 700;
+}
+
+.tab.active .tab-icon {
+  filter: none;
+}
+
+/* ───────────── 채팅 화면 ───────────── */
+
 .chat-screen {
   display: flex;
   flex-direction: column;
   height: 100%;
-}
-
-.chat-screen[hidden],
-.select-screen[hidden] {
-  display: none;
-}
-
-/* 캐릭터 선택 화면 */
-.select-screen {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  padding: 24px;
-  gap: 8px;
-}
-
-.select-title {
-  font-size: 1.6rem;
-}
-
-.select-sub {
-  opacity: 0.7;
-  margin-bottom: 16px;
-}
-
-.character-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-  width: 100%;
-  max-width: 480px;
-}
-
-.character-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 20px 12px;
-  border: 3px solid var(--header);
-  border-radius: 24px;
-  background: #fff;
-  cursor: pointer;
-  font-family: inherit;
-  color: var(--text);
-  transition: transform 0.1s, border-color 0.1s;
-}
-
-.character-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--accent);
-}
-
-.character-card:active {
-  transform: scale(0.96);
-}
-
-.card-emoji {
-  font-size: 2.6rem;
-}
-
-.card-name {
-  font-size: 1.1rem;
-  font-weight: bold;
-}
-
-.card-tagline {
-  font-size: 0.78rem;
-  opacity: 0.7;
-}
-
-.select-parent-btn {
-  margin-top: 24px;
-}
-
-.back-btn {
-  border: none;
-  background: rgba(255, 255, 255, 0.7);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  font-size: 1.1rem;
-  cursor: pointer;
-  color: var(--text);
-  flex-shrink: 0;
 }
 
 .header {
@@ -158,6 +408,18 @@ body {
   font-size: 0.75rem;
   cursor: pointer;
   color: var(--text);
+}
+
+.back-btn {
+  border: none;
+  background: rgba(255, 255, 255, 0.7);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--text);
+  flex-shrink: 0;
 }
 
 .chat {
@@ -260,6 +522,8 @@ body {
   opacity: 0.5;
   cursor: default;
 }
+
+/* ───────────── 다이얼로그 ───────────── */
 
 dialog {
   border: none;
