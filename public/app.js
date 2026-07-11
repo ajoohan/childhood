@@ -1,31 +1,68 @@
 const homeScreen = document.getElementById("homeScreen");
+const recentScreen = document.getElementById("recentScreen");
 const chatScreen = document.getElementById("chatScreen");
+const tabBar = document.getElementById("tabBar");
 const heroTrack = document.getElementById("heroTrack");
 const heroPause = document.getElementById("heroPause");
 const heroIndex = document.getElementById("heroIndex");
 const heroTotal = document.getElementById("heroTotal");
 const characterRow = document.getElementById("characterRow");
+const recentList = document.getElementById("recentList");
 const chatEl = document.getElementById("chat");
 const inputEl = document.getElementById("input");
 const sendBtn = document.getElementById("sendBtn");
 const backBtn = document.getElementById("backBtn");
-const headerEmoji = document.getElementById("headerEmoji");
+const headerAvatar = document.getElementById("headerAvatar");
 const headerName = document.getElementById("headerName");
 const headerTagline = document.getElementById("headerTagline");
 const parentDialog = document.getElementById("parentDialog");
+const tabHome = document.getElementById("tabHome");
+const tabChat = document.getElementById("tabChat");
 
 let characters = [];
 let current = null;
-let lastCharacterId = null;
+let previousScreen = "home";
 
 // 캐릭터별 대화 기록은 브라우저 메모리에만 보관한다 (창을 닫으면 사라짐).
 const histories = {};
 
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+  );
+}
+
+function msgCount(id) {
+  return (histories[id] || []).filter((m) => m.role === "user").length;
+}
+
 // ── 보호자 안내 ──
-for (const id of ["parentBtn", "parentBtnHome", "tabParent"]) {
+for (const id of ["parentBtn", "parentBtnHome", "parentBtnRecent", "tabParent"]) {
   document.getElementById(id).addEventListener("click", () => parentDialog.showModal());
 }
 document.getElementById("closeDialog").addEventListener("click", () => parentDialog.close());
+
+// ── 화면 전환 ──
+function showScreen(name) {
+  homeScreen.hidden = name !== "home";
+  recentScreen.hidden = name !== "recent";
+  chatScreen.hidden = name !== "chat";
+  tabBar.hidden = name === "chat";
+  tabHome.classList.toggle("active", name === "home");
+  tabChat.classList.toggle("active", name === "recent");
+
+  if (name === "home") {
+    renderCharacterRow();
+    if (!heroPaused) startHeroTimer();
+  } else {
+    clearInterval(heroTimer);
+  }
+  if (name === "recent") renderRecent();
+}
+
+tabHome.addEventListener("click", () => showScreen("home"));
+tabChat.addEventListener("click", () => showScreen("recent"));
+backBtn.addEventListener("click", () => showScreen(previousScreen));
 
 // ── 히어로 캐러셀 ──
 let heroIdx = 0;
@@ -44,10 +81,11 @@ function renderHero() {
     slide.style.background = `linear-gradient(135deg, ${c.theme[0]}, ${c.theme[1]})`;
     slide.innerHTML = `
       ${c.isNew ? '<span class="hero-new">New</span>' : ""}
-      <span class="hero-emoji">${c.emoji}</span>
-      <div class="hero-name">${c.name} · ${c.tagline}</div>
+      <span class="hero-art">${avatarSVG(c.id)}</span>
+      <div class="hero-eyebrow">${c.name}</div>
+      <div class="hero-name">${c.tagline}</div>
       <div class="hero-quote">"${c.quote}"</div>`;
-    slide.addEventListener("click", () => openChat(c));
+    slide.addEventListener("click", () => openChat(c, "home"));
     heroTrack.appendChild(slide);
   }
   heroTotal.textContent = pad(characters.length);
@@ -76,24 +114,20 @@ heroPause.addEventListener("click", (e) => {
 });
 
 // ── 인기 친구들 카드 ──
-function msgCount(id) {
-  return (histories[id] || []).filter((m) => m.role === "user").length;
-}
-
 function renderCharacterRow() {
   characterRow.innerHTML = "";
   for (const c of characters) {
     const card = document.createElement("button");
     card.className = "pop-card";
     card.innerHTML = `
-      <span class="pop-thumb" style="background: linear-gradient(160deg, ${c.theme[0]}, ${c.theme[1]})">
+      <span class="pop-thumb" style="background: linear-gradient(160deg, #ffffff, ${c.theme[0]})">
         ${c.isNew ? '<span class="pop-new">New</span>' : ""}
-        <span class="pop-emoji">${c.emoji}</span>
+        <span class="pop-art">${avatarSVG(c.id)}</span>
         <span class="pop-count">💬 ${msgCount(c.id)}</span>
       </span>
       <span class="pop-name">${c.name}</span>
       <span class="pop-quote">"${c.quote}"</span>`;
-    card.addEventListener("click", () => openChat(c));
+    card.addEventListener("click", () => openChat(c, "home"));
     characterRow.appendChild(card);
   }
 }
@@ -102,41 +136,53 @@ document.getElementById("moreBtn").addEventListener("click", () => {
   characterRow.scrollTo({ left: characterRow.scrollWidth, behavior: "smooth" });
 });
 
-// ── 탭 바 ──
-document.getElementById("tabHome").addEventListener("click", goHome);
-document.getElementById("tabChat").addEventListener("click", () => {
-  const c =
-    characters.find((c) => c.id === lastCharacterId) || characters[0];
-  if (c) openChat(c);
-});
+// ── 최근 대화 목록 ──
+function renderRecent() {
+  recentList.innerHTML = "";
+  const sorted = [...characters].sort((a, b) => msgCount(b.id) - msgCount(a.id));
+  const hasAny = sorted.some((c) => msgCount(c.id) > 0);
 
-// ── 화면 전환 ──
-function openChat(character) {
+  if (!hasAny) {
+    const empty = document.createElement("p");
+    empty.className = "recent-empty";
+    empty.textContent = "아직 나눈 이야기가 없어요.\n친구를 골라서 첫 대화를 시작해 볼까요? 💬";
+    recentList.appendChild(empty);
+  }
+
+  for (const c of sorted) {
+    const history = histories[c.id] || [];
+    const lastUser = [...history].reverse().find((m) => m.role === "user");
+    const preview = lastUser ? lastUser.content : "아직 대화하지 않았어요";
+    const count = msgCount(c.id);
+
+    const item = document.createElement("button");
+    item.className = "recent-item";
+    item.innerHTML = `
+      <span class="recent-ava" style="background: linear-gradient(160deg, #ffffff, ${c.theme[0]})">${avatarSVG(c.id)}</span>
+      <span class="recent-body">
+        <b>${c.name}</b>
+        <span class="recent-preview ${lastUser ? "" : "muted"}">${escapeHtml(preview)}</span>
+      </span>
+      ${count ? `<span class="recent-badge">${count}</span>` : '<span class="recent-go">›</span>'}`;
+    item.addEventListener("click", () => openChat(c, "recent"));
+    recentList.appendChild(item);
+  }
+}
+
+// ── 채팅 ──
+function openChat(character, from) {
   current = character;
-  lastCharacterId = character.id;
-  headerEmoji.textContent = character.emoji;
+  previousScreen = from || "home";
+  headerAvatar.innerHTML = avatarSVG(character.id);
   headerName.textContent = character.name;
   headerTagline.textContent = character.tagline;
 
-  homeScreen.hidden = true;
-  chatScreen.hidden = false;
-  clearInterval(heroTimer);
-
   if (!histories[character.id]) histories[character.id] = [];
   renderHistory();
+  showScreen("chat");
   inputEl.focus();
 }
 
-function goHome() {
-  chatScreen.hidden = true;
-  homeScreen.hidden = false;
-  renderCharacterRow();
-  if (!heroPaused) startHeroTimer();
-}
-
-backBtn.addEventListener("click", goHome);
-
-// ── 채팅 ──
 function renderHistory() {
   chatEl.innerHTML = "";
   addMessage("bot", current.greeting);
@@ -151,7 +197,8 @@ function addMessage(role, text) {
 
   const avatar = document.createElement("div");
   avatar.className = "avatar";
-  avatar.textContent = role === "bot" ? current.emoji : "🙂";
+  if (role === "bot") avatar.innerHTML = avatarSVG(current.id);
+  else avatar.textContent = "🙂";
 
   const bubble = document.createElement("div");
   bubble.className = "bubble";

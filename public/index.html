@@ -8,75 +8,86 @@
 </head>
 <body>
   <div class="app">
-    <!-- 홈 화면 -->
-    <section class="home-screen" id="homeScreen">
-      <header class="top-bar">
-        <div class="logo">반짝<span>톡</span></div>
-        <div class="safe-badge" title="어린이 보호 모드는 항상 켜져 있어요">
-          <span class="safe-toggle"><span class="safe-knob"></span></span>
-          <span class="safe-icon">🛡️</span>
-          <span class="safe-label">세이프</span>
-        </div>
-        <button class="login-btn" id="parentBtnHome">보호자</button>
-      </header>
-
-      <div class="home-scroll">
-        <!-- 히어로 배너 캐러셀 -->
-        <div class="hero" id="hero">
-          <div class="hero-track" id="heroTrack"></div>
-          <div class="hero-controls">
-            <button class="hero-pause" id="heroPause" aria-label="자동 넘김 멈춤">⏸</button>
-            <div class="hero-indicator"><b id="heroIndex">01</b>&nbsp;|&nbsp;<span id="heroTotal">04</span></div>
+    <div class="screens">
+      <!-- 홈 화면 -->
+      <section class="home-screen" id="homeScreen">
+        <header class="top-bar">
+          <div class="logo">반짝<span>톡</span></div>
+          <div class="safe-badge" title="어린이 보호 모드는 항상 켜져 있어요">
+            <span class="safe-toggle"><span class="safe-knob"></span></span>
+            <span class="safe-icon">🛡️</span>
+            <span class="safe-label">세이프</span>
           </div>
+          <button class="login-btn" id="parentBtnHome">보호자</button>
+        </header>
+
+        <div class="home-scroll">
+          <!-- 히어로 배너 캐러셀 -->
+          <div class="hero" id="hero">
+            <div class="hero-track" id="heroTrack"></div>
+            <div class="hero-controls">
+              <button class="hero-pause" id="heroPause" aria-label="자동 넘김 멈춤">⏸</button>
+              <div class="hero-indicator"><b id="heroIndex">01</b>&nbsp;|&nbsp;<span id="heroTotal">06</span></div>
+            </div>
+          </div>
+
+          <!-- 인기 캐릭터 -->
+          <div class="section-head">
+            <h2>인기 친구들</h2>
+            <button class="more-btn" id="moreBtn">더보기 ›</button>
+          </div>
+          <div class="character-row" id="characterRow"></div>
         </div>
+      </section>
 
-        <!-- 인기 캐릭터 -->
-        <div class="section-head">
-          <h2>인기 친구들</h2>
-          <button class="more-btn" id="moreBtn">더보기 ›</button>
-        </div>
-        <div class="character-row" id="characterRow"></div>
-      </div>
+      <!-- 최근 대화 화면 -->
+      <section class="recent-screen" id="recentScreen" hidden>
+        <header class="top-bar">
+          <div class="logo">대화</div>
+          <button class="login-btn" id="parentBtnRecent">보호자</button>
+        </header>
+        <div class="recent-list" id="recentList"></div>
+      </section>
 
-      <!-- 하단 탭 바 -->
-      <nav class="tab-bar">
-        <button class="tab active" id="tabHome">
-          <span class="tab-icon">🏠</span><span>홈</span>
-        </button>
-        <button class="tab" id="tabChat">
-          <span class="tab-icon">💬</span><span>대화</span>
-        </button>
-        <button class="tab" id="tabParent">
-          <span class="tab-icon">👨‍👩‍👧</span><span>보호자</span>
-        </button>
-      </nav>
-    </section>
+      <!-- 채팅 화면 -->
+      <section class="chat-screen" id="chatScreen" hidden>
+        <header class="header">
+          <button class="back-btn" id="backBtn" aria-label="뒤로">←</button>
+          <div class="header-star" id="headerAvatar"></div>
+          <div class="header-text">
+            <h1 id="headerName">별이</h1>
+            <p id="headerTagline">뭐든지 함께하는 반짝이 친구</p>
+          </div>
+          <button class="parent-btn" id="parentBtn">보호자 안내</button>
+        </header>
 
-    <!-- 채팅 화면 -->
-    <section class="chat-screen" id="chatScreen" hidden>
-      <header class="header">
-        <button class="back-btn" id="backBtn" aria-label="홈으로">←</button>
-        <div class="header-star" id="headerEmoji">⭐</div>
-        <div class="header-text">
-          <h1 id="headerName">별이</h1>
-          <p id="headerTagline">뭐든지 함께하는 반짝이 친구</p>
-        </div>
-        <button class="parent-btn" id="parentBtn">보호자 안내</button>
-      </header>
+        <main class="chat" id="chat"></main>
 
-      <main class="chat" id="chat"></main>
+        <footer class="composer">
+          <input
+            id="input"
+            type="text"
+            maxlength="1000"
+            placeholder="하고 싶은 말을 써 봐!"
+            autocomplete="off"
+          />
+          <button id="sendBtn" aria-label="보내기">보내기 🚀</button>
+        </footer>
+      </section>
+    </div>
 
-      <footer class="composer">
-        <input
-          id="input"
-          type="text"
-          maxlength="1000"
-          placeholder="하고 싶은 말을 써 봐!"
-          autocomplete="off"
-        />
-        <button id="sendBtn" aria-label="보내기">보내기 🚀</button>
-      </footer>
-    </section>
+    <!-- 하단 탭 바 (공유) -->
+    <nav class="tab-bar" id="tabBar">
+      <button class="tab active" id="tabHome">
+        <span class="tab-icon">🏠</span><span>홈</span>
+      </button>
+      <button class="tab" id="tabChat">
+        <span class="tab-icon">💬</span><span>대화</span>
+      </button>
+      <button class="tab" id="tabParent">
+        <span class="tab-icon">👨‍👩‍👧</span><span>보호자</span>
+      </button>
+    </nav>
   </div>
 
   <dialog id="parentDialog">
@@ -94,6 +105,7 @@
     <button id="closeDialog">닫기</button>
   </dialog>
 
+  <script src="avatars.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
