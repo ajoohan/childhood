@@ -64,6 +64,23 @@ tabHome.addEventListener("click", () => showScreen("home"));
 tabChat.addEventListener("click", () => showScreen("recent"));
 backBtn.addEventListener("click", () => showScreen(previousScreen));
 
+// 햇살 가득한 손그림풍 야외 배경 (모든 히어로 슬라이드 공통)
+const HERO_SCENE = `<svg class="scene-svg" viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#AFE0FF"/><stop offset="0.7" stop-color="#E8F7FF"/></linearGradient></defs>
+  <rect width="400" height="250" fill="url(#sky)"/>
+  <circle cx="336" cy="52" r="52" fill="#FFE08A" opacity="0.4"/>
+  <circle cx="336" cy="52" r="34" fill="#FFE49A"/>
+  <ellipse cx="90" cy="60" rx="34" ry="14" fill="#ffffff" opacity="0.85"/>
+  <ellipse cx="120" cy="52" rx="26" ry="12" fill="#ffffff" opacity="0.85"/>
+  <path d="M0 172 Q110 138 210 170 T400 164 L400 250 L0 250 Z" fill="#C6E68A"/>
+  <path d="M0 200 Q130 174 250 200 T400 194 L400 250 L0 250 Z" fill="#98CE5C"/>
+  <rect x="56" y="176" width="8" height="22" rx="3" fill="#9c7a4a"/>
+  <circle cx="60" cy="166" r="24" fill="#83C24E"/>
+  <circle cx="48" cy="172" r="15" fill="#8FCB58"/>
+  <circle cx="73" cy="172" r="15" fill="#8FCB58"/>
+</svg>`;
+
 // ── 히어로 캐러셀 ──
 let heroIdx = 0;
 let heroTimer = null;
@@ -78,13 +95,15 @@ function renderHero() {
   for (const c of characters) {
     const slide = document.createElement("div");
     slide.className = "hero-slide";
-    slide.style.background = `linear-gradient(135deg, ${c.theme[0]}, ${c.theme[1]})`;
     slide.innerHTML = `
+      <div class="hero-scene">${HERO_SCENE}</div>
       ${c.isNew ? '<span class="hero-new">New</span>' : ""}
       <span class="hero-art">${avatarSVG(c.id)}</span>
-      <div class="hero-eyebrow">${c.name}</div>
-      <div class="hero-name">${c.tagline}</div>
-      <div class="hero-quote">"${c.quote}"</div>`;
+      <div class="hero-text">
+        <div class="hero-eyebrow">${c.name}</div>
+        <div class="hero-name">${c.tagline}</div>
+        <div class="hero-quote">"${c.quote}"</div>
+      </div>`;
     slide.addEventListener("click", () => openChat(c, "home"));
     heroTrack.appendChild(slide);
   }

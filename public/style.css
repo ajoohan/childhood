@@ -5,18 +5,20 @@
 }
 
 :root {
-  --bg: #fdf6e9;
+  --bg: #fbf6ea;
   --header: #ffd166;
   --bot-bubble: #ffffff;
-  --user-bubble: #7bc9ff;
+  --user-bubble: #8fd0f5;
   --text: #3a3226;
   --accent: #f4845f;
   --pink: #ff5d8f;
+  --sky: #aee3ff;
+  --grass: #8fca57;
 }
 
 body {
   font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  background: var(--bg);
+  background: linear-gradient(180deg, #d6f0ff 0%, #eef8ff 22%, var(--bg) 55%);
   color: var(--text);
 }
 
@@ -26,7 +28,7 @@ body {
   height: 100dvh;
   max-width: 720px;
   margin: 0 auto;
-  background: #fff;
+  background: transparent;
 }
 
 .screens {
@@ -53,7 +55,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: linear-gradient(180deg, #d9f1ff 0%, #eef8ef 30%, #fbf6ea 60%);
 }
 
 .top-bar {
@@ -61,8 +63,8 @@ body {
   align-items: center;
   gap: 12px;
   padding: 14px 18px;
-  border-bottom: 1px solid #f0e9db;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(4px);
 }
 
 .logo {
@@ -155,18 +157,35 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 22px;
+  padding: 20px;
   cursor: pointer;
   overflow: hidden;
 }
 
+.hero-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero-scene .scene-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hero-text {
+  position: relative;
+  z-index: 2;
+}
+
 .hero-art {
   position: absolute;
-  top: 50%;
-  right: 7%;
-  transform: translateY(-58%);
-  width: clamp(120px, 34vw, 190px);
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.18));
+  z-index: 1;
+  bottom: 0;
+  right: 3%;
+  width: clamp(112px, 31vw, 168px);
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.2));
 }
 
 .hero-art svg {
@@ -188,28 +207,29 @@ body {
 }
 
 .hero-eyebrow {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.22);
-  max-width: 58%;
+  color: #2f6b3f;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.7);
+  max-width: 60%;
 }
 
 .hero-name {
   margin-top: 2px;
-  font-size: 1.45rem;
+  font-size: 1.42rem;
   font-weight: 900;
   line-height: 1.25;
-  color: #fff;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  max-width: 58%;
+  color: #38301f;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8);
+  max-width: 60%;
 }
 
 .hero-quote {
   margin-top: 5px;
-  font-size: 0.92rem;
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #5a4a2e;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.75);
   max-width: 58%;
 }
 
