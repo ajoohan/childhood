@@ -292,6 +292,11 @@ app.post("/api/chat", rateLimit, async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
+  // 안전 분류 결과를 메타로 먼저 전송한다(아이 화면엔 표시하지 않고, 보호자 대시보드 기록용).
+  if (category !== "safe") {
+    res.write(`data: ${JSON.stringify({ safety: category })}\n\n`);
+  }
+
   try {
     const stream = client.messages.stream({
       model: CHAT_MODEL,

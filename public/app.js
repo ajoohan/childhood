@@ -15,19 +15,48 @@ const backBtn = document.getElementById("backBtn");
 const headerAvatar = document.getElementById("headerAvatar");
 const headerName = document.getElementById("headerName");
 const headerTagline = document.getElementById("headerTagline");
-const parentDialog = document.getElementById("parentDialog");
+const guardScreen = document.getElementById("guardScreen");
 const tabHome = document.getElementById("tabHome");
 const tabChat = document.getElementById("tabChat");
+const gateDialog = document.getElementById("gateDialog");
+const gateQ = document.getElementById("gateQ");
+const gateAnswer = document.getElementById("gateAnswer");
+const gateError = document.getElementById("gateError");
 
 let characters = [];
 let current = null;
 let previousScreen = "home";
+let guardUnlocked = false;
+let gateExpected = 0;
 
-// 캐릭터별 대화 기록은 브라우저 메모리에만 보관한다 (창을 닫으면 사라짐).
-const histories = {};
+// ── 로컬 저장 (서버가 아닌 이 기기 브라우저에만 저장됨) ──
+const STORE_KEY = "banjjaktalk_v1";
+function loadStore() {
+  try {
+    return JSON.parse(localStorage.getItem(STORE_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+function saveStore() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(store));
+  } catch {}
+}
+const store = loadStore();
+if (!store.histories) store.histories = {};
+if (!Array.isArray(store.safety)) store.safety = [];
+if (!store.settings) store.settings = { limitPerDay: null };
+
+// 캐릭터별 대화 기록 (기기에 저장됨)
+const histories = store.histories;
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function escapeHtml(s) {
-  return s.replace(/[&<>"']/g, (c) =>
+  return String(s).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
   );
 }
@@ -36,18 +65,58 @@ function msgCount(id) {
   return (histories[id] || []).filter((m) => m.role === "user").length;
 }
 
-// ── 보호자 안내 ──
-for (const id of ["parentBtn", "parentBtnHome", "parentBtnRecent", "tabParent"]) {
-  document.getElementById(id).addEventListener("click", () => parentDialog.showModal());
+function messagesToday() {
+  const t = todayKey();
+  let n = 0;
+  for (const h of Object.values(histories)) {
+    for (const m of h) if (m.role === "user" && (m.t || "").slice(0, 10) === t) n++;
+  }
+  return n;
 }
-document.getElementById("closeDialog").addEventListener("click", () => parentDialog.close());
+
+// ── 보호자 확인 게이트 → 대시보드 ──
+function openGuard() {
+  if (guardUnlocked) {
+    showScreen("guard");
+    return;
+  }
+  const a = 3 + Math.floor(Math.random() * 8);
+  const b = 4 + Math.floor(Math.random() * 8);
+  gateExpected = a + b;
+  gateQ.textContent = `${a} + ${b} = ?`;
+  gateAnswer.value = "";
+  gateError.hidden = true;
+  gateDialog.showModal();
+  gateAnswer.focus();
+}
+function submitGate() {
+  if (Number(gateAnswer.value) === gateExpected) {
+    guardUnlocked = true;
+    gateDialog.close();
+    showScreen("guard");
+  } else {
+    gateError.hidden = false;
+    gateAnswer.value = "";
+    gateAnswer.focus();
+  }
+}
+for (const id of ["parentBtn", "parentBtnHome", "parentBtnRecent", "tabParent"]) {
+  document.getElementById(id).addEventListener("click", openGuard);
+}
+document.getElementById("gateCancel").addEventListener("click", () => gateDialog.close());
+document.getElementById("gateOk").addEventListener("click", submitGate);
+gateAnswer.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") submitGate();
+});
+document.getElementById("guardBack").addEventListener("click", () => showScreen("home"));
 
 // ── 화면 전환 ──
 function showScreen(name) {
   homeScreen.hidden = name !== "home";
   recentScreen.hidden = name !== "recent";
   chatScreen.hidden = name !== "chat";
-  tabBar.hidden = name === "chat";
+  guardScreen.hidden = name !== "guard";
+  tabBar.hidden = name === "chat" || name === "guard";
   tabHome.classList.toggle("active", name === "home");
   tabChat.classList.toggle("active", name === "recent");
 
@@ -58,6 +127,7 @@ function showScreen(name) {
     clearInterval(heroTimer);
   }
   if (name === "recent") renderRecent();
+  if (name === "guard") renderGuard();
 }
 
 tabHome.addEventListener("click", () => showScreen("home"));
@@ -251,13 +321,22 @@ async function send() {
   const text = inputEl.value.trim();
   if (!text || sendBtn.disabled || !current) return;
 
+  // 보호자가 정한 하루 대화 횟수 제한 (기기 저장, 소프트 제한)
+  const limit = store.settings.limitPerDay;
+  if (limit && messagesToday() >= limit) {
+    inputEl.value = "";
+    addMessage("bot", `오늘은 이야기를 ${limit}번이나 나눴대! 오늘은 여기까지 하고 내일 또 만나자 😊`);
+    return;
+  }
+
   inputEl.value = "";
   sendBtn.disabled = true;
   inputEl.disabled = true;
 
   const history = histories[current.id];
   addMessage("user", text);
-  history.push({ role: "user", content: text });
+  history.push({ role: "user", content: text, t: new Date().toISOString() });
+  saveStore();
 
   const bubble = addMessage("bot", "");
   bubble.classList.add("typing");
@@ -297,7 +376,23 @@ async function send() {
         if (!line.startsWith("data: ")) continue;
         const data = line.slice(6);
         if (data === "[DONE]") continue;
-        const { text: delta } = JSON.parse(data);
+        const obj = JSON.parse(data);
+
+        // 안전 분류 메타: 아이 화면엔 표시하지 않고 보호자 대시보드용으로 기록만 한다.
+        if (obj.safety) {
+          store.safety.unshift({
+            t: new Date().toISOString(),
+            characterId: current.id,
+            characterName: current.name,
+            category: obj.safety,
+            text,
+          });
+          if (store.safety.length > 100) store.safety.length = 100;
+          saveStore();
+          continue;
+        }
+
+        const delta = obj.text || "";
         reply += delta;
         bubble.classList.remove("typing");
         bubble.textContent = reply;
@@ -314,6 +409,7 @@ async function send() {
   } finally {
     bubble.classList.remove("typing");
     history.push({ role: "assistant", content: reply });
+    saveStore();
     sendBtn.disabled = false;
     inputEl.disabled = false;
     inputEl.focus();
@@ -323,6 +419,123 @@ async function send() {
 sendBtn.addEventListener("click", send);
 inputEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.isComposing) send();
+});
+
+// ── 보호자 대시보드 렌더링 ──
+const SAFETY_LABEL = {
+  personal_info: {
+    icon: "🔒",
+    name: "개인정보 공유 시도",
+    cls: "warn",
+    tip: "아이와 함께 개인정보(주소·학교·전화번호 등)를 인터넷에서 말하지 않기로 이야기해 보세요.",
+  },
+  harmful_request: {
+    icon: "🚫",
+    name: "부적절한 요청",
+    cls: "warn",
+    tip: "아이가 어떤 맥락에서 물었는지 부드럽게 대화해 보세요.",
+  },
+  distress: {
+    icon: "❤️",
+    name: "마음 신호 감지",
+    cls: "danger",
+    tip: "아이의 마음을 살펴봐 주세요. 필요하면 청소년 상담전화 1388에 도움을 청할 수 있어요.",
+  },
+};
+
+function fmtTime(iso) {
+  try {
+    return new Date(iso).toLocaleString("ko-KR", {
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
+
+function lastTime(id) {
+  const h = histories[id] || [];
+  for (let i = h.length - 1; i >= 0; i--) {
+    if (h[i].role === "user" && h[i].t) return h[i].t;
+  }
+  return null;
+}
+
+function renderGuard() {
+  // 안전 알림
+  const alertList = document.getElementById("alertList");
+  alertList.innerHTML = "";
+  if (!store.safety.length) {
+    alertList.innerHTML = '<p class="guard-empty">아직 특별한 알림이 없어요. 👍</p>';
+  } else {
+    for (const ev of store.safety.slice(0, 30)) {
+      const label = SAFETY_LABEL[ev.category] || {
+        icon: "⚠️",
+        name: "알림",
+        cls: "warn",
+        tip: "",
+      };
+      const item = document.createElement("div");
+      item.className = `alert-item ${label.cls}`;
+      item.innerHTML = `
+        <span class="alert-icon">${label.icon}</span>
+        <div class="alert-body">
+          <div class="alert-top"><b>${label.name}</b><span class="alert-time">${fmtTime(ev.t)}</span></div>
+          <div class="alert-meta">${escapeHtml(ev.characterName || "")}와의 대화</div>
+          <div class="alert-text">"${escapeHtml(ev.text || "")}"</div>
+          ${label.tip ? `<div class="alert-tip">${label.tip}</div>` : ""}
+        </div>`;
+      alertList.appendChild(item);
+    }
+  }
+
+  // 사용 현황
+  const total = Object.values(histories).reduce(
+    (n, h) => n + h.filter((m) => m.role === "user").length,
+    0
+  );
+  document.getElementById("usageSummary").innerHTML =
+    `오늘 <b>${messagesToday()}</b>번 · 전체 <b>${total}</b>번 대화했어요.`;
+
+  const usageList = document.getElementById("usageList");
+  usageList.innerHTML = "";
+  const rows = characters
+    .map((c) => ({ c, n: msgCount(c.id), last: lastTime(c.id) }))
+    .sort((a, b) => b.n - a.n);
+  for (const { c, n, last } of rows) {
+    const row = document.createElement("div");
+    row.className = "usage-item";
+    row.innerHTML = `
+      <span class="usage-ava" style="background: linear-gradient(160deg,#fff,${c.theme[0]})">${avatarHTML(c)}</span>
+      <span class="usage-name">${c.name}</span>
+      <span class="usage-count">${n}번${last ? ` · ${fmtTime(last)}` : ""}</span>`;
+    usageList.appendChild(row);
+  }
+
+  // 설정
+  document.getElementById("limitInput").value = store.settings.limitPerDay || "";
+  document.getElementById("limitSaved").textContent = "";
+}
+
+document.getElementById("saveLimit").addEventListener("click", () => {
+  const v = document.getElementById("limitInput").value.trim();
+  store.settings.limitPerDay = v ? Math.max(0, parseInt(v, 10) || 0) : null;
+  saveStore();
+  document.getElementById("limitSaved").textContent = store.settings.limitPerDay
+    ? `하루 ${store.settings.limitPerDay}번으로 저장했어요.`
+    : "제한 없음으로 저장했어요.";
+});
+
+document.getElementById("clearData").addEventListener("click", () => {
+  if (!confirm("모든 대화·알림·설정 기록을 지울까요? 되돌릴 수 없어요.")) return;
+  for (const k of Object.keys(histories)) delete histories[k];
+  store.safety.length = 0;
+  store.settings.limitPerDay = null;
+  saveStore();
+  renderGuard();
 });
 
 // ── 초기화 ──
