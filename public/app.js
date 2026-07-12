@@ -115,7 +115,7 @@ function renderHero() {
     slide.innerHTML = `
       <div class="hero-scene">${HERO_SCENE}</div>
       ${c.isNew ? '<span class="hero-new">New</span>' : ""}
-      <span class="hero-art">${avatarSVG(c.id)}</span>
+      <span class="hero-art">${avatarHTML(c)}</span>
       <div class="hero-text">
         <div class="hero-eyebrow">${c.name}</div>
         <div class="hero-name">${c.tagline}</div>
@@ -158,7 +158,7 @@ function renderCharacterRow() {
     card.innerHTML = `
       <span class="pop-thumb" style="background: linear-gradient(160deg, #ffffff, ${c.theme[0]})">
         ${c.isNew ? '<span class="pop-new">New</span>' : ""}
-        <span class="pop-art">${avatarSVG(c.id)}</span>
+        <span class="pop-art">${avatarHTML(c)}</span>
         <span class="pop-count">💬 ${msgCount(c.id)}</span>
       </span>
       <span class="pop-name">${c.name}</span>
@@ -194,7 +194,7 @@ function renderRecent() {
     const item = document.createElement("button");
     item.className = "recent-item";
     item.innerHTML = `
-      <span class="recent-ava" style="background: linear-gradient(160deg, #ffffff, ${c.theme[0]})">${avatarSVG(c.id)}</span>
+      <span class="recent-ava" style="background: linear-gradient(160deg, #ffffff, ${c.theme[0]})">${avatarHTML(c)}</span>
       <span class="recent-body">
         <b>${c.name}</b>
         <span class="recent-preview ${lastUser ? "" : "muted"}">${escapeHtml(preview)}</span>
@@ -209,7 +209,7 @@ function renderRecent() {
 function openChat(character, from) {
   current = character;
   previousScreen = from || "home";
-  headerAvatar.innerHTML = avatarSVG(character.id);
+  headerAvatar.innerHTML = avatarHTML(character);
   headerName.textContent = character.name;
   headerTagline.textContent = character.tagline;
 
@@ -233,7 +233,7 @@ function addMessage(role, text) {
 
   const avatar = document.createElement("div");
   avatar.className = "avatar";
-  if (role === "bot") avatar.innerHTML = avatarSVG(current.id);
+  if (role === "bot") avatar.innerHTML = avatarHTML(current);
   else avatar.textContent = "🙂";
 
   const bubble = document.createElement("div");

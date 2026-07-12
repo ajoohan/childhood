@@ -62,3 +62,14 @@ const AVATARS = {
 function avatarSVG(id) {
   return AVATARS[id] || "";
 }
+
+// 캐릭터 아바타 마크업.
+// character.image 가 있으면 그 이미지 아트를 쓰고, 없으면 기본 SVG 마스코트를 쓴다.
+// → 라이선스/직접 제작한 캐릭터 아트를 config의 image 경로로 지정하면 바로 교체된다.
+function avatarHTML(character) {
+  if (character && character.image) {
+    const alt = (character.name || "").replace(/"/g, "&quot;");
+    return `<img class="ava-img" src="${character.image}" alt="${alt}" />`;
+  }
+  return avatarSVG(character && character.id);
+}

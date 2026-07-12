@@ -349,6 +349,21 @@ body {
   display: block;
 }
 
+/* 캐릭터가 이미지 아트를 쓸 때 (config의 image 지정 시) */
+.ava-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.recent-ava .ava-img,
+.avatar .ava-img,
+.header-star .ava-img {
+  object-fit: cover;
+  border-radius: 50%;
+}
+
 .pop-count {
   position: absolute;
   left: 10px;

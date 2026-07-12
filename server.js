@@ -258,6 +258,9 @@ app.get("/api/characters", (req, res) => {
       theme: c.theme,
       isNew: c.isNew,
       greeting: c.greeting,
+      // 라이선스/직접 제작한 캐릭터 아트 파일 경로 (예: "/characters/kongi.png").
+      // 값이 있으면 프론트엔드가 SVG 대신 이 이미지를 아바타로 사용한다.
+      image: c.image || null,
     }))
   );
 });
