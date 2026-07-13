@@ -1998,3 +1998,98 @@ body { background: #FBE7DD; }
   outline: none;
 }
 .pin-forgot-input:focus { border-color: var(--accent); }
+
+/* ───────────── 별(Sparks) 모으기 시트 ───────────── */
+
+.star-badge {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(40, 30, 22, 0.42);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fade-in 0.18s ease;
+}
+.sheet {
+  width: 100%;
+  max-width: 720px;
+  background: #FBF3E6;
+  border-radius: 26px 26px 0 0;
+  padding: 10px 20px calc(24px + env(safe-area-inset-bottom));
+  box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.22);
+  animation: sheet-up 0.24s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-grip {
+  width: 44px;
+  height: 5px;
+  border-radius: 3px;
+  background: #d9cab9;
+  margin: 4px auto 16px;
+}
+
+.sparks-hd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sparks-star { font-size: 30px; }
+.sparks-hd b { display: block; font-size: 19px; font-weight: 800; color: #2b2117; }
+.sparks-hd small { font-size: 13px; color: #9c8a7b; font-weight: 600; }
+.sparks-count {
+  margin-left: auto;
+  background: #fff;
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.sparks-ways { display: flex; flex-direction: column; gap: 12px; }
+.sparks-way {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: none;
+  background: #fffdfb;
+  border-radius: 18px;
+  padding: 14px 16px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+  transition: transform 0.1s;
+}
+.sparks-way:active { transform: scale(0.98); }
+.sw-emoji { font-size: 30px; flex-shrink: 0; }
+.sw-body { flex: 1; min-width: 0; }
+.sw-body b { display: block; font-size: 16px; color: #2b2117; }
+.sw-body small { font-size: 13px; color: #9c8a7b; }
+.sw-go {
+  flex-shrink: 0;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 9px 15px;
+  border-radius: 999px;
+}
+.sparks-note {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 13.5px;
+  color: #7a6b5d;
+  line-height: 1.5;
+}
+.sparks-note b { color: var(--accent); }

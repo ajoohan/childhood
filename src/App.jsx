@@ -7,6 +7,7 @@ import Session from "./screens/Session.jsx";
 import Collection from "./screens/Collection.jsx";
 import ParentZone from "./screens/ParentZone.jsx";
 import PinGate from "./components/PinGate.jsx";
+import SparksSheet from "./components/SparksSheet.jsx";
 import { INTERESTS } from "./lib/data.js";
 import { loadStore, persist, userMsgCount } from "./lib/store.js";
 
@@ -33,6 +34,7 @@ export default function App() {
 
   const [splash, setSplash] = useState(!splashSeen);
   const [pinOpen, setPinOpen] = useState(false);
+  const [sparksOpen, setSparksOpen] = useState(false);
   const [guardUnlocked, setGuardUnlocked] = useState(false);
 
   const dismissSplash = () => {
@@ -141,6 +143,7 @@ export default function App() {
             onPickCategory={(c) => setView({ name: "list", category: c })}
             onPickActivity={openActivity}
             onParent={openParent}
+            onStars={() => setSparksOpen(true)}
           />
         )}
 
@@ -241,6 +244,18 @@ export default function App() {
       )}
 
       {pinGate}
+
+      {sparksOpen && (
+        <SparksSheet
+          stars={stars}
+          activities={data.activities}
+          onGo={(a) => {
+            setSparksOpen(false);
+            openActivity(a);
+          }}
+          onClose={() => setSparksOpen(false)}
+        />
+      )}
     </div>
   );
 }

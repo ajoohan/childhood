@@ -29,6 +29,7 @@ export default function KidsHome({
   onPickCategory,
   onPickActivity,
   onParent,
+  onStars,
 }) {
   const hi = name ? `안녕, ${name}! 👋` : "안녕! 👋";
   const bigTiles = categories.filter((c) => c.id === "story" || c.id === "heart");
@@ -51,9 +52,9 @@ export default function KidsHome({
           <b>{hi}</b>
           <small>오늘도 반가워</small>
         </div>
-        <span className="star-badge">
+        <button className="star-badge" onClick={onStars} aria-label="별 모으기">
           <b>{stars}</b> ⭐
-        </span>
+        </button>
       </header>
 
       <button className="parent-banner" onClick={onParent}>
