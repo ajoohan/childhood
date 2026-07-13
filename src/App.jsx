@@ -9,8 +9,11 @@ import VoiceMode from "./screens/VoiceMode.jsx";
 import ParentZone from "./screens/ParentZone.jsx";
 import PinGate from "./components/PinGate.jsx";
 import SparksSheet from "./components/SparksSheet.jsx";
+import MissionBoard from "./screens/MissionBoard.jsx";
+import DecorRoom from "./screens/DecorRoom.jsx";
 import { INTERESTS } from "./lib/data.js";
-import { loadStore, persist, userMsgCount } from "./lib/store.js";
+import { REWARD, allMissions } from "./lib/missions.js";
+import { loadStore, persist, userMsgCount, rollDay } from "./lib/store.js";
 
 const initial = loadStore();
 
@@ -32,6 +35,9 @@ export default function App() {
     voice: initial.settings.voice || "shimmer",
   });
   const [profile, setProfile] = useState(initial.profile);
+  const [rewards, setRewards] = useState(initial.rewards);
+  const [parentMissions, setParentMissions] = useState(initial.parentMissions);
+  const [decor, setDecor] = useState(initial.decor);
 
   const [splash, setSplash] = useState(!splashSeen);
   const [pinOpen, setPinOpen] = useState(false);
@@ -44,8 +50,72 @@ export default function App() {
   };
 
   useEffect(() => {
-    persist({ histories, safety, settings, profile });
-  }, [histories, safety, settings, profile]);
+    persist({ histories, safety, settings, profile, rewards, parentMissions, decor });
+  }, [histories, safety, settings, profile, rewards, parentMissions, decor]);
+
+  // 미션 완료 → 별 지급 + 올클리어 보너스 (기획서 3장 밸런싱)
+  function completeMission(mission) {
+    setRewards((r0) => {
+      const r = rollDay(r0);
+      if (r.doneToday.includes(mission.id)) return r; // 하루 1회
+      const doneToday = [...r.doneToday, mission.id];
+      const gain = mission.reward || REWARD.mission;
+      let balance = r.balance + gain;
+      let earnedToday = r.earnedToday + gain;
+      let allClear = r.allClear;
+      // 오늘의 모든 미션(기본+부모)을 다 했으면 올클리어 보너스
+      const total = allMissions(parentMissions).length;
+      if (!allClear && doneToday.length >= total && total > 0) {
+        balance += REWARD.allClear;
+        earnedToday += REWARD.allClear;
+        allClear = true;
+      }
+      return { ...r, doneToday, balance, earnedToday, allClear };
+    });
+  }
+
+  // 출석 + AI 첫인사 (하루 1회)
+  function claimAttendance() {
+    setRewards((r0) => {
+      const r = rollDay(r0);
+      if (r.attendance) return r;
+      return {
+        ...r,
+        attendance: true,
+        balance: r.balance + REWARD.attendance,
+        earnedToday: r.earnedToday + REWARD.attendance,
+      };
+    });
+  }
+
+  const addParentMission = (m) => setParentMissions((p) => [...p, m]);
+  const removeParentMission = (id) =>
+    setParentMissions((p) => p.filter((x) => x.id !== id));
+
+  // 꾸미기: 별을 소모해 오브젝트 배치 (잔액 부족 시 취소)
+  function placeDecor(themeId, slot, optIndex) {
+    if (rewards.balance < slot.cost) return false;
+    setRewards((r0) => {
+      const r = rollDay(r0);
+      if (r.balance < slot.cost) return r;
+      return { ...r, balance: r.balance - slot.cost };
+    });
+    setDecor((d) => ({
+      ...d,
+      placed: {
+        ...d.placed,
+        [themeId]: { ...(d.placed[themeId] || {}), [slot.id]: optIndex },
+      },
+    }));
+    return true;
+  }
+  const setDecorTheme = (themeId) => setDecor((d) => ({ ...d, theme: themeId }));
+  const completeTheme = (themeId) =>
+    setDecor((d) =>
+      d.completed.includes(themeId)
+        ? d
+        : { ...d, completed: [...d.completed, themeId] }
+    );
 
   function completeOnboarding(p) {
     // 나이를 연령 모드로 매핑: 0–6세 영유아 / 7세 이상 초등
@@ -94,10 +164,7 @@ export default function App() {
   const addSafety = (ev) => setSafety((s) => [ev, ...s].slice(0, 100));
 
   const openActivity = (a) => setView({ name: "session", activity: a });
-  const stars = Object.values(histories).reduce(
-    (n, h) => n + userMsgCount(h),
-    0
-  );
+  const stars = rewards.balance; // 별 잔액 (미션으로 획득, 꾸미기로 소모)
   const history =
     view.name === "session" && view.activity
       ? histories[view.activity.id] || []
@@ -111,7 +178,10 @@ export default function App() {
       .filter(Boolean),
   };
   const showTab =
-    zone === "kids" && (view.name === "home" || view.name === "collection");
+    zone === "kids" &&
+    (view.name === "home" ||
+      view.name === "collection" ||
+      view.name === "missions");
 
   if (splash) {
     return (
@@ -203,6 +273,28 @@ export default function App() {
           />
         )}
 
+        {zone === "kids" && view.name === "missions" && (
+          <MissionBoard
+            name={profile.name}
+            rewards={rewards}
+            parentMissions={parentMissions}
+            onComplete={completeMission}
+            onClaimAttendance={claimAttendance}
+            onDecor={() => setView({ name: "decor" })}
+          />
+        )}
+
+        {zone === "kids" && view.name === "decor" && (
+          <DecorRoom
+            decor={decor}
+            balance={rewards.balance}
+            onPlace={placeDecor}
+            onSetTheme={setDecorTheme}
+            onCompleteTheme={completeTheme}
+            onBack={() => setView({ name: "missions" })}
+          />
+        )}
+
         {zone === "parent" && (
           <ParentZone
             activities={data.activities}
@@ -210,6 +302,10 @@ export default function App() {
             safety={safety}
             settings={settings}
             profile={profile}
+            rewards={rewards}
+            parentMissions={parentMissions}
+            onAddMission={addParentMission}
+            onRemoveMission={removeParentMission}
             onBack={() => setZone("kids")}
             onSaveLimit={(val) => setSettings((s) => ({ ...s, limitPerDay: val }))}
             onSetAge={(v) => setSettings((s) => ({ ...s, ageMode: v }))}
@@ -243,6 +339,13 @@ export default function App() {
           >
             <span className="tab-icon">🏠</span>
             <span>홈</span>
+          </button>
+          <button
+            className={`tab ${view.name === "missions" ? "active" : ""}`}
+            onClick={() => setView({ name: "missions" })}
+          >
+            <span className="tab-icon">🎯</span>
+            <span>미션</span>
           </button>
           <button
             className={`tab ${view.name === "collection" ? "active" : ""}`}

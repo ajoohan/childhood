@@ -1,20 +1,42 @@
 import { useState } from "react";
 import { SAFETY_LABEL, INTERESTS } from "../lib/data.js";
+import { MISSION_EMOJIS } from "../lib/missions.js";
 import { userMsgCount, messagesToday, lastTime, fmtTime } from "../lib/store.js";
 
-// Parent Zone — 성인 인증 게이트 뒤. 대시보드·시간통제·활동 로그·구독·연령.
+// Parent Zone — 성인 인증 게이트 뒤. 대시보드·시간통제·활동 로그·구독·연령·미션.
 export default function ParentZone({
   activities,
   histories,
   safety,
   settings,
   profile,
+  rewards,
+  parentMissions,
+  onAddMission,
+  onRemoveMission,
   onBack,
   onSaveLimit,
   onSetAge,
   onSaveProfile,
   onClear,
 }) {
+  const [mTitle, setMTitle] = useState("");
+  const [mEmoji, setMEmoji] = useState(MISSION_EMOJIS[0]);
+  const [mReward, setMReward] = useState(2);
+
+  function addMission() {
+    const title = mTitle.trim().slice(0, 30);
+    if (!title) return;
+    onAddMission({
+      id: "p_" + Math.random().toString(36).slice(2, 9),
+      emoji: mEmoji,
+      title,
+      reward: Math.max(1, Math.min(10, parseInt(mReward, 10) || 2)),
+    });
+    setMTitle("");
+    setMEmoji(MISSION_EMOJIS[0]);
+    setMReward(2);
+  }
   const [limitInput, setLimitInput] = useState(
     settings.limitPerDay != null ? String(settings.limitPerDay) : ""
   );
@@ -126,6 +148,70 @@ export default function ParentZone({
             프로필 저장
           </button>
           {profSaved && <p className="guard-hint">{profSaved}</p>}
+        </div>
+
+        <div className="guard-card">
+          <h3>🎯 미션 관리</h3>
+          <p className="guard-hint">
+            아이에게 줄 미션을 직접 추가해요. "장난감 정리하기"처럼 잔소리 대신
+            AI와의 즐거운 미션으로 바꿔 주세요. 완료하면 아이가 별을 받아요.
+          </p>
+
+          {rewards && (
+            <p className="usage-summary">
+              오늘 획득 <b>{rewards.earnedToday}</b>⭐ · 현재 잔액{" "}
+              <b>{rewards.balance}</b>⭐
+            </p>
+          )}
+
+          {(parentMissions || []).length > 0 &&
+            parentMissions.map((m) => (
+              <div key={m.id} className="mission-row">
+                <span className="mr-emoji">{m.emoji}</span>
+                <span className="mr-title">{m.title}</span>
+                <span className="mr-reward">+{m.reward}⭐</span>
+                <button
+                  className="mr-del"
+                  onClick={() => onRemoveMission(m.id)}
+                  aria-label="삭제"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+
+          <div className="mission-add">
+            <div className="ma-emojis">
+              {MISSION_EMOJIS.map((e) => (
+                <button
+                  key={e}
+                  className={`ma-emoji ${mEmoji === e ? "on" : ""}`}
+                  onClick={() => setMEmoji(e)}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+            <div className="ma-row">
+              <input
+                type="text"
+                maxLength={30}
+                placeholder="예: 장난감 정리하기"
+                value={mTitle}
+                onChange={(e) => setMTitle(e.target.value)}
+              />
+              <select value={mReward} onChange={(e) => setMReward(e.target.value)}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <option key={n} value={n}>
+                    +{n}⭐
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button className="guard-btn" onClick={addMission}>
+              미션 추가
+            </button>
+          </div>
         </div>
 
         <div className="guard-card alert-card">
