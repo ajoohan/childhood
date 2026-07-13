@@ -2163,6 +2163,40 @@ body { background: #FBE7DD; }
   line-height: 1.3;
 }
 .voice-said { font-size: 15px; color: #7a6b5d; font-weight: 600; }
+.voice-interim {
+  max-width: 460px;
+  min-height: 24px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2b2117;
+  line-height: 1.5;
+}
+.voice-caret {
+  display: inline-block;
+  width: 2px;
+  height: 18px;
+  margin-left: 3px;
+  background: var(--accent);
+  vertical-align: middle;
+  animation: caret-blink 0.9s steps(1) infinite;
+}
+@keyframes caret-blink { 50% { opacity: 0; } }
+
+/* 세션 실시간 받아쓰기 캡션 */
+.live-stt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 6px;
+  padding: 10px 14px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  font-size: 15px;
+  font-weight: 600;
+  color: #2b2117;
+}
+.live-stt > span { flex: 1; min-width: 0; color: #4a3d30; }
 .voice-reply {
   max-width: 460px;
   font-size: 16px;

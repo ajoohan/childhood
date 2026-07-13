@@ -164,6 +164,12 @@ export default function Session({
         {notice && <Bubble role="bot">{notice}</Bubble>}
       </main>
 
+      {speech.listening && (
+        <div className="live-stt">
+          🎤 <span>{speech.interim || "듣고 있어요…"}</span>
+        </div>
+      )}
+
       <footer className="composer">
         {speech.supported && (
           <button

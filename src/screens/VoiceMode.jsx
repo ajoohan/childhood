@@ -140,7 +140,13 @@ export default function VoiceMode({
         />
         <div className="voice-note">🤖 나는 AI 도우미예요. 진짜 사람은 아니에요!</div>
         <h1 className="voice-status">{statusText}</h1>
-        {lastSaid && <p className="voice-said">“{lastSaid}”</p>}
+        {speech.listening && (
+          <p className="voice-interim">
+            {speech.interim || "…"}
+            <span className="voice-caret" />
+          </p>
+        )}
+        {!speech.listening && lastSaid && <p className="voice-said">“{lastSaid}”</p>}
         {reply && <p className="voice-reply">{reply}</p>}
       </div>
 
