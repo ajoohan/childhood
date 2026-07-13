@@ -24,6 +24,7 @@ export default function Session({
   history,
   histories,
   settings,
+  persona,
   onBack,
   onUserMessage,
   onBotMessage,
@@ -75,7 +76,11 @@ export default function Session({
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activityId: activity.id, messages: outgoing }),
+        body: JSON.stringify({
+          activityId: activity.id,
+          messages: outgoing,
+          profile: persona,
+        }),
       });
       if (!res.ok || !res.body) {
         let msg = null;

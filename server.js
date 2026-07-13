@@ -161,17 +161,48 @@ function activityById(id) {
   return ACTIVITIES[id] ? id : DEFAULT_ACTIVITY;
 }
 
-function systemPromptFor(activityId) {
+// 온보딩에서 모은 아이 프로필(이름·나이·관심사)을 활동 범위 안에서 자연스럽게 반영하도록
+// 시스템 프롬프트에 개인화 블록을 만든다. 개방형 대화로 벗어나지 않도록 '활동 범위 안에서'를 강조.
+function personaBlock({ name, age, interests }) {
+  const parts = [];
+  if (name) parts.push(`아이의 이름은 "${name}"이야. 가끔 다정하게 이름을 불러 줘.`);
+  if (age) parts.push(`${age}살이야. 그 나이에 맞는 쉬운 말과 주제로 이야기해 줘.`);
+  if (interests && interests.length)
+    parts.push(
+      `좋아하는 것: ${interests.join(", ")}. 지금 활동 범위 안에서 아이의 관심사를 ` +
+        `예시·소재로 자연스럽게 녹여 줘(억지로 전부 넣지는 말고, 어울릴 때만).`
+    );
+  if (!parts.length) return "";
+  return `\n<이 아이에 대해>\n${parts.join("\n")}\n`;
+}
+
+function systemPromptFor(activityId, persona = {}) {
   const a = ACTIVITIES[activityById(activityId)];
   const disclosure = AI_DISCLOSURE.replace("<ACTIVITY>", a.title);
   return `너는 5~12세 어린이를 위한 안전한 AI 도우미 "${HELPER_NAME}"야.
 
 <지금 활동>
 ${a.scope}
-
+${personaBlock(persona)}
 ${disclosure}
 
 ${SAFETY_CORE}`;
+}
+
+// 클라이언트가 보낸 프로필을 안전하게 정리한다(길이·개수 제한).
+function sanitizeProfile(raw) {
+  const p = raw && typeof raw === "object" ? raw : {};
+  const name = typeof p.name === "string" ? p.name.trim().slice(0, 20) : "";
+  const age =
+    Number.isFinite(p.age) && p.age > 0 && p.age < 20 ? Math.floor(p.age) : null;
+  const interests = Array.isArray(p.interests)
+    ? p.interests
+        .filter((s) => typeof s === "string")
+        .map((s) => s.trim().slice(0, 20))
+        .filter(Boolean)
+        .slice(0, 12)
+    : [];
+  return { name, age, interests };
 }
 
 const SAFETY_SCHEMA = {
@@ -267,6 +298,7 @@ app.post("/api/chat", rateLimit, async (req, res) => {
   }
 
   const activityId = activityById(req.body?.activityId);
+  const persona = sanitizeProfile(req.body?.profile);
 
   const lastUserText = messages[messages.length - 1].content;
   const category = await classifySafety(lastUserText);
@@ -295,7 +327,7 @@ app.post("/api/chat", rateLimit, async (req, res) => {
       model: CHAT_MODEL,
       max_tokens: 2048,
       output_config: { effort: "low" },
-      system: systemPromptFor(activityId),
+      system: systemPromptFor(activityId, persona),
       messages,
     });
 

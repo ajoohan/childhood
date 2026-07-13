@@ -7,6 +7,7 @@ import Session from "./screens/Session.jsx";
 import Collection from "./screens/Collection.jsx";
 import ParentZone from "./screens/ParentZone.jsx";
 import GateDialog from "./components/GateDialog.jsx";
+import { INTERESTS } from "./lib/data.js";
 import { loadStore, persist, userMsgCount } from "./lib/store.js";
 
 const initial = loadStore();
@@ -82,6 +83,14 @@ export default function App() {
     view.name === "session" && view.activity
       ? histories[view.activity.id] || []
       : [];
+  // 온보딩 프로필을 AI 개인화용으로 변환 (관심사 id → 한글 라벨)
+  const persona = {
+    name: profile.name,
+    age: profile.age,
+    interests: (profile.interests || [])
+      .map((id) => INTERESTS.find((x) => x.id === id)?.label)
+      .filter(Boolean),
+  };
   const showTab =
     zone === "kids" && (view.name === "home" || view.name === "collection");
 
@@ -154,6 +163,7 @@ export default function App() {
             history={history}
             histories={histories}
             settings={settings}
+            persona={persona}
             onBack={() =>
               setView({
                 name: "list",
