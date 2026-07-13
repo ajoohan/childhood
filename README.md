@@ -26,6 +26,12 @@
 - **개인정보 최소화** — 대화 기록은 브라우저 메모리에만 보관, 서버에 저장하지 않음
 - **보호자 안내** — UI 내 보호자 안내 모달 제공
 
+## 기술 스택
+
+- **프론트엔드**: React + Vite (SPA, `src/`)
+- **백엔드**: Node.js + Express (`server.js`) — Claude 연동·안전 분류·요청 제한
+- 배포 시 Express가 Vite 빌드 결과물(`dist/`)과 `/api`를 함께 서빙 (단일 서비스)
+
 ## 실행 방법
 
 ```bash
@@ -36,12 +42,15 @@ npm install
 cp .env.example .env
 # .env 파일에 ANTHROPIC_API_KEY를 입력하세요
 
-# 3. 서버 실행
-npm start
-# 개발 중에는: npm run dev (파일 변경 시 자동 재시작)
-```
+# 3-a. 개발 모드 (권장) — Vite 개발서버 + API 서버 동시 실행
+npm run dev
+# → http://localhost:5173 (자동 새로고침, /api는 3000으로 프록시)
 
-브라우저에서 http://localhost:3000 을 열면 됩니다.
+# 3-b. 프로덕션처럼 실행 — 빌드 후 Express가 서빙
+npm run build
+npm start
+# → http://localhost:3000
+```
 
 ## 외부에 공개하기 (다른 사람도 주소로 접속)
 
@@ -80,12 +89,19 @@ docker run -p 3000:3000 -e ANTHROPIC_API_KEY=sk-... banjjaktalk
 ## 프로젝트 구조
 
 ```
-├── server.js          # Express 서버 + Claude API 연동 + 안전 분류 + 캐릭터 정의
-├── public/
-│   ├── index.html     # 홈/최근 대화/채팅 화면 + 하단 탭 바
-│   ├── style.css      # 아이 친화적 디자인
-│   ├── avatars.js     # 캐릭터별 인라인 SVG 마스코트
-│   └── app.js         # 화면 전환, 캐러셀, 최근 대화, 스트리밍 수신
+├── server.js               # Express 서버 + Claude 연동 + 안전 분류 + 요청 제한 + 캐릭터 정의
+├── index.html              # Vite 진입 HTML
+├── vite.config.js          # Vite 설정 (dev 프록시, 빌드 outDir=dist)
+├── src/
+│   ├── main.jsx            # React 진입점
+│   ├── App.jsx             # 상태·화면 전환·게이트·저장
+│   ├── index.css           # 전체 스타일
+│   ├── screens/            # Home / Recent / Chat / Guard(보호자 대시보드)
+│   ├── components/         # Avatar / TopBar / TabBar / GateDialog
+│   └── lib/                # data(캐릭터 SVG·배경·라벨), store(로컬 저장)
+├── public/characters/      # 캐릭터 아트 드롭인 폴더 (라이선스 아트 교체용)
+├── dist/                   # 빌드 결과물 (git 제외, 배포 시 생성)
+├── Dockerfile / render.yaml
 ├── package.json
 └── .env.example
 ```

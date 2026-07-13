@@ -9,7 +9,8 @@ const app = express();
 app.set("trust proxy", 1);
 
 app.use(express.json({ limit: "100kb" }));
-app.use(express.static("public"));
+// Vite 빌드 결과물(React SPA)을 서빙한다. `npm run build` → dist/
+app.use(express.static("dist"));
 
 const PORT = process.env.PORT || 3000;
 

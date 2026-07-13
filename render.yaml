@@ -6,7 +6,7 @@ services:
     runtime: node
     plan: free
     branch: claude/ai-chat-kids-service-seznwa
-    buildCommand: npm install
+    buildCommand: npm install && npm run build
     startCommand: node server.js
     healthCheckPath: /
     envVars:

@@ -733,43 +733,36 @@ body {
   cursor: default;
 }
 
-/* ───────────── 다이얼로그 ───────────── */
+/* ───────────── 모달(보호자 게이트) ───────────── */
 
-dialog {
-  border: none;
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  background: #fff;
   border-radius: 20px;
   padding: 24px;
   max-width: 480px;
-  width: calc(100% - 40px);
+  width: 100%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.4);
-}
-
-dialog h2 {
+.modal h2 {
   margin-bottom: 12px;
   font-size: 1.1rem;
 }
 
-dialog ul {
-  padding-left: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-dialog button {
-  margin-top: 16px;
-  border: none;
-  background: var(--header);
-  padding: 10px 20px;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  cursor: pointer;
+/* SVG 아바타 래퍼: 박스를 만들지 않고 부모 규칙(.hero-art svg 등)이 그대로 적용되게 함 */
+.ava-svg {
+  display: contents;
 }
 
 /* ───────────── 보호자 대시보드 ───────────── */
@@ -985,7 +978,7 @@ dialog button {
   color: var(--text);
 }
 
-#gateAnswer {
+.modal input[type="number"] {
   width: 100%;
   border: 2.5px solid var(--header);
   border-radius: 12px;
@@ -995,7 +988,7 @@ dialog button {
   outline: none;
 }
 
-#gateAnswer:focus {
+.modal input[type="number"]:focus {
   border-color: var(--accent);
 }
 

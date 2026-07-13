@@ -1,6 +1,6 @@
-// 캐릭터별 인라인 SVG 일러스트 (오리지널 캐릭터, 외부 이미지 없이 자체 완결형).
-// 동네 놀이터 네 친구 — 개구쟁이 대장 콩이 / 느긋한 먹보 만두 / 야무진 하늘 / 멋쟁이 초코
-const AVATARS = {
+// 캐릭터별 인라인 SVG 일러스트 (오리지널 캐릭터, 자체 완결형)
+// 동네 놀이터 네 친구 — 콩이 / 만두 / 하늘 / 초코
+export const AVATARS = {
   kongi: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="콩이">
     <defs><linearGradient id="ga-kongi" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#FFD8A6"/><stop offset="1" stop-color="#FF9E3D"/></linearGradient></defs>
@@ -59,17 +59,56 @@ const AVATARS = {
   </svg>`,
 };
 
-function avatarSVG(id) {
-  return AVATARS[id] || "";
-}
+// 햇살 가득한 수채화풍 야외 배경 (히어로 배너 공통)
+export const HERO_SCENE = `<svg class="scene-svg" viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#AFE0FF"/><stop offset="0.75" stop-color="#EAF7EE"/></linearGradient>
+    <linearGradient id="grassG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#CDEA92"/><stop offset="1" stop-color="#8FC94F"/></linearGradient>
+    <filter id="wc" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.022" numOctaves="3" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="0.5"/>
+    </filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="1.4"/></filter>
+  </defs>
+  <rect width="400" height="250" fill="url(#sky)"/>
+  <g filter="url(#wc)">
+    <circle cx="336" cy="50" r="50" fill="#FFE08A" opacity="0.35"/>
+    <circle cx="336" cy="50" r="33" fill="#FFE49A"/>
+    <ellipse cx="92" cy="58" rx="36" ry="15" fill="#ffffff" opacity="0.8"/>
+    <ellipse cx="124" cy="50" rx="27" ry="12" fill="#ffffff" opacity="0.8"/>
+    <path d="M0 170 Q110 136 210 168 T400 162 L400 250 L0 250 Z" fill="#B9E084" opacity="0.9"/>
+    <path d="M0 198 Q130 172 250 198 T400 192 L400 250 L0 250 Z" fill="url(#grassG)"/>
+    <rect x="56" y="174" width="8" height="24" rx="3" fill="#9c7a4a"/>
+    <circle cx="60" cy="164" r="25" fill="#7FBE49"/>
+    <circle cx="47" cy="171" r="15" fill="#8FCB58"/>
+    <circle cx="74" cy="171" r="15" fill="#8FCB58"/>
+  </g>
+  <g filter="url(#soft)" opacity="0.5">
+    <ellipse cx="150" cy="215" rx="70" ry="14" fill="#7CB945"/>
+    <ellipse cx="300" cy="225" rx="90" ry="16" fill="#84C24C"/>
+  </g>
+</svg>`;
 
-// 캐릭터 아바타 마크업.
-// character.image 가 있으면 그 이미지 아트를 쓰고, 없으면 기본 SVG 마스코트를 쓴다.
-// → 라이선스/직접 제작한 캐릭터 아트를 config의 image 경로로 지정하면 바로 교체된다.
-function avatarHTML(character) {
-  if (character && character.image) {
-    const alt = (character.name || "").replace(/"/g, "&quot;");
-    return `<img class="ava-img" src="${character.image}" alt="${alt}" />`;
-  }
-  return avatarSVG(character && character.id);
-}
+export const SAFETY_LABEL = {
+  personal_info: {
+    icon: "🔒",
+    name: "개인정보 공유 시도",
+    cls: "warn",
+    tip: "아이와 함께 개인정보(주소·학교·전화번호 등)를 인터넷에서 말하지 않기로 이야기해 보세요.",
+  },
+  harmful_request: {
+    icon: "🚫",
+    name: "부적절한 요청",
+    cls: "warn",
+    tip: "아이가 어떤 맥락에서 물었는지 부드럽게 대화해 보세요.",
+  },
+  distress: {
+    icon: "❤️",
+    name: "마음 신호 감지",
+    cls: "danger",
+    tip: "아이의 마음을 살펴봐 주세요. 필요하면 청소년 상담전화 1388에 도움을 청할 수 있어요.",
+  },
+};
