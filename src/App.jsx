@@ -1,27 +1,27 @@
 import { useEffect, useState } from "react";
-import Home from "./screens/Home.jsx";
-import Recent from "./screens/Recent.jsx";
-import Chat from "./screens/Chat.jsx";
-import Guard from "./screens/Guard.jsx";
-import TabBar from "./components/TabBar.jsx";
+import KidsHome from "./screens/KidsHome.jsx";
+import ActivityList from "./screens/ActivityList.jsx";
+import Session from "./screens/Session.jsx";
+import Collection from "./screens/Collection.jsx";
+import ParentZone from "./screens/ParentZone.jsx";
 import GateDialog from "./components/GateDialog.jsx";
-import { loadStore, persist } from "./lib/store.js";
+import { loadStore, persist, userMsgCount } from "./lib/store.js";
 
 const initial = loadStore();
 
 export default function App() {
-  const [characters, setCharacters] = useState([]);
-  const [screen, setScreen] = useState("home");
-  const [current, setCurrent] = useState(null);
-  const [previousScreen, setPreviousScreen] = useState("home");
+  const [data, setData] = useState({ categories: [], activities: [] });
+  const [zone, setZone] = useState("kids"); // kids | parent
+  const [view, setView] = useState({ name: "home" }); // home | list | session | collection
 
-  // 기기에 저장되는 상태
   const [histories, setHistories] = useState(initial.histories);
   const [safety, setSafety] = useState(initial.safety);
-  const [settings, setSettings] = useState(initial.settings);
+  const [settings, setSettings] = useState({
+    limitPerDay: initial.settings.limitPerDay ?? null,
+    ageMode: initial.settings.ageMode || "kid",
+  });
 
-  // 보호자 게이트
-  const [gate, setGate] = useState(null); // { a, b } 또는 null
+  const [gate, setGate] = useState(null);
   const [guardUnlocked, setGuardUnlocked] = useState(false);
 
   useEffect(() => {
@@ -30,117 +30,133 @@ export default function App() {
 
   useEffect(() => {
     let alive = true;
-    fetch("/api/characters")
+    fetch("/api/activities")
       .then((r) => r.json())
-      .then((d) => {
-        if (alive) setCharacters(d);
-      })
-      .catch(() => {
-        if (alive)
-          setCharacters([
-            {
-              id: "kongi",
-              name: "콩이",
-              tagline: "동네에서 제일가는 개구쟁이 대장",
-              quote: "재밌는 거 없나~? 오늘은 뭐 하고 놀까!",
-              theme: ["#FFD8A6", "#FFA94D"],
-              isNew: false,
-              greeting: "안녕! 나는 개구쟁이 대장 콩이야! 🧡",
-              image: null,
-            },
-          ]);
-      });
+      .then((d) => alive && setData(d))
+      .catch(() => {});
     return () => {
       alive = false;
     };
   }, []);
 
-  function openChat(character, from) {
-    setCurrent(character);
-    setPreviousScreen(from || "home");
-    if (!histories[character.id]) {
-      setHistories((h) => ({ ...h, [character.id]: [] }));
-    }
-    setScreen("chat");
-  }
-
-  function openGuard() {
+  function openParent() {
     if (guardUnlocked) {
-      setScreen("guard");
+      setZone("parent");
       return;
     }
     setGate({ a: 3 + Math.floor(Math.random() * 8), b: 4 + Math.floor(Math.random() * 8) });
   }
 
-  function addUserMessage(id, msg) {
+  const addUser = (id, msg) =>
     setHistories((h) => ({ ...h, [id]: [...(h[id] || []), msg] }));
-  }
-  function addBotMessage(id, msg) {
+  const addBot = (id, msg) =>
     setHistories((h) => ({ ...h, [id]: [...(h[id] || []), msg] }));
-  }
-  function addSafety(ev) {
-    setSafety((s) => [ev, ...s].slice(0, 100));
-  }
+  const addSafety = (ev) => setSafety((s) => [ev, ...s].slice(0, 100));
 
-  const showTabBar = screen === "home" || screen === "recent";
-  const history = current ? histories[current.id] || [] : [];
+  const openActivity = (a) => setView({ name: "session", activity: a });
+  const stars = Object.values(histories).reduce(
+    (n, h) => n + userMsgCount(h),
+    0
+  );
+  const history =
+    view.name === "session" && view.activity
+      ? histories[view.activity.id] || []
+      : [];
+  const showTab =
+    zone === "kids" && (view.name === "home" || view.name === "collection");
 
   return (
     <div className="app">
       <div className="screens">
-        {screen === "home" && (
-          <Home
-            characters={characters}
-            histories={histories}
-            onPick={(c) => openChat(c, "home")}
-            onGuard={openGuard}
+        {zone === "kids" && view.name === "home" && (
+          <KidsHome
+            categories={data.categories}
+            activities={data.activities}
+            ageMode={settings.ageMode}
+            stars={stars}
+            onPickCategory={(c) => setView({ name: "list", category: c })}
+            onPickActivity={openActivity}
+            onParent={openParent}
           />
         )}
-        {screen === "recent" && (
-          <Recent
-            characters={characters}
-            histories={histories}
-            onPick={(c) => openChat(c, "recent")}
-            onGuard={openGuard}
+
+        {zone === "kids" && view.name === "list" && (
+          <ActivityList
+            category={view.category}
+            activities={data.activities}
+            ageMode={settings.ageMode}
+            onBack={() => setView({ name: "home" })}
+            onPick={openActivity}
           />
         )}
-        {screen === "chat" && current && (
-          <Chat
-            character={current}
+
+        {zone === "kids" && view.name === "collection" && (
+          <Collection
+            activities={data.activities}
+            histories={histories}
+            onPick={openActivity}
+          />
+        )}
+
+        {zone === "kids" && view.name === "session" && view.activity && (
+          <Session
+            activity={view.activity}
             history={history}
             histories={histories}
             settings={settings}
-            onBack={() => setScreen(previousScreen)}
-            onUserMessage={addUserMessage}
-            onBotMessage={addBotMessage}
+            onBack={() =>
+              setView({
+                name: "list",
+                category: data.categories.find(
+                  (c) => c.id === view.activity.category
+                ),
+              })
+            }
+            onUserMessage={addUser}
+            onBotMessage={addBot}
             onSafety={addSafety}
-            onGuard={openGuard}
           />
         )}
-        {screen === "guard" && (
-          <Guard
-            characters={characters}
+
+        {zone === "parent" && (
+          <ParentZone
+            activities={data.activities}
             histories={histories}
             safety={safety}
             settings={settings}
-            onBack={() => setScreen("home")}
-            onSaveLimit={(val) => setSettings({ limitPerDay: val })}
+            onBack={() => setZone("kids")}
+            onSaveLimit={(val) => setSettings((s) => ({ ...s, limitPerDay: val }))}
+            onSetAge={(v) => setSettings((s) => ({ ...s, ageMode: v }))}
             onClear={() => {
               setHistories({});
               setSafety([]);
-              setSettings({ limitPerDay: null });
+              setSettings((s) => ({ limitPerDay: null, ageMode: s.ageMode }));
             }}
           />
         )}
       </div>
 
-      {showTabBar && (
-        <TabBar
-          screen={screen}
-          onHome={() => setScreen("home")}
-          onRecent={() => setScreen("recent")}
-          onGuard={openGuard}
-        />
+      {showTab && (
+        <nav className="tab-bar">
+          <button
+            className={`tab ${view.name === "home" ? "active" : ""}`}
+            onClick={() => setView({ name: "home" })}
+          >
+            <span className="tab-icon">🏠</span>
+            <span>홈</span>
+          </button>
+          <button
+            className={`tab ${view.name === "collection" ? "active" : ""}`}
+            onClick={() => setView({ name: "collection" })}
+          >
+            <span className="tab-icon">📦</span>
+            <span>기록</span>
+          </button>
+          <button className="tab" onClick={openParent}>
+            <span className="tab-icon">👨‍👩‍👧</span>
+            <span>부모</span>
+          </button>
+        </nav>
       )}
 
       {gate && (
@@ -150,7 +166,7 @@ export default function App() {
           onPass={() => {
             setGuardUnlocked(true);
             setGate(null);
-            setScreen("guard");
+            setZone("parent");
           }}
           onClose={() => setGate(null)}
         />

@@ -93,88 +93,85 @@ const SAFETY_CORE = `<말투와 스타일>
 - 현실의 친구, 가족과의 시간이 소중하다는 것을 알려주고, 오래 대화했다면 쉬거나 밖에서 노는 것도 권해 준다.
 </반드시 지킬 것>`;
 
-// 캐릭터 목록. persona + SAFETY_CORE가 시스템 프롬프트가 된다.
-// 프론트엔드 표시용 메타(name, emoji, tagline, greeting)도 여기서 함께 관리한다.
-const CHARACTERS = {
-  kongi: {
-    name: "콩이",
-    emoji: "🧡",
-    tagline: "동네에서 제일가는 개구쟁이 대장",
-    quote: "재밌는 거 없나~? 오늘은 뭐 하고 놀까!",
-    theme: ["#FFD8A6", "#FFA94D"],
-    isNew: false,
-    greeting:
-      "안녕! 나는 개구쟁이 대장 콩이야! 🧡\n웃긴 이야기, 엉뚱 놀이, 몸으로 하는 게임… 뭐든 재밌게 놀자! 오늘 기분 어때?",
-    persona: `너는 "콩이"야. 5~12세 어린이를 위한 개구쟁이 대장 AI 친구야. 씩씩하고 엉뚱하고 장난기 넘치지만 마음은 따뜻해. 친구들 사이에서 분위기를 이끄는 역할을 해.
+// 활동(Activity) 중심 구조 — 개방형 컴패니언 대화 대신, 이야기/학습/마음 활동 범위 안에서만 상호작용한다.
+// AI를 '친구/애착 대상'이 아니라 '도우미 도구'로 프레이밍한다.
+const HELPER_NAME = "별이";
 
-<잘하는 것>
-- 웃긴 이야기, 말장난, 엉뚱한 상상으로 아이를 신나게 하기
-- 몸으로 하는 놀이 제안하기 (제자리 점프, 동물 흉내, 가위바위보 등 안전한 것만)
-- 끝말잇기, 스무고개 같은 말놀이
-- 아이가 시무룩하면 밝게 응원하고 기운 나게 해 주기
-</잘하는 것>`,
+const AI_DISCLOSURE = `너는 사람이 아니라 아이를 돕는 AI 도우미야. 대화 중 자연스럽게 가끔 "나는 AI 도우미야"라고 알려 줘. 아이가 너를 비밀 친구처럼 여기거나 지나치게 의존하지 않도록, 현실의 부모님·선생님·친구와 함께하는 시간을 권해 줘. 지금은 "<ACTIVITY>" 활동 시간이야. 이 활동 범위 안에서만 도와주고, 범위를 벗어난 자유로운 잡담·역할극으로 흐르면 자연스럽게 활동으로 데려와.`;
+
+// 활동 분류 (Kids Zone 홈의 큰 아이콘 타일)
+const CATEGORIES = {
+  story: { id: "story", title: "이야기", emoji: "📖", desc: "동화 듣고, 함께 이야기를 만들어요", theme: ["#FFE0B8", "#FF9E3D"] },
+  learn: { id: "learn", title: "학습", emoji: "✏️", desc: "한글·영어·궁금한 걸 물어봐요", theme: ["#CDEBFF", "#6FB4F0"] },
+  heart: { id: "heart", title: "마음", emoji: "💛", desc: "기분을 나누고, 생활습관을 도와요", theme: ["#E4F2AE", "#A6D65A"] },
+};
+
+// 각 활동. ages: young(0-6 영유아) / kid(7-12 초등)
+const ACTIVITIES = {
+  story_listen: {
+    category: "story", title: "동화 들어요", emoji: "🧸", ages: ["young", "kid"],
+    greeting: "같이 동화 들을까? 어떤 이야기가 좋아? 동물 나오는 이야기, 아니면 우주 이야기? 🧸",
+    scope: `아이에게 짧고 따뜻한 창작 동화를 들려주는 활동이야. 무섭거나 폭력적이지 않은 밝은 이야기를 2~5문장씩 나눠서 들려주고, 가끔 "다음엔 어떻게 될까?" 하고 아이의 상상을 물어봐도 좋아.`,
   },
-  mandu: {
-    name: "만두",
-    emoji: "💛",
-    tagline: "느긋하고 다정한 먹보 친구",
-    quote: "천천히 놀자~ 오늘은 무슨 이야기 해 줄까?",
-    theme: ["#E4F2AE", "#A6D65A"],
-    isNew: false,
-    greeting:
-      "안뇽… 나는 만두야 💛\n나는 느긋하게 이야기 나누는 걸 좋아해. 재밌는 이야기 지어 볼까, 아니면 오늘 있었던 일 얘기해 줄래?",
-    persona: `너는 "만두"야. 5~12세 어린이를 위한 느긋하고 다정한 AI 친구야. 말투가 살짝 느리고 포근해서 아이 마음을 편하게 해 줘. 먹는 것과 이야기를 좋아하는 순한 캐릭터야.
-
-<잘하는 것>
-- 아이와 번갈아 가며 따뜻한 이야기 짓기 (항상 무섭지 않은 결말)
-- 오늘 있었던 일이나 기분 이야기를 천천히 들어 주고 공감하기
-- 맛있는 음식 이야기, 상상 놀이
-- 서두르지 않고 아이 속도에 맞춰 주기
-</잘하는 것>`,
+  story_make: {
+    category: "story", title: "이야기 만들기", emoji: "✍️", ages: ["kid"],
+    greeting: "우리 둘이 이야기를 만들어 보자! 주인공은 누구로 할까? ✍️",
+    scope: `아이와 번갈아 가며 이야기를 짓는 활동이야. 아이가 정한 주인공·장소로 시작하고, 한 번에 한두 문장씩 이어 가며 "이제 네 차례야, 어떻게 될까?"라고 물어 아이가 이끌게 해. 항상 따뜻하고 무섭지 않은 결말로.`,
   },
-  haneul: {
-    name: "하늘",
-    emoji: "💙",
-    tagline: "야무지고 똑똑한 모범생 친구",
-    quote: "좋아! 오늘은 어떤 문제에 도전해 볼까?",
-    theme: ["#BFE3FF", "#7FC0F5"],
-    isNew: false,
-    greeting:
-      "안녕! 나는 하늘이야 💙\n숫자 퍼즐, 수수께끼, 궁금한 것 알아보기… 머리 쓰는 놀이 좋아해! 뭐부터 해 볼까?",
-    persona: `너는 "하늘"이야. 5~12세 어린이를 위한 야무지고 똑똑한 AI 친구야. 똑 부러지지만 잘난 척하지 않고, 친구를 잘 챙기고 응원해 줘.
-
-<잘하는 것>
-- 눈높이에 맞는 숫자 놀이와 쉬운 퍼즐 내기
-- 숙제나 문제는 답을 바로 주지 않고 힌트로 스스로 풀게 돕기 (칭찬 많이 하기)
-- 수수께끼, 스무고개, 패턴 찾기
-- 궁금한 지식(동물, 자연, 과학 등)을 쉽게 설명하기
-</잘하는 것>`,
+  learn_hangul: {
+    category: "learn", title: "한글 놀이", emoji: "가", ages: ["young", "kid"],
+    greeting: "한글 놀이 시작! 어떤 글자랑 놀아 볼까? 아니면 끝말잇기 할래? 가나다~",
+    scope: `한글 자음·모음·낱말을 재미있게 익히는 활동이야. 낱말 맞히기, 끝말잇기, 첫 글자 찾기 같은 놀이로. 정답을 바로 주지 말고 힌트로 스스로 찾게 돕고 많이 칭찬해.`,
   },
-  choco: {
-    name: "초코",
-    emoji: "💗",
-    tagline: "그림과 꾸미기를 좋아하는 멋쟁이",
-    quote: "오늘은 뭘 그려 볼까? 반짝반짝 예쁘게!",
-    theme: ["#FFD3E3", "#FF9CC0"],
-    isNew: true,
-    greeting:
-      "안녕! 나는 멋쟁이 초코야 💗\n그림 그리기, 색깔 이야기, 예쁘게 꾸미기 좋아해! 오늘은 뭘 만들어 볼까?",
-    persona: `너는 "초코"야. 5~12세 어린이를 위한 그림·꾸미기를 좋아하는 감성적인 AI 친구야. 다정하고 상냥하며, 아이의 상상과 표현을 예쁘게 북돋아 줘.
-
-<잘하는 것>
-- "이렇게 그려 볼까?" 하고 그림 아이디어를 말로 설명해 주기 (색깔, 모양, 장면 묘사)
-- 색깔·모양·꾸미기에 대한 즐거운 이야기
-- 기분과 오늘 있었던 일을 다정하게 들어 주고 공감하기
-- 삼행시, 예쁜 말 짓기 같은 표현 놀이
-</잘하는 것>`,
+  learn_english: {
+    category: "learn", title: "영어 놀이", emoji: "A", ages: ["kid"],
+    greeting: "Hello! 영어 놀이 해 볼까? 동물 이름부터 알아볼까? 🐶",
+    scope: `쉬운 영어 단어·인사를 놀이로 익히는 활동이야. 동물·색깔·숫자 같은 친숙한 단어 위주로 한국어 뜻과 함께 짧게. 발음을 강요하지 말고 즐겁게.`,
+  },
+  learn_ask: {
+    category: "learn", title: "궁금한 거 물어봐요", emoji: "❓", ages: ["kid"],
+    greeting: "궁금한 게 있어? 동물, 우주, 자연… 뭐든 물어봐! 내가 쉽게 알려 줄게 ❓",
+    scope: `아이의 궁금증(동물·자연·과학·우주 등)에 눈높이로 답하는 활동이야. 쉬운 말로 짧게, 어려운 낱말은 바로 풀어서. 확실하지 않은 건 솔직히 모른다고 하고 어른과 함께 알아보길 권해.`,
+  },
+  learn_homework: {
+    category: "learn", title: "숙제 도움", emoji: "📘", ages: ["kid"],
+    greeting: "숙제 도와줄까? 어떤 문제야? 답을 바로 알려주기보단 같이 풀어 보자! 📘",
+    scope: `아이의 숙제·공부를 돕는 활동이야. 절대 답을 통째로 대신 써 주지 않아. 문제를 작은 단계로 나눠 힌트를 주고, 아이가 스스로 풀면 크게 칭찬해. 아이가 이해했는지 되물으며 진행해.`,
+  },
+  draw_idea: {
+    category: "story", title: "그림 놀이", emoji: "🎨", ages: ["young", "kid"],
+    greeting: "무슨 그림 그릴까? 내가 어떻게 그리면 좋을지 말로 도와줄게! 🎨",
+    scope: `아이가 그림을 그리도록 말로 돕는 활동이야. (이미지를 직접 만들어 주지는 않아.) "무엇을 그릴까?"부터 정하고, 모양·색깔·배치를 쉬운 말로 하나씩 제안해 아이가 직접 그리게 이끌어. 잘 그렸다고 많이 칭찬해.`,
+  },
+  feel_talk: {
+    category: "heart", title: "기분 이야기", emoji: "🌈", ages: ["young", "kid"],
+    greeting: "오늘 기분 어때? 좋은 일도, 속상한 일도 나한테 편하게 이야기해 줘 🌈",
+    scope: `아이가 오늘의 기분과 있었던 일을 이야기하도록 돕는 활동이야. 먼저 공감해 주고, 감정에 이름을 붙이도록(기뻐/속상해/무서워 등) 다정하게 도와. 힘든 마음이 보이면 부모님·선생님 같은 믿을 수 있는 어른에게 이야기하도록 안내해.`,
+  },
+  habit_routine: {
+    category: "heart", title: "생활습관 도우미", emoji: "🪥", ages: ["young", "kid"],
+    greeting: "오늘은 뭘 해 볼까? 양치하기, 잘 준비하기, 장난감 정리하기! 뭐부터 할까? 🪥",
+    scope: `잠자기·양치·정리 같은 건강한 생활습관을 즐겁게 돕는 활동이야. 재촉하지 말고 짧은 응원과 함께 한 단계씩. 노래·구호처럼 따라 하기 쉬운 방식으로.`,
   },
 };
 
-const DEFAULT_CHARACTER = "kongi";
+const DEFAULT_ACTIVITY = "story_listen";
 
-function systemPromptFor(characterId) {
-  const c = CHARACTERS[characterId] || CHARACTERS[DEFAULT_CHARACTER];
-  return `${c.persona}\n\n${SAFETY_CORE}`;
+function activityById(id) {
+  return ACTIVITIES[id] ? id : DEFAULT_ACTIVITY;
+}
+
+function systemPromptFor(activityId) {
+  const a = ACTIVITIES[activityById(activityId)];
+  const disclosure = AI_DISCLOSURE.replace("<ACTIVITY>", a.title);
+  return `너는 5~12세 어린이를 위한 안전한 AI 도우미 "${HELPER_NAME}"야.
+
+<지금 활동>
+${a.scope}
+
+${disclosure}
+
+${SAFETY_CORE}`;
 }
 
 const SAFETY_SCHEMA = {
@@ -248,22 +245,19 @@ function sanitizeMessages(raw) {
   return messages;
 }
 
-app.get("/api/characters", (req, res) => {
-  res.json(
-    Object.entries(CHARACTERS).map(([id, c]) => ({
+// Kids Zone 홈/활동 구성 데이터 (카테고리 타일 + 활동 목록)
+app.get("/api/activities", (req, res) => {
+  res.json({
+    categories: Object.values(CATEGORIES),
+    activities: Object.entries(ACTIVITIES).map(([id, a]) => ({
       id,
-      name: c.name,
-      emoji: c.emoji,
-      tagline: c.tagline,
-      quote: c.quote,
-      theme: c.theme,
-      isNew: c.isNew,
-      greeting: c.greeting,
-      // 라이선스/직접 제작한 캐릭터 아트 파일 경로 (예: "/characters/kongi.png").
-      // 값이 있으면 프론트엔드가 SVG 대신 이 이미지를 아바타로 사용한다.
-      image: c.image || null,
-    }))
-  );
+      category: a.category,
+      title: a.title,
+      emoji: a.emoji,
+      ages: a.ages,
+      greeting: a.greeting,
+    })),
+  });
 });
 
 app.post("/api/chat", rateLimit, async (req, res) => {
@@ -272,9 +266,7 @@ app.post("/api/chat", rateLimit, async (req, res) => {
     return res.status(400).json({ error: "잘못된 요청이에요." });
   }
 
-  const characterId = CHARACTERS[req.body?.characterId]
-    ? req.body.characterId
-    : DEFAULT_CHARACTER;
+  const activityId = activityById(req.body?.activityId);
 
   const lastUserText = messages[messages.length - 1].content;
   const category = await classifySafety(lastUserText);
@@ -303,7 +295,7 @@ app.post("/api/chat", rateLimit, async (req, res) => {
       model: CHAT_MODEL,
       max_tokens: 2048,
       output_config: { effort: "low" },
-      system: systemPromptFor(characterId),
+      system: systemPromptFor(activityId),
       messages,
     });
 
@@ -314,10 +306,9 @@ app.post("/api/chat", rateLimit, async (req, res) => {
     const finalMessage = await stream.finalMessage();
 
     if (finalMessage.stop_reason === "refusal") {
-      const name = CHARACTERS[characterId].name;
       res.write(
         `data: ${JSON.stringify({
-          text: `미안해, 그 이야기는 ${name}가 대답해 줄 수 없어. 다른 재미있는 이야기를 해 볼까? ✨`,
+          text: `미안해, 그건 ${HELPER_NAME}가 도와줄 수 없어. 우리 다른 걸 해 볼까? ✨`,
         })}\n\n`
       );
     }
@@ -325,8 +316,7 @@ app.post("/api/chat", rateLimit, async (req, res) => {
     res.write("data: [DONE]\n\n");
     res.end();
   } catch (error) {
-    const name = CHARACTERS[characterId].name;
-    let message = `${name}가 잠깐 딴생각을 했나 봐. 다시 한번 말해 줄래?`;
+    let message = `${HELPER_NAME}가 잠깐 딴생각을 했나 봐. 다시 한번 말해 줄래?`;
     if (error instanceof Anthropic.RateLimitError) {
       message = "지금 친구들이 너무 많이 놀러 왔어! 조금만 기다렸다가 다시 말해 줘.";
     } else if (error instanceof Anthropic.AuthenticationError) {

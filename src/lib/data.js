@@ -112,3 +112,31 @@ export const SAFETY_LABEL = {
     tip: "아이의 마음을 살펴봐 주세요. 필요하면 청소년 상담전화 1388에 도움을 청할 수 있어요.",
   },
 };
+
+// AI 도우미 "별이" — 중립적인 별 마스코트 (컴패니언이 아닌 도우미 도구로 프레이밍)
+export const HELPER = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="별이">
+  <defs><linearGradient id="ga-star" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFE7A3"/><stop offset="1" stop-color="#FFB347"/></linearGradient></defs>
+  <polygon points="50,6 62,38 96,38 68,59 79,93 50,72 21,93 32,59 4,38 38,38"
+    fill="url(#ga-star)" stroke="#F4A100" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="36" cy="53" r="3.6" fill="#FF8FA3" opacity="0.65"/>
+  <circle cx="64" cy="53" r="3.6" fill="#FF8FA3" opacity="0.65"/>
+  <circle cx="43" cy="47" r="4" fill="#5a3d00"/>
+  <circle cx="57" cy="47" r="4" fill="#5a3d00"/>
+  <path d="M43 56 Q50 64 57 56" fill="none" stroke="#5a3d00" stroke-width="3" stroke-linecap="round"/>
+</svg>`;
+
+// 밝은 게임풍 하늘 배경 (구름 + 초록 언덕) — 자체 완결형 SVG
+export const KIDS_SKY = `<svg class="sky-svg" viewBox="0 0 400 700" preserveAspectRatio="xMidYMin slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs><linearGradient id="ksky" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#8FD3FF"/><stop offset="0.55" stop-color="#BDE7FF"/><stop offset="1" stop-color="#E8F7FF"/></linearGradient></defs>
+  <rect width="400" height="700" fill="url(#ksky)"/>
+  <g fill="#ffffff">
+    <ellipse cx="70" cy="70" rx="42" ry="20" opacity="0.92"/><ellipse cx="110" cy="60" rx="30" ry="15" opacity="0.92"/>
+    <ellipse cx="320" cy="120" rx="46" ry="21" opacity="0.9"/><ellipse cx="360" cy="110" rx="30" ry="15" opacity="0.9"/>
+    <ellipse cx="200" cy="200" rx="34" ry="16" opacity="0.8"/>
+  </g>
+  <g fill="#7FC24A">
+    <ellipse cx="40" cy="690" rx="120" ry="70"/><ellipse cx="220" cy="700" rx="150" ry="66"/><ellipse cx="380" cy="690" rx="120" ry="72"/>
+  </g>
+</svg>`;

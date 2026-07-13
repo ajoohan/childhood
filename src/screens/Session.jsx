@@ -1,20 +1,26 @@
 import { useEffect, useRef, useState } from "react";
-import Avatar from "../components/Avatar.jsx";
+import { HELPER } from "../lib/data.js";
 import { messagesToday } from "../lib/store.js";
+import { useSpeech } from "../lib/useSpeech.js";
 
-function Bubble({ role, character, children, typing }) {
+function Bubble({ role, children, typing }) {
   return (
     <div className={`message ${role}`}>
       <div className="avatar">
-        {role === "bot" ? <Avatar character={character} /> : "🙂"}
+        {role === "bot" ? (
+          <span className="ava-svg" dangerouslySetInnerHTML={{ __html: HELPER }} />
+        ) : (
+          "🙂"
+        )}
       </div>
       <div className={`bubble ${typing ? "typing" : ""}`}>{children}</div>
     </div>
   );
 }
 
-export default function Chat({
-  character,
+// 활동 스코프 안에서의 AI 도우미 세션 (개방형 대화가 아님)
+export default function Session({
+  activity,
   history,
   histories,
   settings,
@@ -22,19 +28,21 @@ export default function Chat({
   onUserMessage,
   onBotMessage,
   onSafety,
-  onGuard,
 }) {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [streaming, setStreaming] = useState(null); // 진행 중 봇 텍스트
-  const [notice, setNotice] = useState(null); // 일시 안내(제한 등)
+  const [streaming, setStreaming] = useState(null);
+  const [notice, setNotice] = useState(null);
   const chatRef = useRef(null);
   const inputRef = useRef(null);
+  const speech = useSpeech({
+    onResult: (t) => setInput((prev) => (prev ? prev + " " + t : t)),
+  });
 
   useEffect(() => {
     setNotice(null);
     setStreaming(null);
-  }, [character.id]);
+  }, [activity.id]);
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -59,7 +67,7 @@ export default function Chat({
     setStreaming("");
 
     const userMsg = { role: "user", content: text, t: new Date().toISOString() };
-    onUserMessage(character.id, userMsg);
+    onUserMessage(activity.id, userMsg);
     const outgoing = [...history, userMsg];
 
     let reply = "";
@@ -67,9 +75,8 @@ export default function Chat({
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ characterId: character.id, messages: outgoing }),
+        body: JSON.stringify({ activityId: activity.id, messages: outgoing }),
       });
-
       if (!res.ok || !res.body) {
         let msg = null;
         try {
@@ -80,7 +87,6 @@ export default function Chat({
         if (msg) e.friendly = msg;
         throw e;
       }
-
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -98,8 +104,8 @@ export default function Chat({
           if (obj.safety) {
             onSafety({
               t: new Date().toISOString(),
-              characterId: character.id,
-              characterName: character.name,
+              activityId: activity.id,
+              activityTitle: activity.title,
               category: obj.safety,
               text,
             });
@@ -111,67 +117,65 @@ export default function Chat({
       }
     } catch (err) {
       console.error(err);
-      reply =
-        reply ||
-        err.friendly ||
-        `앗, ${character.name}랑 연결이 잠깐 끊겼어. 다시 말해 줄래?`;
+      reply = reply || err.friendly || "앗, 잠깐 연결이 끊겼어. 다시 말해 줄래?";
     } finally {
       setStreaming(null);
-      onBotMessage(character.id, { role: "assistant", content: reply });
+      onBotMessage(activity.id, { role: "assistant", content: reply });
       setBusy(false);
       if (inputRef.current) inputRef.current.focus();
     }
   }
 
   return (
-    <section className="chat-screen">
+    <section className="chat-screen session">
       <header className="header">
         <button className="back-btn" onClick={onBack} aria-label="뒤로">
           ←
         </button>
         <div className="header-star">
-          <Avatar character={character} />
+          <span className="ava-svg" dangerouslySetInnerHTML={{ __html: HELPER }} />
         </div>
         <div className="header-text">
-          <h1>{character.name}</h1>
-          <p>{character.tagline}</p>
+          <h1>
+            {activity.emoji} {activity.title}
+          </h1>
+          <p>별이가 도와줄게 · AI 도우미</p>
         </div>
-        <button className="parent-btn" onClick={onGuard}>
-          보호자
-        </button>
       </header>
 
       <main className="chat" ref={chatRef}>
-        <Bubble role="bot" character={character}>
-          {character.greeting}
-        </Bubble>
+        <div className="ai-note">🤖 나는 AI 도우미예요. 진짜 사람은 아니에요!</div>
+        <Bubble role="bot">{activity.greeting}</Bubble>
         {history.map((m, i) => (
-          <Bubble
-            key={i}
-            role={m.role === "user" ? "user" : "bot"}
-            character={character}
-          >
+          <Bubble key={i} role={m.role === "user" ? "user" : "bot"}>
             {m.content}
           </Bubble>
         ))}
         {streaming !== null && (
-          <Bubble role="bot" character={character} typing={streaming === ""}>
+          <Bubble role="bot" typing={streaming === ""}>
             {streaming}
           </Bubble>
         )}
-        {notice && (
-          <Bubble role="bot" character={character}>
-            {notice}
-          </Bubble>
-        )}
+        {notice && <Bubble role="bot">{notice}</Bubble>}
       </main>
 
       <footer className="composer">
+        {speech.supported && (
+          <button
+            className={`mic-btn ${speech.listening ? "on" : ""}`}
+            onClick={speech.toggle}
+            disabled={busy}
+            aria-label="음성으로 말하기"
+            title="음성으로 말하기"
+          >
+            🎤
+          </button>
+        )}
         <input
           ref={inputRef}
           type="text"
           maxLength={1000}
-          placeholder="하고 싶은 말을 써 봐!"
+          placeholder={speech.listening ? "듣고 있어요…" : "하고 싶은 말을 써 봐!"}
           autoComplete="off"
           value={input}
           disabled={busy}
