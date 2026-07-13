@@ -243,6 +243,42 @@ export const INTERESTS = [
   { id: "body", label: "우리 몸", emoji: "🩺" },
 ];
 
+// 관심사(id) → 어울리는 활동(id) 매핑. 관심사 기반 홈 추천에 사용.
+export const INTEREST_ACT = {
+  science: ["learn_ask", "story_make"],
+  animals: ["story_make", "learn_ask"],
+  space: ["learn_ask", "story_make"],
+  reading: ["story_listen", "story_make"],
+  art: ["draw_idea", "story_make"],
+  math: ["learn_homework", "learn_ask"],
+  music: ["story_make", "draw_idea"],
+  dino: ["learn_ask", "story_make"],
+  sports: ["habit_routine", "feel_talk"],
+  body: ["learn_ask", "habit_routine"],
+};
+
+// 아이의 관심사에 맞는 활동을 점수순으로 추천 (연령 모드로 필터, 최대 max개)
+export function recommendActivities(interestIds, activities, ageMode, max = 4) {
+  if (!interestIds || !interestIds.length) return [];
+  const score = {};
+  for (const id of interestIds) {
+    (INTEREST_ACT[id] || []).forEach((actId, i) => {
+      score[actId] = (score[actId] || 0) + (2 - i); // 첫 번째 매핑에 가중치
+    });
+  }
+  return activities
+    .filter((a) => score[a.id] && (a.ages || []).includes(ageMode))
+    .sort((x, y) => score[y.id] - score[x.id])
+    .slice(0, max);
+}
+
+// 관심사 id → 이모지 (홈 개인화 강조용)
+export function interestEmojis(interestIds) {
+  return (interestIds || [])
+    .map((id) => INTERESTS.find((x) => x.id === id)?.emoji)
+    .filter(Boolean);
+}
+
 // 스플래시용 안전 인증 배지 — 상표 무관 오리지널 (교육 앱스토어 배지 아님)
 export const SAFETY_BADGE = `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI 안전 검증 2026" class="badge-svg">
   <defs><linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">

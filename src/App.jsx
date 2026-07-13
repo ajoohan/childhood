@@ -133,6 +133,7 @@ export default function App() {
             ageMode={settings.ageMode}
             stars={stars}
             name={profile.name}
+            interests={profile.interests}
             onPickCategory={(c) => setView({ name: "list", category: c })}
             onPickActivity={openActivity}
             onParent={openParent}
@@ -184,9 +185,23 @@ export default function App() {
             histories={histories}
             safety={safety}
             settings={settings}
+            profile={profile}
             onBack={() => setZone("kids")}
             onSaveLimit={(val) => setSettings((s) => ({ ...s, limitPerDay: val }))}
             onSetAge={(v) => setSettings((s) => ({ ...s, ageMode: v }))}
+            onSaveProfile={(patch) =>
+              setProfile((p) => {
+                const next = { ...p, ...patch };
+                // 나이가 바뀌면 연령 모드도 함께 맞춘다 (0–6 영유아 / 7+ 초등)
+                if (patch.age != null && patch.age !== p.age) {
+                  setSettings((s) => ({
+                    ...s,
+                    ageMode: patch.age <= 6 ? "young" : "kid",
+                  }));
+                }
+                return next;
+              })
+            }
             onClear={() => {
               setHistories({});
               setSafety([]);

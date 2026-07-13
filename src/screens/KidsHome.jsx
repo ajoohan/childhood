@@ -1,9 +1,20 @@
-import { HELPER } from "../lib/data.js";
+import {
+  HELPER,
+  recommendActivities,
+  interestEmojis,
+} from "../lib/data.js";
 
 const LEARN_GRAD = [
   ["#FFC48A", "#FF8A3D"],
   ["#8FD0F5", "#5AA9EE"],
   ["#B7E88F", "#7CC24A"],
+  ["#FFB0C9", "#FF7EA8"],
+];
+
+const REC_GRAD = [
+  ["#FFB27A", "#FF7A3D"],
+  ["#9FD8F7", "#5AA9EE"],
+  ["#C6E88F", "#7CC24A"],
   ["#FFB0C9", "#FF7EA8"],
 ];
 
@@ -14,6 +25,7 @@ export default function KidsHome({
   ageMode,
   stars,
   name,
+  interests,
   onPickCategory,
   onPickActivity,
   onParent,
@@ -24,6 +36,9 @@ export default function KidsHome({
     (a) => a.category === "learn" && a.ages.includes(ageMode)
   );
   const ask = activities.find((a) => a.id === "learn_ask");
+  const recommended = recommendActivities(interests, activities, ageMode, 4);
+  const emojis = interestEmojis(interests);
+  const recTitle = name ? `${name}를 위한 추천` : "너를 위한 추천";
 
   return (
     <section className="kids-home">
@@ -66,6 +81,35 @@ export default function KidsHome({
           </button>
         ))}
       </div>
+
+      {recommended.length > 0 && (
+        <>
+          <div className="rec-head">
+            <span>✨ {recTitle}</span>
+            {emojis.length > 0 && (
+              <span className="rec-emojis">{emojis.join(" ")}</span>
+            )}
+          </div>
+          <div className="rec-row">
+            {recommended.map((a, i) => {
+              const g = REC_GRAD[i % REC_GRAD.length];
+              return (
+                <button
+                  key={a.id}
+                  className="rec-card"
+                  style={{
+                    background: `linear-gradient(160deg, ${g[0]}, ${g[1]})`,
+                  }}
+                  onClick={() => onPickActivity(a)}
+                >
+                  <span className="rc-emoji">{a.emoji}</span>
+                  <span className="rc-title">{a.title}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       <div className="learn-head">💡 새로운 걸 배워요</div>
       <div className="learn-row">

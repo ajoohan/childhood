@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SAFETY_LABEL } from "../lib/data.js";
+import { SAFETY_LABEL, INTERESTS } from "../lib/data.js";
 import { userMsgCount, messagesToday, lastTime, fmtTime } from "../lib/store.js";
 
 // Parent Zone — 성인 인증 게이트 뒤. 대시보드·시간통제·활동 로그·구독·연령.
@@ -8,15 +8,37 @@ export default function ParentZone({
   histories,
   safety,
   settings,
+  profile,
   onBack,
   onSaveLimit,
   onSetAge,
+  onSaveProfile,
   onClear,
 }) {
   const [limitInput, setLimitInput] = useState(
     settings.limitPerDay != null ? String(settings.limitPerDay) : ""
   );
   const [saved, setSaved] = useState("");
+
+  const prof = profile || { name: "", age: null, interests: [] };
+  const [nameInput, setNameInput] = useState(prof.name || "");
+  const [ageInput, setAgeInput] = useState(prof.age != null ? String(prof.age) : "");
+  const [picked, setPicked] = useState(prof.interests || []);
+  const [profSaved, setProfSaved] = useState("");
+
+  function toggleInterest(id) {
+    setPicked((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+    setProfSaved("");
+  }
+  function saveProfile() {
+    const name = nameInput.trim().slice(0, 20);
+    const ageNum = ageInput.trim() ? parseInt(ageInput, 10) : null;
+    const age = Number.isFinite(ageNum) && ageNum > 0 && ageNum < 20 ? ageNum : null;
+    onSaveProfile({ name, age, interests: picked });
+    setProfSaved("프로필을 저장했어요.");
+  }
 
   const total = Object.values(histories).reduce(
     (n, h) => n + h.filter((m) => m.role === "user").length,
@@ -54,6 +76,58 @@ export default function ParentZone({
       </header>
 
       <div className="guard-scroll">
+        <div className="guard-card">
+          <h3>🧒 아이 프로필</h3>
+          <p className="guard-hint">
+            온보딩에서 입력한 이름·나이·관심사예요. AI가 활동 안에서 이 정보를
+            참고해 아이에게 맞춰 줍니다. 언제든 수정할 수 있어요.
+          </p>
+          <label className="prof-row">
+            <span>이름</span>
+            <input
+              type="text"
+              maxLength={20}
+              placeholder="아이 이름"
+              value={nameInput}
+              onChange={(e) => {
+                setNameInput(e.target.value);
+                setProfSaved("");
+              }}
+            />
+          </label>
+          <label className="prof-row">
+            <span>나이</span>
+            <input
+              type="number"
+              min="1"
+              max="19"
+              inputMode="numeric"
+              placeholder="나이"
+              value={ageInput}
+              onChange={(e) => {
+                setAgeInput(e.target.value);
+                setProfSaved("");
+              }}
+            />
+          </label>
+          <div className="prof-interests-label">관심사</div>
+          <div className="prof-chips">
+            {INTERESTS.map((it) => (
+              <button
+                key={it.id}
+                className={`prof-chip ${picked.includes(it.id) ? "on" : ""}`}
+                onClick={() => toggleInterest(it.id)}
+              >
+                <span>{it.emoji}</span> {it.label}
+              </button>
+            ))}
+          </div>
+          <button className="guard-btn" onClick={saveProfile}>
+            프로필 저장
+          </button>
+          {profSaved && <p className="guard-hint">{profSaved}</p>}
+        </div>
+
         <div className="guard-card alert-card">
           <h3>🔔 안전 알림</h3>
           <p className="guard-hint">

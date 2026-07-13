@@ -1713,3 +1713,90 @@ body { background: #FBE7DD; }
   .ob-body h1, .ob-pw-title { font-size: 26px; }
   .ob-load-robot { width: 118px; }
 }
+
+/* ───────────── 관심사 기반 홈 추천 ───────────── */
+
+.rec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 20px 4px 12px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #3a3226;
+}
+.rec-emojis { font-size: 17px; letter-spacing: 1px; flex-shrink: 0; }
+.rec-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 2px 4px 6px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.rec-row::-webkit-scrollbar { display: none; }
+.rec-card {
+  flex: 0 0 132px;
+  scroll-snap-align: start;
+  border: none;
+  border-radius: 22px;
+  padding: 18px 14px;
+  min-height: 118px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14);
+  transition: transform 0.1s;
+}
+.rec-card:active { transform: scale(0.96); }
+.rc-emoji { font-size: 34px; }
+.rc-title { font-size: 16px; font-weight: 800; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.18); }
+
+/* ───────────── 부모 존: 아이 프로필 수정 ───────────── */
+
+.prof-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+.prof-row > span { font-size: 15px; font-weight: 700; color: #4a3d30; flex-shrink: 0; }
+.prof-row input {
+  flex: 1;
+  max-width: 180px;
+  border: 1.5px solid #e4d5c7;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 15px;
+  color: #2b2117;
+  background: #fffdfb;
+  outline: none;
+}
+.prof-row input:focus { border-color: var(--accent); }
+.prof-interests-label {
+  margin: 16px 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #4a3d30;
+}
+.prof-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.prof-chip {
+  border: none;
+  border-radius: 20px;
+  padding: 8px 13px;
+  background: #efe4da;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4a3d30;
+  cursor: pointer;
+}
+.prof-chip > span { margin-right: 3px; }
+.prof-chip.on { background: var(--accent); color: #fff; }
