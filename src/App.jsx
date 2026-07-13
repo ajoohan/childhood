@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Splash from "./screens/Splash.jsx";
 import KidsHome from "./screens/KidsHome.jsx";
 import ActivityList from "./screens/ActivityList.jsx";
 import Session from "./screens/Session.jsx";
@@ -21,6 +22,7 @@ export default function App() {
     ageMode: initial.settings.ageMode || "kid",
   });
 
+  const [splash, setSplash] = useState(true);
   const [gate, setGate] = useState(null);
   const [guardUnlocked, setGuardUnlocked] = useState(false);
 
@@ -64,6 +66,27 @@ export default function App() {
       : [];
   const showTab =
     zone === "kids" && (view.name === "home" || view.name === "collection");
+
+  if (splash) {
+    return (
+      <div className="app">
+        <Splash onStart={() => setSplash(false)} onParent={openParent} />
+        {gate && (
+          <GateDialog
+            a={gate.a}
+            b={gate.b}
+            onPass={() => {
+              setGuardUnlocked(true);
+              setGate(null);
+              setSplash(false);
+              setZone("parent");
+            }}
+            onClose={() => setGate(null)}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="app">
