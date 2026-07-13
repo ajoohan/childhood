@@ -8,10 +8,21 @@ export function loadStore() {
       histories: s.histories || {},
       safety: Array.isArray(s.safety) ? s.safety : [],
       settings: s.settings || { limitPerDay: null },
+      profile: s.profile || emptyProfile(),
     };
   } catch {
-    return { histories: {}, safety: [], settings: { limitPerDay: null } };
+    return {
+      histories: {},
+      safety: [],
+      settings: { limitPerDay: null },
+      profile: emptyProfile(),
+    };
   }
+}
+
+// 온보딩(회원가입)으로 채워지는 아이 프로필 — 이 기기에만 저장
+export function emptyProfile() {
+  return { onboarded: false, name: "", age: null, interests: [], plan: "free" };
 }
 
 export function persist(state) {

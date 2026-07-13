@@ -13,10 +13,12 @@ export default function KidsHome({
   activities,
   ageMode,
   stars,
+  name,
   onPickCategory,
   onPickActivity,
   onParent,
 }) {
+  const hi = name ? `안녕, ${name}! 👋` : "안녕! 👋";
   const bigTiles = categories.filter((c) => c.id === "story" || c.id === "heart");
   const learn = activities.filter(
     (a) => a.category === "learn" && a.ages.includes(ageMode)
@@ -31,7 +33,7 @@ export default function KidsHome({
           dangerouslySetInnerHTML={{ __html: HELPER }}
         />
         <div className="hd-hi">
-          <b>안녕! 👋</b>
+          <b>{hi}</b>
           <small>오늘도 반가워</small>
         </div>
         <span className="star-badge">

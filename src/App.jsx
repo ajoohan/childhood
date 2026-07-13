@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Splash from "./screens/Splash.jsx";
+import Onboarding from "./screens/Onboarding.jsx";
 import KidsHome from "./screens/KidsHome.jsx";
 import ActivityList from "./screens/ActivityList.jsx";
 import Session from "./screens/Session.jsx";
@@ -25,6 +26,7 @@ export default function App() {
     limitPerDay: initial.settings.limitPerDay ?? null,
     ageMode: initial.settings.ageMode || "kid",
   });
+  const [profile, setProfile] = useState(initial.profile);
 
   const [splash, setSplash] = useState(!splashSeen);
   const [gate, setGate] = useState(null);
@@ -36,8 +38,15 @@ export default function App() {
   };
 
   useEffect(() => {
-    persist({ histories, safety, settings });
-  }, [histories, safety, settings]);
+    persist({ histories, safety, settings, profile });
+  }, [histories, safety, settings, profile]);
+
+  function completeOnboarding(p) {
+    // 나이를 연령 모드로 매핑: 0–6세 영유아 / 7세 이상 초등
+    const ageMode = p.age != null && p.age <= 6 ? "young" : "kid";
+    setProfile(p);
+    setSettings((s) => ({ ...s, ageMode }));
+  }
 
   useEffect(() => {
     let alive = true;
@@ -97,6 +106,14 @@ export default function App() {
     );
   }
 
+  if (!profile.onboarded) {
+    return (
+      <div className="app">
+        <Onboarding onDone={completeOnboarding} />
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <div className="screens">
@@ -106,6 +123,7 @@ export default function App() {
             activities={data.activities}
             ageMode={settings.ageMode}
             stars={stars}
+            name={profile.name}
             onPickCategory={(c) => setView({ name: "list", category: c })}
             onPickActivity={openActivity}
             onParent={openParent}

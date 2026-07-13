@@ -211,6 +211,38 @@ export const SPLASH_ROBOT = `<svg viewBox="0 0 260 320" xmlns="http://www.w3.org
   </g>
 </svg>`;
 
+// 로봇 얼굴(머리) — 로딩·페이월 배너용 (오리지널)
+export const ROBOT_HEAD = `<svg viewBox="0 0 140 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="별이" class="robot-head-svg">
+  <defs><linearGradient id="rh" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#7FCDF2"/><stop offset="1" stop-color="#3EA9E0"/></linearGradient></defs>
+  <line x1="70" y1="34" x2="70" y2="16" stroke="#2E90C8" stroke-width="4"/>
+  <circle cx="70" cy="11" r="7" fill="#FFC93C"/>
+  <circle cx="30" cy="78" r="16" fill="#F58A3C"/><circle cx="30" cy="78" r="8" fill="#D96E24"/>
+  <circle cx="110" cy="78" r="16" fill="#F58A3C"/><circle cx="110" cy="78" r="8" fill="#D96E24"/>
+  <rect x="24" y="32" width="92" height="92" rx="30" fill="url(#rh)" stroke="#2E90C8" stroke-width="3"/>
+  <rect x="40" y="50" width="60" height="52" rx="20" fill="#EAF7FF"/>
+  <path d="M50 66 Q59 58 68 66" fill="none" stroke="#F58A3C" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M72 66 Q81 58 90 66" fill="none" stroke="#F58A3C" stroke-width="4.5" stroke-linecap="round"/>
+  <circle cx="55" cy="82" r="10" fill="#26323a"/><circle cx="58.5" cy="78" r="3.4" fill="#fff"/>
+  <circle cx="85" cy="82" r="10" fill="#26323a"/><circle cx="88.5" cy="78" r="3.4" fill="#fff"/>
+  <circle cx="70" cy="90" r="2.6" fill="#2E90C8"/>
+  <path d="M61 96 Q70 106 79 96 Q70 101 61 96 Z" fill="#B34A3A"/>
+</svg>`;
+
+// 온보딩 관심사 (아이콘 다중선택)
+export const INTERESTS = [
+  { id: "science", label: "과학", emoji: "🔬" },
+  { id: "animals", label: "동물", emoji: "🦁" },
+  { id: "space", label: "우주", emoji: "🚀" },
+  { id: "reading", label: "읽기", emoji: "📚" },
+  { id: "art", label: "그림", emoji: "🎨" },
+  { id: "math", label: "수학", emoji: "🧮" },
+  { id: "music", label: "음악", emoji: "🎵" },
+  { id: "dino", label: "공룡", emoji: "🦕" },
+  { id: "sports", label: "운동", emoji: "⚽" },
+  { id: "body", label: "우리 몸", emoji: "🩺" },
+];
+
 // 스플래시용 안전 인증 배지 — 상표 무관 오리지널 (교육 앱스토어 배지 아님)
 export const SAFETY_BADGE = `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI 안전 검증 2026" class="badge-svg">
   <defs><linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
