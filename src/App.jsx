@@ -5,6 +5,7 @@ import KidsHome from "./screens/KidsHome.jsx";
 import ActivityList from "./screens/ActivityList.jsx";
 import Session from "./screens/Session.jsx";
 import Collection from "./screens/Collection.jsx";
+import VoiceMode from "./screens/VoiceMode.jsx";
 import ParentZone from "./screens/ParentZone.jsx";
 import PinGate from "./components/PinGate.jsx";
 import SparksSheet from "./components/SparksSheet.jsx";
@@ -167,6 +168,20 @@ export default function App() {
           />
         )}
 
+        {zone === "kids" && view.name === "voice" && (
+          <VoiceMode
+            activity={data.activities.find((a) => a.id === "learn_ask")}
+            history={histories["learn_ask"] || []}
+            persona={persona}
+            voice={settings.voice}
+            onSetVoice={(v) => setSettings((s) => ({ ...s, voice: v }))}
+            onUserMessage={addUser}
+            onBotMessage={addBot}
+            onSafety={addSafety}
+            onBack={() => setView({ name: "home" })}
+          />
+        )}
+
         {zone === "kids" && view.name === "session" && view.activity && (
           <Session
             activity={view.activity}
@@ -235,6 +250,13 @@ export default function App() {
           >
             <span className="tab-icon">📦</span>
             <span>기록</span>
+          </button>
+          <button
+            className={`tab ${view.name === "voice" ? "active" : ""}`}
+            onClick={() => setView({ name: "voice" })}
+          >
+            <span className="tab-icon">🎙️</span>
+            <span>음성</span>
           </button>
           <button className="tab" onClick={openParent}>
             <span className="tab-icon">👨‍👩‍👧</span>
