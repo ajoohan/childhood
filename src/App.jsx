@@ -6,7 +6,7 @@ import ActivityList from "./screens/ActivityList.jsx";
 import Session from "./screens/Session.jsx";
 import Collection from "./screens/Collection.jsx";
 import ParentZone from "./screens/ParentZone.jsx";
-import GateDialog from "./components/GateDialog.jsx";
+import PinGate from "./components/PinGate.jsx";
 import { INTERESTS } from "./lib/data.js";
 import { loadStore, persist, userMsgCount } from "./lib/store.js";
 
@@ -26,11 +26,13 @@ export default function App() {
   const [settings, setSettings] = useState({
     limitPerDay: initial.settings.limitPerDay ?? null,
     ageMode: initial.settings.ageMode || "kid",
+    pin: initial.settings.pin || null,
+    voice: initial.settings.voice || "shimmer",
   });
   const [profile, setProfile] = useState(initial.profile);
 
   const [splash, setSplash] = useState(!splashSeen);
-  const [gate, setGate] = useState(null);
+  const [pinOpen, setPinOpen] = useState(false);
   const [guardUnlocked, setGuardUnlocked] = useState(false);
 
   const dismissSplash = () => {
@@ -65,8 +67,22 @@ export default function App() {
       setZone("parent");
       return;
     }
-    setGate({ a: 3 + Math.floor(Math.random() * 8), b: 4 + Math.floor(Math.random() * 8) });
+    setPinOpen(true);
   }
+
+  const pinGate = pinOpen ? (
+    <PinGate
+      savedPin={settings.pin}
+      onSetPin={(pin) => setSettings((s) => ({ ...s, pin }))}
+      onUnlock={() => {
+        setGuardUnlocked(true);
+        setPinOpen(false);
+        setSplash(false);
+        setZone("parent");
+      }}
+      onClose={() => setPinOpen(false)}
+    />
+  ) : null;
 
   const addUser = (id, msg) =>
     setHistories((h) => ({ ...h, [id]: [...(h[id] || []), msg] }));
@@ -98,19 +114,7 @@ export default function App() {
     return (
       <div className="app">
         <Splash onStart={dismissSplash} onParent={openParent} />
-        {gate && (
-          <GateDialog
-            a={gate.a}
-            b={gate.b}
-            onPass={() => {
-              setGuardUnlocked(true);
-              setGate(null);
-              dismissSplash();
-              setZone("parent");
-            }}
-            onClose={() => setGate(null)}
-          />
-        )}
+        {pinGate}
       </div>
     );
   }
@@ -236,18 +240,7 @@ export default function App() {
         </nav>
       )}
 
-      {gate && (
-        <GateDialog
-          a={gate.a}
-          b={gate.b}
-          onPass={() => {
-            setGuardUnlocked(true);
-            setGate(null);
-            setZone("parent");
-          }}
-          onClose={() => setGate(null)}
-        />
-      )}
+      {pinGate}
     </div>
   );
 }

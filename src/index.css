@@ -1912,3 +1912,89 @@ body { background: #FBE7DD; }
   color: #a99a8c;
   line-height: 1.5;
 }
+
+/* ───────────── 부모 PIN 잠금 ───────────── */
+
+.pin-card {
+  background: #FBF3E6;
+  border-radius: 26px;
+  padding: 28px 24px 22px;
+  width: min(92vw, 360px);
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+}
+.pin-lock { font-size: 44px; }
+.pin-card h2 {
+  margin-top: 10px;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.pin-sub { margin-top: 6px; font-size: 14.5px; color: #8a7a6c; font-weight: 600; }
+
+.pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 22px 0 6px;
+}
+.pin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #d9cab9;
+  transition: transform 0.1s, background 0.1s;
+}
+.pin-dot.on { background: var(--accent); transform: scale(1.12); }
+.pin-error { color: #d94a3d; font-size: 13.5px; font-weight: 700; min-height: 18px; }
+
+.pin-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 12px auto 4px;
+  max-width: 280px;
+}
+.pin-key {
+  aspect-ratio: 1 / 1;
+  border: none;
+  border-radius: 50%;
+  background: #fffdfb;
+  font-family: inherit;
+  font-size: 26px;
+  font-weight: 700;
+  color: #2b2117;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.08s, background 0.08s;
+}
+.pin-key:active { transform: scale(0.92); background: #f3e7d8; }
+.pin-key.ghost { background: none; box-shadow: none; cursor: default; }
+.pin-key.back { font-size: 22px; background: none; box-shadow: none; color: #6a5c4d; }
+
+.pin-foot { margin-top: 14px; }
+.pin-link {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.pin-forgot-input {
+  width: 120px;
+  margin: 8px auto 0;
+  display: block;
+  border: 1.5px solid #e4d5c7;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  font-family: inherit;
+  font-size: 20px;
+  background: #fffdfb;
+  outline: none;
+}
+.pin-forgot-input:focus { border-color: var(--accent); }
