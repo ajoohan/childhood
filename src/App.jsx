@@ -154,6 +154,8 @@ export default function App() {
           <Collection
             activities={data.activities}
             histories={histories}
+            name={profile.name}
+            stars={stars}
             onPick={openActivity}
           />
         )}

@@ -1800,3 +1800,115 @@ body { background: #FBE7DD; }
 }
 .prof-chip > span { margin-right: 3px; }
 .prof-chip.on { background: var(--accent); color: #fff; }
+
+/* ───────────── Collection 저널 (폴라로이드) ───────────── */
+
+.collection.journal { padding: 14px 16px 20px; }
+.journal-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.jhd-title b { display: block; font-size: 20px; font-weight: 800; color: var(--accent); }
+.jhd-title small { font-size: 13px; color: #9c8a7b; font-weight: 600; }
+
+.journal-pad {
+  position: relative;
+  border: 4px solid #5CC7EA;
+  border-radius: 24px;
+  background: #F7EFD8;
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0,
+    transparent 37px,
+    rgba(146, 122, 74, 0.16) 38px
+  );
+  padding: 34px 16px 26px;
+  min-height: 60vh;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+.journal-clip {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 54px;
+  border: 4px solid #b7b7bd;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.polaroids {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 12px;
+  padding: 6px 4px;
+}
+.polaroid {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  background: #fff;
+  padding: 9px 9px 12px;
+  border-radius: 6px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.12s;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.polaroid:active { transform: rotate(0deg) scale(1.03); }
+.polaroid-photo {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 3px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.polaroid-emoji { font-size: 52px; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.12)); }
+.polaroid-count {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #4a3d30;
+  font-size: 12px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+.polaroid-cap {
+  margin-top: 9px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #3a3226;
+  text-align: center;
+}
+.polaroid-date { font-size: 11px; color: #a99a8c; text-align: center; margin-top: 2px; }
+
+.journal-empty {
+  text-align: center;
+  white-space: pre-line;
+  color: #9c8a7b;
+  font-weight: 600;
+  line-height: 1.7;
+  padding: 40px 12px;
+}
+.journal-hint {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 12.5px;
+  color: #a99a8c;
+  line-height: 1.5;
+}
