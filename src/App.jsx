@@ -10,6 +10,10 @@ import { loadStore, persist, userMsgCount } from "./lib/store.js";
 
 const initial = loadStore();
 
+// 스플래시는 "앱 구동 시 1회"만 노출. 모듈 스코프라 리마운트/HMR에는 유지되고,
+// 페이지(앱)를 완전히 재시작하면 모듈이 새로 로드되어 다시 false → 스플래시 재노출.
+let splashSeen = false;
+
 export default function App() {
   const [data, setData] = useState({ categories: [], activities: [] });
   const [zone, setZone] = useState("kids"); // kids | parent
@@ -22,9 +26,14 @@ export default function App() {
     ageMode: initial.settings.ageMode || "kid",
   });
 
-  const [splash, setSplash] = useState(true);
+  const [splash, setSplash] = useState(!splashSeen);
   const [gate, setGate] = useState(null);
   const [guardUnlocked, setGuardUnlocked] = useState(false);
+
+  const dismissSplash = () => {
+    splashSeen = true;
+    setSplash(false);
+  };
 
   useEffect(() => {
     persist({ histories, safety, settings });
@@ -70,7 +79,7 @@ export default function App() {
   if (splash) {
     return (
       <div className="app">
-        <Splash onStart={() => setSplash(false)} onParent={openParent} />
+        <Splash onStart={dismissSplash} onParent={openParent} />
         {gate && (
           <GateDialog
             a={gate.a}
@@ -78,7 +87,7 @@ export default function App() {
             onPass={() => {
               setGuardUnlocked(true);
               setGate(null);
-              setSplash(false);
+              dismissSplash();
               setZone("parent");
             }}
             onClose={() => setGate(null)}
