@@ -113,17 +113,22 @@ export const SAFETY_LABEL = {
   },
 };
 
-// AI 도우미 "별이" — 중립적인 별 마스코트 (컴패니언이 아닌 도우미 도구로 프레이밍)
+// AI 도우미 "별이" — 친근한 로봇 마스코트 (AI를 '도우미 도구'로 프레이밍)
 export const HELPER = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="별이">
-  <defs><linearGradient id="ga-star" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#FFE7A3"/><stop offset="1" stop-color="#FFB347"/></linearGradient></defs>
-  <polygon points="50,6 62,38 96,38 68,59 79,93 50,72 21,93 32,59 4,38 38,38"
-    fill="url(#ga-star)" stroke="#F4A100" stroke-width="4" stroke-linejoin="round"/>
-  <circle cx="36" cy="53" r="3.6" fill="#FF8FA3" opacity="0.65"/>
-  <circle cx="64" cy="53" r="3.6" fill="#FF8FA3" opacity="0.65"/>
-  <circle cx="43" cy="47" r="4" fill="#5a3d00"/>
-  <circle cx="57" cy="47" r="4" fill="#5a3d00"/>
-  <path d="M43 56 Q50 64 57 56" fill="none" stroke="#5a3d00" stroke-width="3" stroke-linecap="round"/>
+  <defs><linearGradient id="ga-robot" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#8AD8F7"/><stop offset="1" stop-color="#3EA9E0"/></linearGradient></defs>
+  <line x1="50" y1="22" x2="50" y2="11" stroke="#2E90C8" stroke-width="3"/>
+  <circle cx="50" cy="8" r="4.2" fill="#FFCE4A"/>
+  <rect x="15" y="45" width="8" height="16" rx="4" fill="#3EA9E0"/>
+  <rect x="77" y="45" width="8" height="16" rx="4" fill="#3EA9E0"/>
+  <rect x="34" y="79" width="32" height="17" rx="9" fill="url(#ga-robot)"/>
+  <rect x="22" y="24" width="56" height="52" rx="18" fill="url(#ga-robot)" stroke="#2E90C8" stroke-width="2"/>
+  <rect x="30" y="34" width="40" height="30" rx="12" fill="#EAF7FF"/>
+  <circle cx="42" cy="47" r="5" fill="#2b3a44"/><circle cx="43.6" cy="45.4" r="1.7" fill="#fff"/>
+  <circle cx="58" cy="47" r="5" fill="#2b3a44"/><circle cx="59.6" cy="45.4" r="1.7" fill="#fff"/>
+  <circle cx="34" cy="55" r="3.2" fill="#FF9E9E" opacity="0.75"/>
+  <circle cx="66" cy="55" r="3.2" fill="#FF9E9E" opacity="0.75"/>
+  <path d="M44 56 Q50 61 56 56" fill="none" stroke="#2b3a44" stroke-width="2.6" stroke-linecap="round"/>
 </svg>`;
 
 // 밝은 게임풍 하늘 배경 (구름 + 초록 언덕) — 자체 완결형 SVG

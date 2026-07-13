@@ -153,7 +153,7 @@ export default function Session({
         ))}
         {streaming !== null && (
           <Bubble role="bot" typing={streaming === ""}>
-            {streaming}
+            {streaming || "생각 중이에요"}
           </Bubble>
         )}
         {notice && <Bubble role="bot">{notice}</Bubble>}
