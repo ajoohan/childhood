@@ -1,14 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { HELPER } from "../lib/data.js";
+import { robotHead } from "../lib/mascot.js";
 import { messagesToday } from "../lib/store.js";
 import { useSpeech } from "../lib/useSpeech.js";
 
-function Bubble({ role, children, typing }) {
+function Bubble({ role, children, typing, expr = "happy" }) {
   return (
     <div className={`message ${role}`}>
       <div className="avatar">
         {role === "bot" ? (
-          <span className="ava-svg" dangerouslySetInnerHTML={{ __html: HELPER }} />
+          <span
+            className="ava-svg"
+            dangerouslySetInnerHTML={{ __html: robotHead(expr) }}
+          />
         ) : (
           "🙂"
         )}
@@ -34,6 +37,7 @@ export default function Session({
   const [busy, setBusy] = useState(false);
   const [streaming, setStreaming] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [mood, setMood] = useState(null); // 'sad' 등 안전 감지 시
   const chatRef = useRef(null);
   const inputRef = useRef(null);
   const speech = useSpeech({
@@ -43,6 +47,7 @@ export default function Session({
   useEffect(() => {
     setNotice(null);
     setStreaming(null);
+    setMood(null);
   }, [activity.id]);
 
   useEffect(() => {
@@ -64,6 +69,7 @@ export default function Session({
 
     setInput("");
     setNotice(null);
+    setMood(null);
     setBusy(true);
     setStreaming("");
 
@@ -107,6 +113,7 @@ export default function Session({
           if (data === "[DONE]") continue;
           const obj = JSON.parse(data);
           if (obj.safety) {
+            setMood("sad"); // 안전 신호 감지 → 걱정하는 표정
             onSafety({
               t: new Date().toISOString(),
               activityId: activity.id,
@@ -131,6 +138,17 @@ export default function Session({
     }
   }
 
+  // 상황별 헤더 표정: 시간제한=sleepy, 안전감지=sad, 답변 중=talking/생각중=thinking
+  const headExpr = notice
+    ? "sleepy"
+    : mood === "sad"
+      ? "sad"
+      : streaming === ""
+        ? "thinking"
+        : streaming
+          ? "talking"
+          : "happy";
+
   return (
     <section className="chat-screen session">
       <header className="header">
@@ -138,7 +156,10 @@ export default function Session({
           ←
         </button>
         <div className="header-star">
-          <span className="ava-svg" dangerouslySetInnerHTML={{ __html: HELPER }} />
+          <span
+            className="ava-svg"
+            dangerouslySetInnerHTML={{ __html: robotHead(headExpr) }}
+          />
         </div>
         <div className="header-text">
           <h1>
@@ -157,11 +178,19 @@ export default function Session({
           </Bubble>
         ))}
         {streaming !== null && (
-          <Bubble role="bot" typing={streaming === ""}>
+          <Bubble
+            role="bot"
+            typing={streaming === ""}
+            expr={streaming === "" ? "thinking" : "talking"}
+          >
             {streaming || "생각 중이에요"}
           </Bubble>
         )}
-        {notice && <Bubble role="bot">{notice}</Bubble>}
+        {notice && (
+          <Bubble role="bot" expr="sleepy">
+            {notice}
+          </Bubble>
+        )}
       </main>
 
       {speech.listening && (

@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { robotHead } from "../lib/mascot.js";
 
-const IDEAS = ["우주를 나는 공룡", "무지개 위의 고양이", "바닷속 마법 성", "웃는 로봇 친구"];
+const IDEAS =["우주를 나는 공룡", "무지개 위의 고양이", "바닷속 마법 성", "웃는 로봇 친구"];
 
 // 그림 만들기 — 프롬프트 → 서버 안전 분류 → 이미지 생성(키 설정 시). 미설정 시 "준비 중".
 export default function ImageMaker({ enabled, onBack }) {
@@ -71,7 +72,14 @@ export default function ImageMaker({ enabled, onBack }) {
           <img className="im-result" src={image} alt="만든 그림" />
         ) : (
           <div className="im-placeholder">
-            <span className="im-ph-emoji">🖼️</span>
+            {status === "blocked" ? (
+              <span
+                className="im-ph-robot"
+                dangerouslySetInnerHTML={{ __html: robotHead("sad") }}
+              />
+            ) : (
+              <span className="im-ph-emoji">🖼️</span>
+            )}
             <p>{msg || "무엇을 그릴지 알려 주면 내가 그려 줄게!"}</p>
           </div>
         )}

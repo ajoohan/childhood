@@ -3007,3 +3007,6 @@ input::placeholder { color: #6b7aa6 !important; }
 
 /* 컨페티 컨테이너 기준점 */
 .kids-home, .missions { position: relative; }
+
+.im-ph-robot { display: block; width: 96px; margin: 0 auto 10px; }
+.im-ph-robot .rm-svg { width: 100%; height: auto; }
