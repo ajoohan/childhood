@@ -4,6 +4,19 @@
   box-sizing: border-box;
 }
 
+/* 넥슨 배찌체 (무료·상업용 허용, 웹 임베딩 가능) — CDN 다중 폴백 */
+@font-face {
+  font-family: "NEXON Bazzi";
+  src:
+    url("https://cdn.jsdelivr.net/gh/webfontworld/NEXONGothic/NEXONBazzi.woff2") format("woff2"),
+    url("https://cdn.jsdelivr.net/gh/webfontworld/NEXONGothic/NEXONBazzi.woff") format("woff"),
+    url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/Bazzi.woff") format("woff"),
+    url("https://cdn.jsdelivr.net/gh/fontbee/font@main/Nexon/Bazzi.woff") format("woff");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* 다크 "게임 모드" 팔레트 (네온) */
   --bg: #0B1030;
@@ -24,7 +37,7 @@
 }
 
 body {
-  font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  font-family: "NEXON Bazzi", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   background:
     radial-gradient(1100px 620px at 50% -8%, #1b2c66 0%, transparent 62%),
     linear-gradient(180deg, #0C1234 0%, #080C22 100%);
