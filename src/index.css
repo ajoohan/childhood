@@ -5,42 +5,58 @@
 }
 
 :root {
-  --bg: #FBE7DD;
-  --header: #ffd166;
-  --bot-bubble: #ffffff;
-  --user-bubble: #8fd0f5;
-  --text: #3a3226;
-  --accent: #FF6A3D;
-  --pink: #ff5d8f;
-  --sky: #aee3ff;
-  --grass: #8fca57;
+  /* 다크 "게임 모드" 팔레트 (네온) */
+  --bg: #0B1030;
+  --surface: #172147;
+  --surface-2: #1E2A55;
+  --line: rgba(120, 180, 255, 0.18);
+  --neon: #37E6FF; /* 시안 */
+  --neon2: #A46BFF; /* 퍼플 */
+  --header: #172147;
+  --bot-bubble: #1E2A55;
+  --user-bubble: #2f6bff;
+  --text: #EAF0FF;
+  --muted: #9AA8D0;
+  --accent: #FF7A3D; /* 오렌지 (Повысить/Открыть 버튼 톤) */
+  --pink: #FF5CC8;
+  --sky: #37E6FF;
+  --grass: #6EE7A0;
 }
 
 body {
   font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  background: linear-gradient(180deg, #d6f0ff 0%, #eef8ff 22%, var(--bg) 55%);
+  background:
+    radial-gradient(1100px 620px at 50% -8%, #1b2c66 0%, transparent 62%),
+    linear-gradient(180deg, #0C1234 0%, #080C22 100%);
   color: var(--text);
+  min-height: 100dvh;
 }
 
-/* 수채화 종이 질감 — 전체에 은은한 그레인 오버레이 */
-.app::after {
+/* 게임풍 원근 그리드 오버레이 */
+.app::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 60;
-  opacity: 0.07;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 0;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(rgba(90, 160, 255, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(90, 160, 255, 0.09) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 100%);
 }
 
 .app {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100dvh;
   max-width: 720px;
   margin: 0 auto;
   background: transparent;
+  z-index: 1;
 }
 
 .screens {
@@ -1025,12 +1041,11 @@ body {
   color: #fff;
 }
 
-/* ═════════════ Kids Zone — 밝은 아동 친화 테마 ═════════════ */
-body { background: #FBE7DD; }
+/* ═════════════ Kids Zone ═════════════ */
 
 .kids-home {
   display: flex; flex-direction: column; height: 100%;
-  overflow-y: auto; padding: 16px 16px 20px; background: #FBE7DD;
+  overflow-y: auto; padding: 16px 16px 20px;
 }
 
 .home-hd { display: flex; align-items: center; gap: 12px; padding: 6px 4px 14px; }
@@ -2595,3 +2610,127 @@ body { background: #FBE7DD; }
 }
 .celebrate h2 { margin-top: 16px; font-size: 24px; font-weight: 800; color: var(--accent); }
 .celebrate p { margin-top: 8px; font-size: 15px; line-height: 1.5; color: #4a3d30; }
+
+/* ============================================================
+   DARK GAME THEME — 다크 네온 "게임 모드" 오버라이드
+   (사행성 요소 없음: 룰렛·루트박스·젬구매 미포함)
+   ============================================================ */
+
+/* 화면 컨테이너는 투명 → 남색 배경/그리드가 비침 */
+.kids-home, .home-screen, .splash, .ob, .ob-loading, .ob-paywall,
+.voice-mode, .missions, .decor, .collection, .collection.journal,
+.guard-screen, .chat-screen, .chat, .session {
+  background: transparent !important;
+}
+
+/* 기본 텍스트/제목 → 밝게 */
+.hd-hi b, .mb-hd b, .jhd-title b, .guard-card h3, .ob-body h1, .ob-copy h1,
+.splash-copy h1, .voice-status, .mission-modal h2, .celebrate h2, .pin-card h2,
+.sparks-hd b, .mb-body b, .coll-body b, .ob-pw-title, .mb-att-body b,
+.sw-body b, .vo-body b, .ds-name, .rc-title, .bt-title, .lc-title,
+.ob-field input, .ob-plan-name, .ob-plan-price, .prof-row > span,
+.prof-interests-label, .mr-title, .sparks-count b, .mb-balance, .decor-balance {
+  color: var(--text) !important;
+}
+.hd-hi small, .mb-hd small, .jhd-title small, .guard-hint, .ob-sub, .ob-pw-sub,
+.splash-copy p, .voice-said, .sw-body small, .vo-body small, .coll-preview,
+.usage-summary, .guard-empty, .mb-att-body small, .mb-progress > span,
+.sparks-hd small, .sparks-note, .decor-hint, .journal-hint, .ob-pw-note,
+.pin-sub, .polaroid-date, .mb-body small, .celebrate p, .mission-modal p,
+.ai-note, .voice-note, .ob-safe-card, .guard-info li, .alert-tip, .alert-meta {
+  color: var(--muted) !important;
+}
+
+/* 카드/시트/모달 → 다크 표면 + 네온 라인 + 글로우 */
+.parent-banner, .guard-card, .act-card, .coll-item, .mb-item, .mb-attend.done,
+.sub-card, .ob-field, .ob-safe-card, .ob-pw-feat, .ob-pw-review, .sparks-way,
+.voice-opt, .sheet, .pin-card, .mission-modal, .celebrate, .modal, .live-stt,
+.voice-reply, .ob-plan, .ob-pw-faq details, .ask-bar, .age-opt, .sub-card {
+  background: var(--surface) !important;
+  color: var(--text);
+  border: 1px solid var(--line);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.ob-plan.on, .voice-opt.on, .age-opt.on {
+  border-color: var(--neon);
+  box-shadow: 0 0 0 1px var(--neon), 0 0 18px rgba(55, 230, 255, 0.35);
+}
+
+/* 헤더/상단바 */
+.home-hd, .mb-hd, .journal-hd, .top-bar, .header, .voice-top, .decor-top,
+.ob-top, .splash-actions, .ob-cta, .ob-pw-cta, .voice-controls, .composer {
+  background: transparent !important;
+}
+.star-badge, .mb-balance, .decor-balance, .sparks-count {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--line);
+  color: var(--neon) !important;
+  box-shadow: 0 0 14px rgba(55, 230, 255, 0.25);
+}
+
+/* 배지·칩 */
+.age-switch .age-opt, .ob-chip, .prof-chip, .decor-tab, .ma-emoji, .voice-pick {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line);
+}
+.ob-chip.on, .prof-chip.on, .decor-tab.on, .ma-emoji.on {
+  background: linear-gradient(180deg, #ff9350, var(--accent)) !important;
+  color: #fff !important;
+  border-color: transparent;
+  box-shadow: 0 0 16px rgba(255, 122, 61, 0.5);
+}
+
+/* 입력/셀렉트 */
+input, select, textarea,
+.ob-field input, .ma-row input, .ma-row select, .prof-row input,
+.limit-row input, .composer input, .pin-forgot-input, .gate-q + input {
+  background: #0E1638 !important;
+  color: var(--text) !important;
+  border-color: var(--line) !important;
+}
+input::placeholder { color: #6b7aa6 !important; }
+
+/* 주요 버튼 — 글로시 네온 */
+.ob-primary, .splash-primary, .mm-yes, .mb-do, .guard-btn:not(.danger),
+.sw-go, .ask-btn, .mb-attend:not(.done) {
+  background: linear-gradient(180deg, #FF9350 0%, #FF6A2A 100%) !important;
+  color: #fff !important;
+  border: none;
+  box-shadow: 0 8px 22px rgba(255, 110, 45, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+}
+.mm-later, .ma-row select { background: var(--surface-2) !important; color: var(--text) !important; }
+
+/* 마이크 버튼 네온 */
+.mic-btn, .voice-mic { box-shadow: 0 10px 26px rgba(255, 110, 45, 0.5), 0 0 0 3px rgba(255,255,255,.06); }
+
+/* 하단 탭바 — 글래스 + 네온 액티브 */
+.tab-bar {
+  background: rgba(16, 22, 52, 0.94) !important;
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+}
+.tab { color: var(--muted) !important; }
+.tab.active { color: var(--neon) !important; }
+
+/* 진행바 트랙 */
+.ob-progress, .mb-progress-bar, .ob-load-bar { background: #26315e !important; }
+
+/* 채팅 말풍선 */
+.bubble { background: var(--surface-2) !important; color: var(--text) !important; border: 1px solid var(--line); }
+.message.user .bubble { background: linear-gradient(180deg, #3f7bff, #2f6bff) !important; color: #fff !important; }
+
+/* 그레인 오버레이 제거(다크에선 불필요) */
+.app::after { display: none; }
+
+/* 폴라로이드는 흰 프레임 유지(사진 느낌) — 대비를 위해 살짝 유지 */
+.polaroid { background: #f4f0e6 !important; }
+.polaroid-cap { color: #2b2117 !important; }
+
+/* 미션/꾸미기 강조 네온 라인 */
+.mb-decor { box-shadow: 0 8px 22px rgba(120, 90, 220, 0.5), inset 0 1px 0 rgba(255,255,255,.15) !important; }
+.decor-stage { box-shadow: inset 0 0 24px rgba(0,0,0,.35), 0 0 0 1px var(--line) !important; }
+.decor-slot { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.18) !important; }
+.decor-slot.filled { background: rgba(255,255,255,0.1) !important; }
+.ds-name { color: #dfe6ff !important; }
