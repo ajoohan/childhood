@@ -42,7 +42,58 @@ export default function VoiceMode({
   const [lastSaid, setLastSaid] = useState("");
   const [reply, setReply] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [recording, setRecording] = useState(false);
   const busyRef = useRef(false);
+  const recRef = useRef(null);
+
+  // 브라우저 음성인식 미지원 기기 → 녹음 후 서버 STT로 받아쓰기 (폴백)
+  async function toggleRecord() {
+    if (recording) {
+      try {
+        recRef.current && recRef.current.stop();
+      } catch {}
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      const chunks = [];
+      mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      mr.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setRecording(false);
+        setStatus("thinking");
+        try {
+          const blob = new Blob(chunks, { type: mr.mimeType || "audio/webm" });
+          const buf = await blob.arrayBuffer();
+          let bin = "";
+          const bytes = new Uint8Array(buf);
+          for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+          const b64 = btoa(bin);
+          const res = await fetch("/api/transcribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ audio: b64, mime: blob.type }),
+          });
+          const j = await res.json().catch(() => ({}));
+          if (j.text) handleSpeech(j.text);
+          else {
+            setStatus("idle");
+            setLastSaid(j.error || "받아쓰기가 아직 준비 중이에요.");
+          }
+        } catch {
+          setStatus("idle");
+          setLastSaid("받아쓰기에 실패했어요.");
+        }
+      };
+      recRef.current = mr;
+      mr.start();
+      setRecording(true);
+      setStatus("idle");
+    } catch {
+      setLastSaid("마이크를 사용할 수 없어요. 권한을 확인해 주세요.");
+    }
+  }
 
   const speech = useSpeech({
     onResult: (t) => handleSpeech(t),
@@ -161,9 +212,15 @@ export default function VoiceMode({
             🎤
           </button>
         ) : (
-          <p className="voice-unsupported">
-            이 브라우저는 음성 인식을 지원하지 않아요. 활동 화면에서 글로 이야기해 봐요!
-          </p>
+          <button
+            className={`voice-mic ${recording ? "on" : ""}`}
+            onClick={toggleRecord}
+            disabled={status === "thinking" || status === "speaking"}
+            aria-label="녹음해서 말하기"
+            title="녹음해서 말하기"
+          >
+            {recording ? "⏹️" : "🎤"}
+          </button>
         )}
       </div>
 

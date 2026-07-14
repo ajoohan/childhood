@@ -11,6 +11,7 @@ import PinGate from "./components/PinGate.jsx";
 import SparksSheet from "./components/SparksSheet.jsx";
 import MissionBoard from "./screens/MissionBoard.jsx";
 import DecorRoom from "./screens/DecorRoom.jsx";
+import ImageMaker from "./screens/ImageMaker.jsx";
 import { INTERESTS } from "./lib/data.js";
 import { REWARD, allMissions } from "./lib/missions.js";
 import { loadStore, persist, userMsgCount, rollDay } from "./lib/store.js";
@@ -215,6 +216,8 @@ export default function App() {
             onPickActivity={openActivity}
             onParent={openParent}
             onStars={() => setSparksOpen(true)}
+            onCollection={() => setView({ name: "collection" })}
+            onImageMaker={() => setView({ name: "image" })}
           />
         )}
 
@@ -281,6 +284,13 @@ export default function App() {
             onComplete={completeMission}
             onClaimAttendance={claimAttendance}
             onDecor={() => setView({ name: "decor" })}
+          />
+        )}
+
+        {zone === "kids" && view.name === "image" && (
+          <ImageMaker
+            enabled={!!data.features?.image}
+            onBack={() => setView({ name: "home" })}
           />
         )}
 

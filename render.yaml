@@ -20,3 +20,11 @@ services:
         value: "200"
       - key: RL_GLOBAL_PER_DAY
         value: "3000"
+      # (선택) 서버 음성 인식 — 값이 있으면 브라우저 미지원 기기에서도 받아쓰기 작동
+      # OpenAI Whisper 호환. 미설정 시 "준비 중"으로 안전 비활성.
+      - key: STT_API_KEY
+        sync: false
+      # (선택) 그림 만들기 — 이미지 생성 API 키. OpenAI Images 호환.
+      # 미설정 시 "준비 중". 프롬프트는 항상 서버에서 안전 분류 후 생성.
+      - key: IMAGE_API_KEY
+        sync: false

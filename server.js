@@ -8,11 +8,28 @@ const app = express();
 // 호스팅(Render 등) 프록시 뒤에서 실제 접속 IP를 인식하기 위함
 app.set("trust proxy", 1);
 
-app.use(express.json({ limit: "100kb" }));
+// 오디오 업로드(받아쓰기)만 큰 본문 허용, 나머지는 100kb로 남용 방지
+app.use((req, res, next) =>
+  req.path === "/api/transcribe"
+    ? next()
+    : express.json({ limit: "100kb" })(req, res, next)
+);
 // Vite 빌드 결과물(React SPA)을 서빙한다. `npm run build` → dist/
 app.use(express.static("dist"));
 
 const PORT = process.env.PORT || 3000;
+
+// ── 선택 기능(외부 API 키 필요). 키가 없으면 "준비 중"으로 안전하게 비활성 ──
+// 서버 STT(브라우저 미지원 기기 대비) — OpenAI Whisper 호환 엔드포인트
+const STT_API_URL =
+  process.env.STT_API_URL || "https://api.openai.com/v1/audio/transcriptions";
+const STT_API_KEY = process.env.STT_API_KEY;
+const STT_MODEL = process.env.STT_MODEL || "whisper-1";
+// 이미지 생성(그림 만들기) — OpenAI Images 호환 엔드포인트
+const IMAGE_API_URL =
+  process.env.IMAGE_API_URL || "https://api.openai.com/v1/images/generations";
+const IMAGE_API_KEY = process.env.IMAGE_API_KEY;
+const IMAGE_MODEL = process.env.IMAGE_MODEL || "gpt-image-1";
 
 // ── 요청 제한 (공개 배포 시 API 키 남용·비용 폭주 방지) ──
 // 환경변수로 조절 가능. 단일 인스턴스 기준 인메모리 카운터.
@@ -288,7 +305,76 @@ app.get("/api/activities", (req, res) => {
       ages: a.ages,
       greeting: a.greeting,
     })),
+    // 클라이언트가 선택 기능 활성 여부를 알 수 있게 노출
+    features: { stt: !!STT_API_KEY, image: !!IMAGE_API_KEY },
   });
+});
+
+// 서버 음성 인식(받아쓰기) — 브라우저 Web Speech 미지원 기기 대비 폴백
+app.post(
+  "/api/transcribe",
+  rateLimit,
+  express.json({ limit: "6mb" }),
+  async (req, res) => {
+    if (!STT_API_KEY)
+      return res.status(503).json({ pending: true, error: "음성 인식(서버)은 준비 중이에요." });
+    const { audio, mime } = req.body || {};
+    if (!audio) return res.status(400).json({ error: "오디오가 없어요." });
+    try {
+      const bytes = Buffer.from(audio, "base64");
+      const form = new FormData();
+      form.append("file", new Blob([bytes], { type: mime || "audio/webm" }), "clip.webm");
+      form.append("model", STT_MODEL);
+      form.append("language", "ko");
+      const r = await fetch(STT_API_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${STT_API_KEY}` },
+        body: form,
+      });
+      if (!r.ok) throw new Error("STT " + r.status);
+      const j = await r.json();
+      res.json({ text: (j.text || "").trim() });
+    } catch (e) {
+      console.error("transcribe:", e.message);
+      res.status(502).json({ error: "받아쓰기에 실패했어요. 다시 해볼까?" });
+    }
+  }
+);
+
+// 이미지 생성(그림 만들기) — 프롬프트를 반드시 안전 분류 후, 아동 안전 래핑
+app.post("/api/image", rateLimit, async (req, res) => {
+  const prompt = (req.body?.prompt || "").toString().slice(0, 300).trim();
+  if (!prompt) return res.status(400).json({ error: "무엇을 그릴지 알려줘!" });
+
+  const category = await classifySafety(prompt);
+  if (category !== "safe")
+    return res.json({ safety: category, error: "그건 그릴 수 없어. 다른 걸 그려 볼까? ✨" });
+  if (!IMAGE_API_KEY)
+    return res.status(503).json({ pending: true, error: "그림 만들기는 준비 중이에요." });
+
+  try {
+    const safePrompt =
+      `어린이용의 안전하고 밝고 귀여운 그림. 폭력·공포·부적절한 요소 없이, ` +
+      `동화책 일러스트, 파스텔 색감, 다정한 분위기로: ${prompt}`;
+    const r = await fetch(IMAGE_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${IMAGE_API_KEY}` },
+      body: JSON.stringify({ model: IMAGE_MODEL, prompt: safePrompt, size: "1024x1024", n: 1 }),
+    });
+    if (!r.ok) throw new Error("IMG " + r.status);
+    const j = await r.json();
+    const d = j.data && j.data[0];
+    const url = d?.url
+      ? d.url
+      : d?.b64_json
+        ? `data:image/png;base64,${d.b64_json}`
+        : null;
+    if (!url) throw new Error("no image in response");
+    res.json({ url });
+  } catch (e) {
+    console.error("image:", e.message);
+    res.status(502).json({ error: "그림을 만들지 못했어요. 다시 해볼까?" });
+  }
 });
 
 app.post("/api/chat", rateLimit, async (req, res) => {

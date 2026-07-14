@@ -2756,3 +2756,62 @@ input::placeholder { color: #6b7aa6 !important; }
 .decor-slot { background: rgba(255,255,255,0.06) !important; border-color: rgba(255,255,255,0.18) !important; }
 .decor-slot.filled { background: rgba(255,255,255,0.1) !important; }
 .ds-name { color: #dfe6ff !important; }
+
+/* ───────────── 홈 메뉴 드롭다운 ───────────── */
+.hd-menu-wrap { position: relative; flex-shrink: 0; }
+.hd-menu-btn {
+  width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--surface-2); color: var(--text); font-size: 20px; cursor: pointer;
+}
+.hd-menu-scrim { position: fixed; inset: 0; z-index: 40; }
+.hd-menu {
+  position: absolute; top: 48px; left: 0; z-index: 41; width: 210px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  padding: 8px; box-shadow: 0 14px 34px rgba(0,0,0,.5);
+}
+.hd-menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; border: none;
+  background: none; color: var(--text); font-family: inherit; font-size: 15px;
+  font-weight: 700; padding: 12px 12px; border-radius: 10px; cursor: pointer; text-align: left;
+}
+.hd-menu-item:active { background: var(--surface-2); }
+.hd-menu-item > span { font-size: 19px; }
+
+/* ───────────── 그림 만들기 ───────────── */
+.imgmaker { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 14px 16px 20px; }
+.im-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.im-title { font-size: 18px; font-weight: 800; color: var(--text); }
+.im-stage {
+  flex: 1; min-height: 0; display: grid; place-items: center;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 22px;
+  padding: 20px; overflow: hidden;
+}
+.im-result { max-width: 100%; max-height: 100%; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.im-placeholder { text-align: center; color: var(--muted); }
+.im-ph-emoji { font-size: 60px; display: block; margin-bottom: 12px; }
+.im-placeholder p { font-size: 15.5px; line-height: 1.55; }
+.im-note { display: block; margin-top: 10px; font-size: 12.5px; color: #8a97c4; }
+.im-loading { text-align: center; color: var(--text); }
+.im-spinner {
+  width: 46px; height: 46px; margin: 0 auto 14px; border-radius: 50%;
+  border: 5px solid var(--surface-2); border-top-color: var(--neon); animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.im-ideas { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 10px; }
+.im-idea {
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--text);
+  border-radius: 999px; padding: 9px 14px; font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer;
+}
+.im-bar { display: flex; gap: 10px; }
+.im-bar input {
+  flex: 1; min-width: 0; background: #0E1638; color: var(--text); border: 1px solid var(--line);
+  border-radius: 16px; padding: 14px 16px; font-family: inherit; font-size: 16px; outline: none;
+}
+.im-bar input:focus { border-color: var(--neon); }
+.im-draw {
+  flex-shrink: 0; border: none; border-radius: 16px; padding: 14px 18px; font-family: inherit;
+  font-size: 16px; font-weight: 800; color: #fff; cursor: pointer; white-space: nowrap;
+  background: linear-gradient(180deg, #FF9350, #FF6A2A);
+  box-shadow: 0 8px 20px rgba(255,110,45,.45);
+}
+.im-draw:disabled { opacity: 0.6; }

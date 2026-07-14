@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   HELPER,
   recommendActivities,
@@ -30,8 +31,17 @@ export default function KidsHome({
   onPickActivity,
   onParent,
   onStars,
+  onCollection,
+  onImageMaker,
 }) {
   const hi = name ? `안녕, ${name}! 👋` : "안녕! 👋";
+  const [menuOpen, setMenuOpen] = useState(false);
+  const MENU = [
+    { icon: "🏅", label: "성취 · 별 모으기", go: onStars },
+    { icon: "🖼️", label: "그림 만들기", go: onImageMaker },
+    { icon: "🕘", label: "내 기록", go: onCollection },
+    { icon: "✏️", label: "프로필 수정", go: onParent },
+  ];
   const bigTiles = categories.filter((c) => c.id === "story" || c.id === "heart");
   const learn = activities.filter(
     (a) => a.category === "learn" && a.ages.includes(ageMode)
@@ -44,6 +54,34 @@ export default function KidsHome({
   return (
     <section className="kids-home">
       <header className="home-hd">
+        <div className="hd-menu-wrap">
+          <button
+            className="hd-menu-btn"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="메뉴"
+          >
+            ☰
+          </button>
+          {menuOpen && (
+            <>
+              <div className="hd-menu-scrim" onClick={() => setMenuOpen(false)} />
+              <div className="hd-menu">
+                {MENU.map((m) => (
+                  <button
+                    key={m.label}
+                    className="hd-menu-item"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      m.go && m.go();
+                    }}
+                  >
+                    <span>{m.icon}</span> {m.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
         <span
           className="hd-ava"
           dangerouslySetInnerHTML={{ __html: HELPER }}
