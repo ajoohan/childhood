@@ -33,12 +33,13 @@ export default function KidsHome({
   onStars,
   onCollection,
   onImageMaker,
+  imageEnabled,
 }) {
   const hi = name ? `안녕, ${name}! 👋` : "안녕! 👋";
   const [menuOpen, setMenuOpen] = useState(false);
   const MENU = [
     { icon: "🏅", label: "성취 · 별 모으기", go: onStars },
-    { icon: "🖼️", label: "그림 만들기", go: onImageMaker },
+    { icon: "🖼️", label: "그림 만들기", go: onImageMaker, pending: !imageEnabled },
     { icon: "🕘", label: "내 기록", go: onCollection },
     { icon: "✏️", label: "프로필 수정", go: onParent },
   ];
@@ -75,7 +76,9 @@ export default function KidsHome({
                       m.go && m.go();
                     }}
                   >
-                    <span>{m.icon}</span> {m.label}
+                    <span>{m.icon}</span>
+                    <span className="hd-menu-label">{m.label}</span>
+                    {m.pending && <span className="hd-menu-tag">준비 중</span>}
                   </button>
                 ))}
               </div>

@@ -218,6 +218,7 @@ export default function App() {
             onStars={() => setSparksOpen(true)}
             onCollection={() => setView({ name: "collection" })}
             onImageMaker={() => setView({ name: "image" })}
+            imageEnabled={!!data.features?.image}
           />
         )}
 
