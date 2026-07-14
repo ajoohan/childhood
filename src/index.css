@@ -2829,3 +2829,134 @@ input::placeholder { color: #6b7aa6 !important; }
   color: #ffd7a8; background: rgba(255,122,61,.18); border: 1px solid rgba(255,122,61,.5);
   padding: 5px 12px; border-radius: 999px;
 }
+
+/* ============================================================
+   UI DETAIL POLISH — 게임풍 디테일 업그레이드
+   ============================================================ */
+
+/* 배경 앰비언스: 은은히 떠다니는 컬러 글로우 오브 */
+.app::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+  background:
+    radial-gradient(240px 240px at 10% 14%, rgba(55, 230, 255, 0.10), transparent 70%),
+    radial-gradient(300px 300px at 92% 26%, rgba(164, 107, 255, 0.13), transparent 70%),
+    radial-gradient(260px 260px at 72% 92%, rgba(255, 122, 61, 0.09), transparent 70%);
+  animation: amb-float 16s ease-in-out infinite alternate;
+}
+@keyframes amb-float {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(0, -14px, 0); }
+}
+
+/* 컬러 타일 광택 — 대각선 글로시 하이라이트 + 깊이 */
+.big-tile, .learn-card, .rec-card, .mb-attend:not(.done) {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.big-tile::after, .learn-card::after, .rec-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.08) 20%,
+    transparent 42%
+  );
+  mix-blend-mode: soft-light;
+}
+.big-tile, .learn-card, .rec-card {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -10px 20px rgba(0, 0, 0, 0.12);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.big-tile:active, .learn-card:active, .rec-card:active {
+  transform: translateY(2px) scale(0.985);
+}
+
+/* 마스코트 아바타 네온 글로우 */
+.hd-ava { filter: drop-shadow(0 0 10px rgba(55, 230, 255, 0.45)); }
+
+/* HUD 별 배지 — 살짝 반짝임 */
+.star-badge, .mb-balance, .decor-balance {
+  background: linear-gradient(180deg, #202c58, #172147) !important;
+}
+.star-badge { animation: hud-pulse 3.2s ease-in-out infinite; }
+@keyframes hud-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(55, 230, 255, 0.22); }
+  50% { box-shadow: 0 0 18px rgba(55, 230, 255, 0.45); }
+}
+
+/* 하단 탭 활성 인디케이터 */
+.tab { position: relative; }
+.tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--neon);
+  box-shadow: 0 0 10px var(--neon);
+}
+
+/* 프로그레스 바 반짝임 */
+.mb-progress-bar > i, .ob-progress > i {
+  position: relative;
+  overflow: hidden;
+}
+.mb-progress-bar > i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: bar-shine 2.2s ease-in-out infinite;
+}
+@keyframes bar-shine { to { transform: translateX(200%); } }
+
+/* 미세 인터랙션 — 눌리는 카드/칩 */
+.act-card, .coll-item, .sparks-way, .voice-opt, .parent-banner, .ask-bar,
+.mb-do, .sw-go, .ob-chip, .prof-chip, .decor-tab, .im-idea, .hd-menu-item {
+  transition: transform 0.1s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+.act-card:active, .coll-item:active, .sparks-way:active, .voice-opt:active,
+.parent-banner:active, .ask-bar:active { transform: scale(0.98); }
+.mb-do:active, .sw-go:active { transform: scale(0.94); }
+
+/* 주요 버튼 상단 광택 강화 */
+.ob-primary, .splash-primary, .mm-yes.wide, .im-draw, .mb-decor {
+  position: relative;
+  overflow: hidden;
+}
+.ob-primary::before, .splash-primary::before, .mm-yes.wide::before,
+.im-draw::before, .mb-decor::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 46%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent);
+  pointer-events: none;
+}
+
+/* 세션 말풍선 살짝 깊이 */
+.bubble { box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
