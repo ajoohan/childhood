@@ -3010,3 +3010,11 @@ input::placeholder { color: #6b7aa6 !important; }
 
 .im-ph-robot { display: block; width: 96px; margin: 0 auto 10px; }
 .im-ph-robot .rm-svg { width: 100%; height: auto; }
+
+/* 미션 보드 반응형 마스코트 */
+.mb-mascot { width: 46px; flex-shrink: 0; display: block; }
+.mb-mascot .rm-svg { width: 100%; height: auto; }
+.mb-hd > div:not(.mb-balance) { flex: 1; min-width: 0; }
+/* 별 모으기 시트 마스코트 */
+.sparks-robot { width: 40px; flex-shrink: 0; display: block; }
+.sparks-robot .rm-svg { width: 100%; height: auto; }

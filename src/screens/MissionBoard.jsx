@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { allMissions, praiseFor, REWARD } from "../lib/missions.js";
-import { robotMascot } from "../lib/mascot.js";
+import { robotMascot, robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
 
 // 오늘의 미션 보드 — 미션 수행 → AI 대화형 인증(칭찬) → 별 지급 → 꾸미기로 소모
@@ -36,6 +36,14 @@ export default function MissionBoard({
     <section className="missions">
       {burst && <Confetti count={60} />}
       <header className="mb-hd">
+        <span
+          className="mb-mascot"
+          dangerouslySetInnerHTML={{
+            __html: robotHead(
+              rewards.allClear ? "proud" : doneCount > 0 ? "excited" : "happy"
+            ),
+          }}
+        />
         <div>
           <b>🎯 오늘의 미션</b>
           <small>{name ? `${name}야, 오늘도 도전!` : "오늘도 도전해 볼까?"}</small>

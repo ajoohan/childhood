@@ -171,7 +171,7 @@ export default function Session({
 
       <main className="chat" ref={chatRef}>
         <div className="ai-note">🤖 나는 AI 도우미예요. 진짜 사람은 아니에요!</div>
-        <Bubble role="bot">{activity.greeting}</Bubble>
+        <Bubble role="bot" expr="love">{activity.greeting}</Bubble>
         {history.map((m, i) => (
           <Bubble key={i} role={m.role === "user" ? "user" : "bot"}>
             {m.content}

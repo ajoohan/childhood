@@ -1,3 +1,5 @@
+import { robotHead } from "../lib/mascot.js";
+
 // 별(Sparks) 모으기 시트 — 소비/상점 없이 '격려'만. 활동을 하면 별이 쌓여요.
 const WAYS = [
   { id: "story_listen", emoji: "📖", label: "이야기 들어보기", tip: "동화를 듣고 이야기해요" },
@@ -13,7 +15,10 @@ export default function SparksSheet({ stars, activities, onGo, onClose }) {
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-grip" />
         <div className="sparks-hd">
-          <span className="sparks-star">⭐</span>
+          <span
+            className="sparks-robot"
+            dangerouslySetInnerHTML={{ __html: robotHead("proud") }}
+          />
           <div>
             <b>별 모으기</b>
             <small>재미있게 놀면 별이 쌓여요</small>

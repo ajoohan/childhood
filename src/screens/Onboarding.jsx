@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { INTERESTS, ROBOT_HEAD, SPLASH_DECO } from "../lib/data.js";
+import { INTERESTS, SPLASH_DECO } from "../lib/data.js";
+import { robotHead } from "../lib/mascot.js";
 import GateDialog from "../components/GateDialog.jsx";
 
 const AGES = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -84,7 +85,7 @@ export default function Onboarding({ onDone }) {
       <section className="ob ob-loading">
         <span
           className="ob-load-robot"
-          dangerouslySetInnerHTML={{ __html: ROBOT_HEAD }}
+          dangerouslySetInnerHTML={{ __html: robotHead("excited") }}
         />
         <h1>
           {who}의 경험을
@@ -132,7 +133,7 @@ export default function Onboarding({ onDone }) {
             />
             <span
               className="ob-pw-robot"
-              dangerouslySetInnerHTML={{ __html: ROBOT_HEAD }}
+              dangerouslySetInnerHTML={{ __html: robotHead("love") }}
             />
           </div>
 

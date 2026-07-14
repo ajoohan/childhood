@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { HELPER } from "../lib/data.js";
 import { THEMES, themeById, isThemeComplete } from "../lib/decor.js";
+import { robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
 
 // 꾸미기 방 — 별을 소모해 오브젝트 배치 (로열매치식). 테마 완성 시 기념 사진.
@@ -143,7 +143,7 @@ export default function DecorRoom({
               >
                 <span
                   className="celebrate-robot"
-                  dangerouslySetInnerHTML={{ __html: HELPER }}
+                  dangerouslySetInnerHTML={{ __html: robotHead("excited") }}
                 />
                 <div className="celebrate-objs">
                   {theme.slots.map((s) => (
