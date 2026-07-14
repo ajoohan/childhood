@@ -20,11 +20,10 @@ services:
         value: "200"
       - key: RL_GLOBAL_PER_DAY
         value: "3000"
-      # (선택) 서버 음성 인식 — 값이 있으면 브라우저 미지원 기기에서도 받아쓰기 작동
-      # OpenAI Whisper 호환. 미설정 시 "준비 중"으로 안전 비활성.
-      - key: STT_API_KEY
-        sync: false
-      # (선택) 그림 만들기 — 이미지 생성 API 키. OpenAI Images 호환.
-      # 미설정 시 "준비 중". 프롬프트는 항상 서버에서 안전 분류 후 생성.
-      - key: IMAGE_API_KEY
-        sync: false
+      #
+      # (선택 기능) 그림 만들기 / 서버 음성 인식은 기본적으로 "준비 중"으로
+      # 비활성 상태이며 별도 설정이 필요 없습니다. 나중에 켜고 싶으면 Render
+      # 대시보드 > 서비스 > Environment 에서 아래 키를 "직접 추가"하세요.
+      # (Blueprint에는 넣지 않아 배포 시 입력을 요구하지 않습니다.)
+      #   IMAGE_API_KEY = 이미지 생성 API 키 (OpenAI Images 호환) → 그림 만들기 켜짐
+      #   STT_API_KEY   = 음성 인식 API 키 (OpenAI Whisper 호환) → 서버 받아쓰기 켜짐
