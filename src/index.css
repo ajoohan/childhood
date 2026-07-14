@@ -8,8 +8,6 @@
 @font-face {
   font-family: "NEXON Bazzi";
   src:
-    url("https://cdn.jsdelivr.net/gh/webfontworld/NEXONGothic/NEXONBazzi.woff2") format("woff2"),
-    url("https://cdn.jsdelivr.net/gh/webfontworld/NEXONGothic/NEXONBazzi.woff") format("woff"),
     url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/Bazzi.woff") format("woff"),
     url("https://cdn.jsdelivr.net/gh/fontbee/font@main/Nexon/Bazzi.woff") format("woff");
   font-weight: 400 800;
