@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { allMissions, praiseFor, REWARD } from "../lib/missions.js";
+import { robotMascot } from "../lib/mascot.js";
+import Confetti from "../components/Confetti.jsx";
 
 // 오늘의 미션 보드 — 미션 수행 → AI 대화형 인증(칭찬) → 별 지급 → 꾸미기로 소모
 export default function MissionBoard({
@@ -117,8 +119,18 @@ export default function MissionBoard({
       {/* 칭찬 + 별 지급 모달 */}
       {praise && (
         <div className="modal-backdrop" onClick={() => setPraise(null)}>
+          <Confetti />
           <div className="mission-modal praise" onClick={(e) => e.stopPropagation()}>
-            <div className="mm-star">⭐</div>
+            <span
+              className="mm-robot"
+              dangerouslySetInnerHTML={{ __html: robotMascot("excited") }}
+            />
+            <div className="star-burst">
+              <span className="mm-star">⭐</span>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <i key={i} className="sb" style={{ "--a": `${i * 45}deg` }} />
+              ))}
+            </div>
             <h2>+{praise.reward} 별!</h2>
             <p>{praise.text}</p>
             <button className="mm-yes wide" onClick={() => setPraise(null)}>

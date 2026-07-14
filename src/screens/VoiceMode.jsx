@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { SPLASH_ROBOT } from "../lib/data.js";
+import { robotMascot } from "../lib/mascot.js";
 import { useSpeech } from "../lib/useSpeech.js";
 
 // 음성 목소리 프리셋 (브라우저 TTS의 pitch/rate로 개성 부여)
@@ -187,7 +187,17 @@ export default function VoiceMode({
       <div className="voice-stage">
         <span
           className={`voice-robot ${status === "speaking" ? "talking" : ""}`}
-          dangerouslySetInnerHTML={{ __html: SPLASH_ROBOT }}
+          dangerouslySetInnerHTML={{
+            __html: robotMascot(
+              status === "thinking"
+                ? "thinking"
+                : status === "speaking"
+                  ? "talking"
+                  : speech.listening
+                    ? "wow"
+                    : "happy"
+            ),
+          }}
         />
         <div className="voice-note">🤖 나는 AI 도우미예요. 진짜 사람은 아니에요!</div>
         <h1 className="voice-status">{statusText}</h1>

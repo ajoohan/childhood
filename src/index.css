@@ -2960,3 +2960,47 @@ input::placeholder { color: #6b7aa6 !important; }
 
 /* 세션 말풍선 살짝 깊이 */
 .bubble { box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+
+/* ============================================================
+   완료 컨페티 · 별 획득 · 캐릭터 표정 애니메이션
+   ============================================================ */
+
+.confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 6; }
+.confetti-p {
+  position: absolute; top: -24px; opacity: 0;
+  animation-name: confetti-fall; animation-timing-function: cubic-bezier(.2,.6,.4,1);
+  animation-fill-mode: forwards;
+}
+@keyframes confetti-fall {
+  0% { transform: translate(0,-10px) rotate(0); opacity: 0; }
+  8% { opacity: 1; }
+  100% { transform: translate(var(--drift), 108vh) rotate(var(--rot)); opacity: .9; }
+}
+
+/* 미션 완료 모달 — 신난 로봇 + 별 버스트 */
+.mm-robot { display: block; width: 118px; margin: -4px auto 0; }
+.mm-robot .rm-svg { width: 100%; height: auto; }
+.star-burst { position: relative; width: 84px; height: 70px; margin: 2px auto 0; display: grid; place-items: center; }
+.star-burst .mm-star { font-size: 56px; z-index: 2; animation: star-pop .5s cubic-bezier(.2,1.4,.4,1); }
+.star-burst .sb {
+  position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px;
+  border-radius: 50%; background: radial-gradient(circle, #FFE79A, #FFB400);
+  transform: rotate(var(--a)) translateY(-6px) scale(0); opacity: 0;
+  animation: sb-out .65s ease-out forwards; animation-delay: .08s;
+}
+@keyframes sb-out {
+  0% { transform: rotate(var(--a)) translateY(-4px) scale(.2); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: rotate(var(--a)) translateY(-48px) scale(1); opacity: 0; }
+}
+
+/* 캐릭터 표정 — 말하는 입 / 안테나 반짝 / 신난 흔들 */
+.rm-svg .rm-mouth { transform-box: fill-box; transform-origin: center; }
+.voice-robot.talking .rm-mouth, .rm-talking .rm-mouth {
+  animation: rm-talk .3s ease-in-out infinite alternate;
+}
+@keyframes rm-talk { from { transform: scaleY(.5); } to { transform: scaleY(1.2); } }
+.rm-svg .rm-antenna { transform-box: fill-box; transform-origin: center; animation: rm-ant 2.4s ease-in-out infinite; }
+@keyframes rm-ant { 0%,100% { opacity: .95; } 50% { opacity: .4; } }
+.rm-excited { animation: rm-bounce 1s ease-in-out infinite; }
+@keyframes rm-bounce { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-6px) rotate(1.5deg); } }

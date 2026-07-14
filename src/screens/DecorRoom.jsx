@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { HELPER } from "../lib/data.js";
 import { THEMES, themeById, isThemeComplete } from "../lib/decor.js";
+import Confetti from "../components/Confetti.jsx";
 
 // 꾸미기 방 — 별을 소모해 오브젝트 배치 (로열매치식). 테마 완성 시 기념 사진.
 export default function DecorRoom({
@@ -131,6 +132,7 @@ export default function DecorRoom({
       {/* 테마 완성 기념 사진 */}
       {celebrate && (
         <div className="modal-backdrop" onClick={() => setCelebrate(false)}>
+          <Confetti count={90} />
           <div className="celebrate" onClick={(e) => e.stopPropagation()}>
             <div className="celebrate-frame">
               <div
