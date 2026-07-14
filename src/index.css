@@ -3004,3 +3004,6 @@ input::placeholder { color: #6b7aa6 !important; }
 @keyframes rm-ant { 0%,100% { opacity: .95; } 50% { opacity: .4; } }
 .rm-excited { animation: rm-bounce 1s ease-in-out infinite; }
 @keyframes rm-bounce { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-6px) rotate(1.5deg); } }
+
+/* 컨페티 컨테이너 기준점 */
+.kids-home, .missions { position: relative; }

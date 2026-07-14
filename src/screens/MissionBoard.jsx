@@ -16,6 +16,14 @@ export default function MissionBoard({
   const doneCount = missions.filter((m) => rewards.doneToday.includes(m.id)).length;
   const [checking, setChecking] = useState(null); // 인증 대기 미션
   const [praise, setPraise] = useState(null); // {text, reward}
+  const [burst, setBurst] = useState(false); // 출석 등 짧은 컨페티
+
+  function claimAttend() {
+    if (rewards.attendance) return;
+    onClaimAttendance();
+    setBurst(true);
+    setTimeout(() => setBurst(false), 2200);
+  }
 
   function confirmDone(m) {
     onComplete(m);
@@ -26,6 +34,7 @@ export default function MissionBoard({
 
   return (
     <section className="missions">
+      {burst && <Confetti count={60} />}
       <header className="mb-hd">
         <div>
           <b>🎯 오늘의 미션</b>
@@ -53,7 +62,7 @@ export default function MissionBoard({
       {/* 출석 + AI 첫인사 (하루 1회 +1) */}
       <button
         className={`mb-attend ${rewards.attendance ? "done" : ""}`}
-        onClick={() => !rewards.attendance && onClaimAttendance()}
+        onClick={claimAttend}
         disabled={rewards.attendance}
       >
         <span className="mb-att-emoji">🌅</span>

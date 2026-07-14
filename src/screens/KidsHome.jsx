@@ -1,9 +1,11 @@
-import { useState } from "react";
-import {
-  HELPER,
-  recommendActivities,
-  interestEmojis,
-} from "../lib/data.js";
+import { useEffect, useState } from "react";
+import { recommendActivities, interestEmojis } from "../lib/data.js";
+import { robotHead } from "../lib/mascot.js";
+import Confetti from "../components/Confetti.jsx";
+
+// 앱 실행 후 홈 첫 진입에서 환영 컨페티를 1회만
+let welcomedThisSession = false;
+const FACE_CYCLE = ["happy", "happy", "wink", "happy", "love", "happy", "proud", "cool"];
 
 const LEARN_GRAD = [
   ["#FFC48A", "#FF8A3D"],
@@ -37,6 +39,26 @@ export default function KidsHome({
 }) {
   const hi = name ? `안녕, ${name}! 👋` : "안녕! 👋";
   const [menuOpen, setMenuOpen] = useState(false);
+  const [face, setFace] = useState("happy");
+  const [welcome, setWelcome] = useState(!welcomedThisSession);
+
+  // 홈 첫 진입 환영 컨페티 (앱 실행당 1회)
+  useEffect(() => {
+    if (welcomedThisSession) return;
+    welcomedThisSession = true;
+    const t = setTimeout(() => setWelcome(false), 2600);
+    return () => clearTimeout(t);
+  }, []);
+
+  // 마스코트 표정 주기적 변화
+  useEffect(() => {
+    let i = 0;
+    const id = setInterval(() => {
+      i = (i + 1) % FACE_CYCLE.length;
+      setFace(FACE_CYCLE[i]);
+    }, 3800);
+    return () => clearInterval(id);
+  }, []);
   const MENU = [
     { icon: "🏅", label: "성취 · 별 모으기", go: onStars },
     { icon: "🖼️", label: "그림 만들기", go: onImageMaker, pending: !imageEnabled },
@@ -54,6 +76,7 @@ export default function KidsHome({
 
   return (
     <section className="kids-home">
+      {welcome && <Confetti count={80} />}
       <header className="home-hd">
         <div className="hd-menu-wrap">
           <button
@@ -87,7 +110,7 @@ export default function KidsHome({
         </div>
         <span
           className="hd-ava"
-          dangerouslySetInnerHTML={{ __html: HELPER }}
+          dangerouslySetInnerHTML={{ __html: robotHead(face) }}
         />
         <div className="hd-hi">
           <b>{hi}</b>
