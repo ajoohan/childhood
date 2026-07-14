@@ -29,7 +29,7 @@
   --bot-bubble: #1E2A55;
   --user-bubble: #2f6bff;
   --text: #EAF0FF;
-  --muted: #9AA8D0;
+  --muted: #B7C2E6;
   --accent: #FF7A3D; /* 오렌지 (Повысить/Открыть 버튼 톤) */
   --pink: #FF5CC8;
   --sky: #37E6FF;
@@ -2718,14 +2718,25 @@ input::placeholder { color: #6b7aa6 !important; }
 /* 마이크 버튼 네온 */
 .mic-btn, .voice-mic { box-shadow: 0 10px 26px rgba(255, 110, 45, 0.5), 0 0 0 3px rgba(255,255,255,.06); }
 
-/* 하단 탭바 — 글래스 + 네온 액티브 */
+/* 하단 탭바 — 글래스 + 네온 액티브 (가독성 강화) */
 .tab-bar {
-  background: rgba(16, 22, 52, 0.94) !important;
+  background: rgba(14, 20, 48, 0.97) !important;
   border-top: 1px solid var(--line);
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
+  padding: 9px 0 14px;
 }
-.tab { color: var(--muted) !important; }
-.tab.active { color: var(--neon) !important; }
+.tab {
+  color: #D3DBF2 !important; /* 비활성도 밝게 */
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  gap: 4px;
+}
+.tab-icon { filter: none !important; opacity: 0.9 !important; font-size: 1.5rem !important; }
+.tab.active {
+  color: var(--neon) !important;
+  text-shadow: 0 0 12px rgba(55, 230, 255, 0.55);
+}
+.tab.active .tab-icon { opacity: 1 !important; }
 
 /* 진행바 트랙 */
 .ob-progress, .mb-progress-bar, .ob-load-bar { background: #26315e !important; }
