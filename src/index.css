@@ -3018,3 +3018,34 @@ input::placeholder { color: #6b7aa6 !important; }
 /* 별 모으기 시트 마스코트 */
 .sparks-robot { width: 40px; flex-shrink: 0; display: block; }
 .sparks-robot .rm-svg { width: 100%; height: auto; }
+
+/* ============================================================
+   레이아웃 견고화 — 폰트 폭 증가/긴 텍스트로 인한 겹침 방지
+   ============================================================ */
+
+/* 콘텐츠·탭바를 배경 앰비언스/그리드 위로 확실히 */
+.screens { position: relative; z-index: 1; }
+.tab-bar { position: relative; z-index: 3; }
+
+/* 홈 헤더: 인사 텍스트는 남는 폭을 쓰고 줄바꿈, 배지/버튼은 안 줄어듦 */
+.home-hd { min-width: 0; }
+.hd-hi { flex: 1; min-width: 0; }
+.hd-hi b { overflow-wrap: anywhere; }
+.hd-menu-wrap, .star-badge, .hd-ava { flex-shrink: 0; }
+
+/* 미션 관리: 긴 미션 제목은 말줄임 */
+.mr-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 인라인 액션 버튼은 줄바꿈 대신 한 줄 유지 */
+.ask-btn, .im-draw, .mb-do, .sw-go, .mm-yes, .mm-later, .splash-primary,
+.ob-primary, .guard-btn { white-space: nowrap; }
+.ask-btn { flex-shrink: 0; }
+
+/* 큰 타일 텍스트가 넘칠 때 자연스럽게 줄바꿈 */
+.bt-title, .bt-desc, .lc-title, .rc-title, .mb-body b, .coll-body b, .sw-body b {
+  overflow-wrap: anywhere;
+}
+
+/* 부모 배너/현황 행: 텍스트 영역이 남는 폭을 차지 */
+.pb-text, .mb-att-body, .sw-body, .vo-body { min-width: 0; }
+.pb-text b, .pb-text small { overflow-wrap: anywhere; }
