@@ -3049,3 +3049,73 @@ input::placeholder { color: #6b7aa6 !important; }
 /* 부모 배너/현황 행: 텍스트 영역이 남는 폭을 차지 */
 .pb-text, .mb-att-body, .sw-body, .vo-body { min-width: 0; }
 .pb-text b, .pb-text small { overflow-wrap: anywhere; }
+
+/* ============================================================
+   6–7세 가독성 — 전반적으로 큰 글자 + 넉넉한 줄간격
+   ============================================================ */
+
+/* 작은 보조 텍스트(부제·힌트·캡션)를 크게 (최소 15px) */
+.hd-hi small, .pb-text small, .mb-hd small, .jhd-title small, .sparks-hd small,
+.vo-body small, .sw-body small, .mb-att-body small, .mb-decor-body small,
+.mb-body small, .guard-hint, .ob-sub, .ob-pw-sub, .voice-said, .voice-note,
+.ai-note, .polaroid-date, .journal-hint, .decor-hint, .sparks-note, .pin-sub,
+.im-note, .usage-summary, .mb-progress > span, .ds-name, .ds-cost,
+.alert-meta, .alert-tip, .celebrate-cap, .ob-plan-per, .mr-reward,
+.splash-copy p, .voice-unsupported, .im-placeholder small {
+  font-size: 15px !important;
+  line-height: 1.55 !important;
+}
+
+/* 본문·라벨을 크게 (17–18px) */
+.pb-text b, .bt-desc, .lc-title, .rc-title, .mb-body b, .coll-body b,
+.sw-body b, .vo-body b, .prof-row > span, .prof-interests-label, .mr-title,
+.mission-modal p, .celebrate p, .hd-menu-item, .ob-chip, .im-idea,
+.decor-tab, .guard-info li, .sparks-way b, .mb-att-body b, .ma-row input,
+.ma-row select, .im-placeholder p, .ob-safe-card, .ob-pw-feat, .voice-said {
+  font-size: 17px !important;
+  line-height: 1.5 !important;
+}
+
+/* 큰 제목 강조 */
+.hd-hi b { font-size: 1.55rem !important; }
+.bt-title { font-size: 1.9rem !important; }
+.bt-emoji { font-size: 2.6rem !important; }
+.mb-hd b, .jhd-title b { font-size: 23px !important; }
+.guard-card h3 { font-size: 20px !important; }
+.learn-head, .rec-head { font-size: 19px !important; }
+.mb-body b, .coll-body b { font-size: 18px !important; }
+.ob-body h1 { font-size: 33px !important; }
+.voice-status { font-size: 24px !important; }
+.header h1 { font-size: 20px !important; }
+.header p { font-size: 14.5px !important; }
+
+/* 채팅 말풍선 크게 */
+.bubble { font-size: 18px !important; line-height: 1.55 !important; }
+.ai-note { font-size: 14px !important; }
+
+/* 활동 목록 카드 제목 */
+.act-card b, .ac-title, .act-title { font-size: 18px !important; }
+
+/* 버튼 크게 (6–7세가 누르기 쉽게) */
+.mb-do, .sw-go, .mm-yes, .ask-btn, .guard-btn, .im-draw {
+  font-size: 18px !important;
+}
+.ob-primary, .splash-primary, .mm-yes.wide { font-size: 20px !important; }
+.mb-attend .mb-att-reward { font-size: 17px !important; }
+
+/* 하단 탭 라벨 조금 더 */
+.tab { font-size: 0.92rem !important; }
+
+/* 입력창 글자 크게 */
+input, .composer input, .ob-field input, .im-bar input { font-size: 18px !important; }
+
+/* 별 배지 등 HUD 숫자 */
+.star-badge, .mb-balance, .decor-balance, .sparks-count { font-size: 17px !important; }
+
+/* 커진 글자에 맞춰 카드 높이 확보 (제목 잘림 방지) */
+.learn-card { height: 150px !important; }
+.rec-card { min-height: 156px !important; }
+.big-tile { min-height: 210px; }
+
+/* 홈 세로 스크롤 시 카드/행이 눌려 잘리지 않도록 */
+.kids-home > * { flex-shrink: 0; }
