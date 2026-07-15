@@ -13,6 +13,7 @@ import MissionBoard from "./screens/MissionBoard.jsx";
 import DecorRoom from "./screens/DecorRoom.jsx";
 import ImageMaker from "./screens/ImageMaker.jsx";
 import { INTERESTS } from "./lib/data.js";
+import { sparkleBurst } from "./lib/fx.js";
 import { REWARD, allMissions } from "./lib/missions.js";
 import { loadStore, persist, userMsgCount, rollDay } from "./lib/store.js";
 
@@ -124,6 +125,25 @@ export default function App() {
     setProfile(p);
     setSettings((s) => ({ ...s, ageMode }));
   }
+
+  // 탭 반짝임 효과 — 누르는 곳마다 별이 튄다 (아이용 즐거움)
+  useEffect(() => {
+    const layer = document.createElement("div");
+    layer.className = "fx-layer";
+    document.body.appendChild(layer);
+    const SEL =
+      "button,.big-tile,.learn-card,.rec-card,.act-card,.parent-banner,.coll-item,.hd-ava,.polaroid,.decor-slot,.sparks-way";
+    function onDown(e) {
+      const t = e.target.closest && e.target.closest(SEL);
+      if (!t || t.disabled) return;
+      sparkleBurst(e.clientX, e.clientY, layer);
+    }
+    document.addEventListener("pointerdown", onDown);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      layer.remove();
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;

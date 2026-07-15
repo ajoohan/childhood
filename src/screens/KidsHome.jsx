@@ -40,7 +40,16 @@ export default function KidsHome({
   const hi = name ? `안녕, ${name}! 👋` : "안녕! 👋";
   const [menuOpen, setMenuOpen] = useState(false);
   const [face, setFace] = useState("happy");
+  const [poked, setPoked] = useState(false);
   const [welcome, setWelcome] = useState(!welcomedThisSession);
+
+  // 마스코트를 콕 누르면 통통 튀며 재밌는 표정
+  function pokeMascot() {
+    const fun = ["wow", "love", "excited", "cool", "proud"];
+    setFace(fun[Math.floor(Math.random() * fun.length)]);
+    setPoked(true);
+    setTimeout(() => setPoked(false), 700);
+  }
 
   // 홈 첫 진입 환영 컨페티 (앱 실행당 1회)
   useEffect(() => {
@@ -109,7 +118,10 @@ export default function KidsHome({
           )}
         </div>
         <span
-          className="hd-ava"
+          className={`hd-ava ${poked ? "poked" : ""}`}
+          onClick={pokeMascot}
+          role="button"
+          aria-label="별이 콕 누르기"
           dangerouslySetInnerHTML={{ __html: robotHead(face) }}
         />
         <div className="hd-hi">

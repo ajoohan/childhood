@@ -3119,3 +3119,32 @@ input, .composer input, .ob-field input, .im-bar input { font-size: 18px !import
 
 /* 홈 세로 스크롤 시 카드/행이 눌려 잘리지 않도록 */
 .kids-home > * { flex-shrink: 0; }
+
+/* ============================================================
+   아이용 즐거운 효과 — 탭 반짝임 · 마스코트 콕 반응
+   ============================================================ */
+
+.fx-layer { position: fixed; inset: 0; pointer-events: none; z-index: 90; overflow: hidden; }
+.fx-sparkle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  will-change: transform, opacity;
+  animation: fx-pop 0.65s ease-out forwards;
+  filter: drop-shadow(0 0 4px rgba(255, 224, 130, 0.7));
+}
+@keyframes fx-pop {
+  0% { transform: translate(-50%, -50%) scale(0.3) rotate(0deg); opacity: 1; }
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.15) rotate(40deg);
+    opacity: 0;
+  }
+}
+
+.hd-ava { cursor: pointer; }
+.hd-ava.poked { animation: mascot-poke 0.7s cubic-bezier(0.2, 1.2, 0.3, 1); }
+@keyframes mascot-poke {
+  0% { transform: scale(1) rotate(0); }
+  25% { transform: scale(1.18) rotate(-8deg); }
+  55% { transform: scale(0.95) rotate(7deg); }
+  100% { transform: scale(1) rotate(0); }
+}
