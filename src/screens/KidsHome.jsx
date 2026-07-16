@@ -151,7 +151,7 @@ export default function KidsHome({
         {bigTiles.map((c) => (
           <button
             key={c.id}
-            className="big-tile"
+            className={`big-tile bt-${c.id}`}
             style={{
               background: `linear-gradient(150deg, ${c.theme[0]}, ${c.theme[1]})`,
             }}

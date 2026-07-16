@@ -425,32 +425,48 @@ export default function App() {
             className={`tab ${view.name === "home" ? "active" : ""}`}
             onClick={() => setView({ name: "home" })}
           >
-            <span className="tab-icon">🏠</span>
+            <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 11l8-7 8 7" />
+              <path d="M6 10v9h12v-9" />
+            </svg>
             <span>홈</span>
           </button>
           <button
             className={`tab ${view.name === "missions" ? "active" : ""}`}
             onClick={() => setView({ name: "missions" })}
           >
-            <span className="tab-icon">🎯</span>
+            <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="8" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
             <span>미션</span>
           </button>
           <button
             className={`tab ${view.name === "collection" ? "active" : ""}`}
             onClick={() => setView({ name: "collection" })}
           >
-            <span className="tab-icon">📦</span>
+            <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="4" y="6" width="16" height="14" rx="2" />
+              <path d="M4 10h16M9 6V4h6v2" />
+            </svg>
             <span>기록</span>
           </button>
           <button
             className={`tab ${view.name === "voice" ? "active" : ""}`}
             onClick={() => setView({ name: "voice" })}
           >
-            <span className="tab-icon">🎙️</span>
+            <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="3" width="6" height="11" rx="3" />
+              <path d="M6 11a6 6 0 0 0 12 0M12 17v3" />
+            </svg>
             <span>음성</span>
           </button>
           <button className="tab" onClick={openParent}>
-            <span className="tab-icon">👨‍👩‍👧</span>
+            <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="8" r="3" />
+              <circle cx="17" cy="9" r="2.4" />
+              <path d="M3.5 19a5.5 5.5 0 0 1 11 0M14.5 19a4 4 0 0 1 6 0" />
+            </svg>
             <span>부모</span>
           </button>
         </nav>

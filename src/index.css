@@ -1,63 +1,42 @@
+/* Pretendard — 모던·세련된 한글 폰트 (오픈, 웹 임베딩 가능) */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css");
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* 넥슨 배찌체 (무료·상업용 허용, 웹 임베딩 가능) — CDN 다중 폴백 */
-@font-face {
-  font-family: "NEXON Bazzi";
-  src:
-    url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/Bazzi.woff") format("woff"),
-    url("https://cdn.jsdelivr.net/gh/fontbee/font@main/Nexon/Bazzi.woff") format("woff");
-  font-weight: 400 800;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
-  /* 다크 "게임 모드" 팔레트 (네온) */
-  --bg: #0B1030;
-  --surface: #172147;
-  --surface-2: #1E2A55;
-  --line: rgba(120, 180, 255, 0.18);
-  --neon: #37E6FF; /* 시안 */
-  --neon2: #A46BFF; /* 퍼플 */
-  --header: #172147;
-  --bot-bubble: #1E2A55;
-  --user-bubble: #2f6bff;
-  --text: #EAF0FF;
-  --muted: #B7C2E6;
-  --accent: #FF7A3D; /* 오렌지 (Повысить/Открыть 버튼 톤) */
-  --pink: #FF5CC8;
-  --sky: #37E6FF;
-  --grass: #6EE7A0;
+  /* 라이트 프리미엄 팔레트 (따뜻한 크림 + 절제된 포인트) */
+  --bg: #FBF6EE;
+  --surface: #FFFFFF;
+  --surface-2: #F5EFE4;
+  --line: #EFE7DA;
+  --neon: #FF6B4A; /* 포인트(코랄) — 기존 액티브 상태들이 이 토큰을 씀 */
+  --neon2: #8B6FD0; /* 라일락 */
+  --header: #FFFFFF;
+  --bot-bubble: #FFFFFF;
+  --user-bubble: #FF8A6B;
+  --text: #2A2622;
+  --muted: #8C857B;
+  --accent: #FF6B4A; /* 코랄 */
+  --pink: #FF7EA8;
+  --sky: #DFF0F7;
+  --grass: #E6F0DC;
 }
 
 body {
-  font-family: "NEXON Bazzi", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  background:
-    radial-gradient(1100px 620px at 50% -8%, #1b2c66 0%, transparent 62%),
-    linear-gradient(180deg, #0C1234 0%, #080C22 100%);
+  font-family: "Pretendard Variable", "Pretendard",
+    "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  background: var(--bg);
   color: var(--text);
   min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.2px;
 }
 
-/* 게임풍 원근 그리드 오버레이 */
-.app::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.5;
-  background-image:
-    linear-gradient(rgba(90, 160, 255, 0.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(90, 160, 255, 0.09) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 100%);
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 100%);
-}
+.app::before { display: none; }
 
 .app {
   position: relative;
@@ -3243,3 +3222,120 @@ input, .composer input, .ob-field input, .im-bar input { font-size: 18px !import
 }
 .cap-spoken { color: #FFD54A; }
 .cap-rest { color: #aebadf; }
+
+/* ============================================================
+   LIGHT REDESIGN — 프리미엄 라이트 (크림/파스텔/소프트 섀도우)
+   다크·네온·글로우·글로시를 걷어내고 차분하게
+   ============================================================ */
+
+.app::after { display: none; }              /* 앰비언스 글로우 제거 */
+.floaty { display: none; }                  /* 떠다니는 별(라이트에선 정돈) */
+
+/* 카드·시트·모달: 흰 표면 + 아주 부드러운 그림자 */
+.parent-banner, .guard-card, .act-card, .coll-item, .mb-item, .sub-card,
+.ob-field, .ob-safe-card, .ob-pw-feat, .ob-pw-review, .sparks-way, .voice-opt,
+.sheet, .pin-card, .mission-modal, .celebrate, .modal, .live-stt, .voice-reply,
+.ob-plan, .ob-pw-faq details, .ask-bar, .age-opt, .badge-card, .book-count,
+.hd-menu, .caption, .mb-attend.done {
+  background: var(--surface) !important;
+  color: var(--text);
+  border: 1px solid var(--line) !important;
+  box-shadow: 0 8px 22px rgba(60, 45, 30, 0.06) !important;
+}
+.bubble { background: var(--surface-2) !important; color: var(--text) !important; box-shadow: none !important; }
+.message.user .bubble { background: var(--accent) !important; color: #fff !important; }
+
+/* 하단 탭바 → 흰 배경, 라인 아이콘 */
+.tab-bar {
+  background: #fff !important;
+  border-top: 1px solid var(--line) !important;
+  box-shadow: 0 -6px 18px rgba(60, 45, 30, 0.05) !important;
+}
+.tab { color: #B8AF9F !important; }
+.tab.active { color: var(--accent) !important; text-shadow: none !important; }
+.tab.active::after { background: var(--accent); box-shadow: none; }
+.tab-svg { width: 24px; height: 24px; display: block; margin: 0 auto 4px; }
+
+/* HUD 배지 → 흰색 + 소프트 */
+.star-badge, .mb-balance, .decor-balance, .sparks-count {
+  background: #fff !important;
+  border: 1px solid var(--line) !important;
+  color: var(--text) !important;
+  box-shadow: 0 4px 14px rgba(60, 45, 30, 0.05) !important;
+  animation: none !important;
+}
+
+/* 입력·셀렉트 → 흰색 */
+input, select, textarea, .ob-field input, .ma-row input, .ma-row select,
+.prof-row input, .composer input, .pin-forgot-input, .im-bar input, .limit-row input {
+  background: #FFFDF9 !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line) !important;
+}
+input::placeholder { color: #B4AC9E !important; }
+
+/* 글로우·글로시 제거 */
+.hd-ava { filter: none !important; }
+.mb-decor, .decor-stage, .mb-attend:not(.done), .mm-yes, .ob-primary, .splash-primary,
+.im-draw, .voice-mic, .mic-btn { text-shadow: none !important; }
+.big-tile::after, .learn-card::after, .rec-card::after,
+.ob-primary::before, .splash-primary::before, .mm-yes.wide::before,
+.im-draw::before, .mb-decor::before { display: none !important; }
+.mb-progress-bar > i::after { display: none !important; }
+
+/* 주요 버튼 → 코랄 솔리드 (글로우 없음) */
+.ob-primary, .splash-primary, .mm-yes, .mb-do, .guard-btn:not(.danger),
+.sw-go, .ask-btn, .im-draw, .mb-attend:not(.done) {
+  background: var(--accent) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 16px rgba(255, 107, 74, 0.22) !important;
+}
+.mb-attend:not(.done) { background: #FFF3E9 !important; color: var(--text) !important; box-shadow: 0 8px 22px rgba(60,45,30,.06) !important; }
+.mb-att-reward { color: #E8895A !important; }
+.mic-btn, .voice-mic { background: var(--accent) !important; box-shadow: 0 8px 20px rgba(255,107,74,.28) !important; }
+
+/* 인사말·아바타 칩 */
+.hd-hi b { color: var(--text) !important; }
+.hd-ava { background: #FFE7D6; border-radius: 20px; padding: 6px; }
+
+/* 큰 카드 → 소프트 파스텔 + 아이콘 칩 + 어두운 글자 */
+.big-tile { box-shadow: 0 8px 22px rgba(60,45,30,.06) !important; }
+.big-tile.bt-story { background: #FFE7D6 !important; }
+.big-tile.bt-heart { background: #E6F0DC !important; }
+.big-tile.bt-learn { background: #DFF0F7 !important; }
+.bt-emoji { background: rgba(255,255,255,.72); width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; font-size: 30px !important; }
+.bt-title { color: var(--text) !important; }
+.bt-desc { color: #7d7468 !important; }
+
+/* 배움·추천 카드 → 흰 카드 + 아이콘 칩 */
+.learn-card, .rec-card {
+  background: #fff !important;
+  box-shadow: 0 6px 16px rgba(60,45,30,.05) !important;
+}
+.lc-emoji, .rc-emoji { background: var(--surface-2); width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; }
+.lc-title, .rc-title { color: var(--text) !important; text-shadow: none !important; }
+
+/* 활동 목록/저널/도감 표면 미세 조정 */
+.decor-slot { background: rgba(0,0,0,0.03) !important; border-color: rgba(0,0,0,0.1) !important; }
+.decor-slot.filled { background: #fff !important; }
+.ds-name, .ds-cost { color: #7d7468 !important; }
+.sticker-slot { background: var(--surface-2) !important; }
+.sticker-slot.got { background: #fff !important; box-shadow: 0 4px 12px rgba(60,45,30,.08) !important; }
+
+/* 자막 라이트 */
+.caption { background: #fff !important; }
+.cap-text { color: var(--text) !important; }
+.cap-spoken { color: var(--accent) !important; }
+.cap-rest { color: #B4AC9E !important; }
+.voice-note { background: #fff !important; color: var(--muted) !important; }
+
+/* 진행바 트랙 */
+.ob-progress, .mb-progress-bar, .ob-load-bar { background: #EFE7DA !important; }
+
+/* 칩(관심사 등) 비활성 → 뉴트럴 */
+.ob-chip, .prof-chip, .decor-tab, .ma-emoji, .voice-pick, .age-opt {
+  background: var(--surface-2) !important; color: var(--text) !important; border: 1px solid var(--line) !important;
+}
+.ob-chip.on, .prof-chip.on, .decor-tab.on, .ma-emoji.on, .age-opt.on {
+  background: var(--accent) !important; color: #fff !important; border-color: transparent !important; box-shadow: none !important;
+}
