@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { recommendActivities, interestEmojis } from "../lib/data.js";
 import { robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
+import FloatingStars from "../components/FloatingStars.jsx";
 
 // 앱 실행 후 홈 첫 진입에서 환영 컨페티를 1회만
 let welcomedThisSession = false;
@@ -35,6 +36,8 @@ export default function KidsHome({
   onStars,
   onCollection,
   onImageMaker,
+  onBadges,
+  onStickers,
   imageEnabled,
 }) {
   const hi = name ? `안녕, ${name}! 👋` : "안녕! 👋";
@@ -69,7 +72,8 @@ export default function KidsHome({
     return () => clearInterval(id);
   }, []);
   const MENU = [
-    { icon: "🏅", label: "성취 · 별 모으기", go: onStars },
+    { icon: "🏅", label: "내 배지", go: onBadges },
+    { icon: "🪄", label: "스티커 도감", go: onStickers },
     { icon: "🖼️", label: "그림 만들기", go: onImageMaker, pending: !imageEnabled },
     { icon: "🕘", label: "내 기록", go: onCollection },
     { icon: "✏️", label: "프로필 수정", go: onParent },
@@ -85,6 +89,7 @@ export default function KidsHome({
 
   return (
     <section className="kids-home">
+      <FloatingStars />
       {welcome && <Confetti count={80} />}
       <header className="home-hd">
         <div className="hd-menu-wrap">

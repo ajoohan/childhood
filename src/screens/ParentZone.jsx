@@ -17,6 +17,7 @@ export default function ParentZone({
   onBack,
   onSaveLimit,
   onSetAge,
+  onSetSound,
   onSaveProfile,
   onClear,
 }) {
@@ -306,6 +307,23 @@ export default function ParentZone({
             저장
           </button>
           {saved && <p className="guard-hint">{saved}</p>}
+        </div>
+
+        <div className="guard-card">
+          <h3>🔊 효과음</h3>
+          <label className="sound-row">
+            <span>버튼·성공 효과음</span>
+            <button
+              className={`toggle ${settings.sound ? "on" : ""}`}
+              onClick={() => onSetSound(!settings.sound)}
+              aria-label="효과음 켜기/끄기"
+            >
+              <span className="toggle-knob" />
+            </button>
+          </label>
+          <p className="guard-hint">
+            {settings.sound ? "켜짐 — 아이가 누를 때 부드러운 소리가 나요." : "꺼짐"}
+          </p>
         </div>
 
         <div className="guard-card sub-card">

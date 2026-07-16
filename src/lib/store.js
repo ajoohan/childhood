@@ -12,6 +12,8 @@ export function loadStore() {
       rewards: rollDay(s.rewards || emptyRewards()),
       parentMissions: Array.isArray(s.parentMissions) ? s.parentMissions : [],
       decor: s.decor || emptyDecor(),
+      badges: Array.isArray(s.badges) ? s.badges : [],
+      stickers: s.stickers && typeof s.stickers === "object" ? s.stickers : {},
     };
   } catch {
     return {
@@ -22,6 +24,8 @@ export function loadStore() {
       rewards: emptyRewards(),
       parentMissions: [],
       decor: emptyDecor(),
+      badges: [],
+      stickers: {},
     };
   }
 }

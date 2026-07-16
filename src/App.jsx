@@ -12,10 +12,14 @@ import SparksSheet from "./components/SparksSheet.jsx";
 import MissionBoard from "./screens/MissionBoard.jsx";
 import DecorRoom from "./screens/DecorRoom.jsx";
 import ImageMaker from "./screens/ImageMaker.jsx";
+import BadgeBook from "./screens/BadgeBook.jsx";
+import StickerBook from "./screens/StickerBook.jsx";
 import { INTERESTS } from "./lib/data.js";
 import { sparkleBurst } from "./lib/fx.js";
+import { sfx, setSfxEnabled } from "./lib/sfx.js";
+import { earnedBadges, drawSticker } from "./lib/collectibles.js";
 import { REWARD, allMissions } from "./lib/missions.js";
-import { loadStore, persist, userMsgCount, rollDay } from "./lib/store.js";
+import { loadStore, persist, rollDay } from "./lib/store.js";
 
 const initial = loadStore();
 
@@ -35,11 +39,14 @@ export default function App() {
     ageMode: initial.settings.ageMode || "kid",
     pin: initial.settings.pin || null,
     voice: initial.settings.voice || "shimmer",
+    sound: initial.settings.sound !== false,
   });
   const [profile, setProfile] = useState(initial.profile);
   const [rewards, setRewards] = useState(initial.rewards);
   const [parentMissions, setParentMissions] = useState(initial.parentMissions);
   const [decor, setDecor] = useState(initial.decor);
+  const [badges, setBadges] = useState(initial.badges);
+  const [stickers, setStickers] = useState(initial.stickers);
 
   const [splash, setSplash] = useState(!splashSeen);
   const [pinOpen, setPinOpen] = useState(false);
@@ -52,8 +59,39 @@ export default function App() {
   };
 
   useEffect(() => {
-    persist({ histories, safety, settings, profile, rewards, parentMissions, decor });
-  }, [histories, safety, settings, profile, rewards, parentMissions, decor]);
+    persist({
+      histories,
+      safety,
+      settings,
+      profile,
+      rewards,
+      parentMissions,
+      decor,
+      badges,
+      stickers,
+    });
+  }, [histories, safety, settings, profile, rewards, parentMissions, decor, badges, stickers]);
+
+  // 효과음 on/off 반영
+  useEffect(() => {
+    setSfxEnabled(settings.sound);
+  }, [settings.sound]);
+
+  // 새로 달성한 배지 자동 잠금 해제
+  useEffect(() => {
+    const met = earnedBadges({ profile, histories, rewards, decor, stickers });
+    setBadges((prev) => {
+      const set = new Set(prev);
+      let changed = false;
+      met.forEach((id) => {
+        if (!set.has(id)) {
+          set.add(id);
+          changed = true;
+        }
+      });
+      return changed ? Array.from(set) : prev;
+    });
+  }, [profile, histories, rewards, decor, stickers]);
 
   // 미션 완료 → 별 지급 + 올클리어 보너스 (기획서 3장 밸런싱)
   function completeMission(mission) {
@@ -74,6 +112,12 @@ export default function App() {
       }
       return { ...r, doneToday, balance, earnedToday, allClear };
     });
+    // 미션 완료 보상: 랜덤 스티커 + 효과음
+    setStickers((s) => {
+      const id = drawSticker(s);
+      return { ...s, [id]: (s[id] || 0) + 1 };
+    });
+    sfx.success();
   }
 
   // 출석 + AI 첫인사 (하루 1회)
@@ -88,6 +132,7 @@ export default function App() {
         earnedToday: r.earnedToday + REWARD.attendance,
       };
     });
+    sfx.star();
   }
 
   const addParentMission = (m) => setParentMissions((p) => [...p, m]);
@@ -137,6 +182,7 @@ export default function App() {
       const t = e.target.closest && e.target.closest(SEL);
       if (!t || t.disabled) return;
       sparkleBurst(e.clientX, e.clientY, layer);
+      sfx.tap();
     }
     document.addEventListener("pointerdown", onDown);
     return () => {
@@ -238,6 +284,8 @@ export default function App() {
             onStars={() => setSparksOpen(true)}
             onCollection={() => setView({ name: "collection" })}
             onImageMaker={() => setView({ name: "image" })}
+            onBadges={() => setView({ name: "badges" })}
+            onStickers={() => setView({ name: "stickers" })}
             imageEnabled={!!data.features?.image}
           />
         )}
@@ -315,6 +363,14 @@ export default function App() {
           />
         )}
 
+        {zone === "kids" && view.name === "badges" && (
+          <BadgeBook badges={badges} onBack={() => setView({ name: "home" })} />
+        )}
+
+        {zone === "kids" && view.name === "stickers" && (
+          <StickerBook stickers={stickers} onBack={() => setView({ name: "home" })} />
+        )}
+
         {zone === "kids" && view.name === "decor" && (
           <DecorRoom
             decor={decor}
@@ -340,6 +396,7 @@ export default function App() {
             onBack={() => setZone("kids")}
             onSaveLimit={(val) => setSettings((s) => ({ ...s, limitPerDay: val }))}
             onSetAge={(v) => setSettings((s) => ({ ...s, ageMode: v }))}
+            onSetSound={(v) => setSettings((s) => ({ ...s, sound: v }))}
             onSaveProfile={(patch) =>
               setProfile((p) => {
                 const next = { ...p, ...patch };
