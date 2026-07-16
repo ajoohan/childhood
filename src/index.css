@@ -3212,3 +3212,34 @@ input, .composer input, .ob-field input, .im-bar input { font-size: 18px !import
 .toggle.on { background: #37c26b; }
 .toggle-knob { width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .15s; }
 .toggle.on .toggle-knob { transform: translateX(24px); }
+
+/* ============================================================
+   음성 자막(캡션) — 입력(내 말) / 출력(별이 말) 큰 글씨
+   ============================================================ */
+.caption {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 8px;
+  background: rgba(10, 16, 44, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.cap-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 5px;
+  color: var(--neon);
+}
+.caption-out .cap-label { color: #FFC24D; }
+.cap-text {
+  font-size: 21px;
+  line-height: 1.5;
+  font-weight: 700;
+  color: #fff;
+  word-break: keep-all;
+}
+.cap-spoken { color: #FFD54A; }
+.cap-rest { color: #aebadf; }

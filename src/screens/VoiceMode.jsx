@@ -9,7 +9,8 @@ export const VOICES = [
   { id: "coral", name: "코랄", emoji: "🧭", desc: "명랑하고 활기찬 목소리", pitch: 1.3, rate: 1.06 },
 ];
 
-function speak(text, voiceId, onEnd) {
+// 말하기 + 자막(캡션). onBoundary(charIndex)로 지금 읽는 위치를 알려 가라오케 자막을 만든다.
+function speak(text, voiceId, { onBoundary, onEnd } = {}) {
   try {
     const synth = window.speechSynthesis;
     if (!synth) return onEnd && onEnd();
@@ -18,6 +19,8 @@ function speak(text, voiceId, onEnd) {
     u.lang = "ko-KR";
     u.pitch = v.pitch;
     u.rate = v.rate;
+    if (onBoundary)
+      u.onboundary = (e) => onBoundary(typeof e.charIndex === "number" ? e.charIndex : 0);
     if (onEnd) u.onend = onEnd;
     synth.cancel();
     synth.speak(u);
@@ -41,6 +44,7 @@ export default function VoiceMode({
   const [status, setStatus] = useState("idle"); // idle|thinking|speaking
   const [lastSaid, setLastSaid] = useState("");
   const [reply, setReply] = useState("");
+  const [capIdx, setCapIdx] = useState(0); // 자막에서 지금까지 읽은 글자 수
   const [pickerOpen, setPickerOpen] = useState(false);
   const [recording, setRecording] = useState(false);
   const busyRef = useRef(false);
@@ -158,9 +162,14 @@ export default function VoiceMode({
 
     onBotMessage(activity.id, { role: "assistant", content: acc });
     setStatus("speaking");
-    speak(acc, voice, () => {
-      setStatus("idle");
-      busyRef.current = false;
+    setCapIdx(0);
+    speak(acc, voice, {
+      onBoundary: (ci) => setCapIdx(ci),
+      onEnd: () => {
+        setCapIdx(acc.length);
+        setStatus("idle");
+        busyRef.current = false;
+      },
     });
   }
 
@@ -201,14 +210,32 @@ export default function VoiceMode({
         />
         <div className="voice-note">🤖 나는 AI 도우미예요. 진짜 사람은 아니에요!</div>
         <h1 className="voice-status">{statusText}</h1>
-        {speech.listening && (
-          <p className="voice-interim">
-            {speech.interim || "…"}
-            <span className="voice-caret" />
-          </p>
+
+        {/* 자막(캡션) — 아이가 읽기 쉽게 */}
+        {(speech.listening || recording) && (
+          <div className="caption caption-in">
+            <span className="cap-label">🎤 내가 한 말</span>
+            <p className="cap-text">
+              {speech.interim || (recording ? "듣고 있어요…" : "…")}
+              <span className="voice-caret" />
+            </p>
+          </div>
         )}
-        {!speech.listening && lastSaid && <p className="voice-said">“{lastSaid}”</p>}
-        {reply && <p className="voice-reply">{reply}</p>}
+
+        {status === "speaking" && reply && (
+          <div className="caption caption-out">
+            <span className="cap-label">🔊 {curVoice.name}가 하는 말</span>
+            <p className="cap-text">
+              <span className="cap-spoken">{reply.slice(0, capIdx)}</span>
+              <span className="cap-rest">{reply.slice(capIdx)}</span>
+            </p>
+          </div>
+        )}
+
+        {status !== "speaking" && !speech.listening && !recording && lastSaid && (
+          <p className="voice-said">“{lastSaid}”</p>
+        )}
+        {status === "idle" && reply && <p className="voice-reply">{reply}</p>}
       </div>
 
       <div className="voice-controls">
