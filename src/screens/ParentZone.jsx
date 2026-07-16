@@ -21,10 +21,8 @@ export default function ParentZone({
   onAddMission,
   onRemoveMission,
   onBack,
-  onSaveLimit,
-  onSetSound,
+  onSettings,
   onSaveProfile,
-  onClear,
 }) {
   const [mTitle, setMTitle] = useState("");
   const [mEmoji, setMEmoji] = useState(MISSION_EMOJIS[0]);
@@ -43,11 +41,6 @@ export default function ParentZone({
     setMEmoji(MISSION_EMOJIS[0]);
     setMReward(2);
   }
-  const [limitInput, setLimitInput] = useState(
-    settings.limitPerDay != null ? String(settings.limitPerDay) : ""
-  );
-  const [saved, setSaved] = useState("");
-
   const prof = profile || { name: "", birthYear: null, birthMonth: null, interests: [] };
   const [nameInput, setNameInput] = useState(prof.name || "");
   const [yearInput, setYearInput] = useState(prof.birthYear ? String(prof.birthYear) : "");
@@ -92,19 +85,6 @@ export default function ParentZone({
     .filter((r) => r.n > 0)
     .sort((x, y) => y.n - x.n);
 
-  function saveLimit() {
-    const v = limitInput.trim();
-    const val = v ? Math.max(0, parseInt(v, 10) || 0) : null;
-    onSaveLimit(val);
-    setSaved(val ? `하루 ${val}번으로 저장했어요.` : "제한 없음으로 저장했어요.");
-  }
-  function clearAll() {
-    if (!window.confirm("모든 대화·알림·설정 기록을 지울까요? 되돌릴 수 없어요.")) return;
-    onClear();
-    setLimitInput("");
-    setSaved("");
-  }
-
   return (
     <section className="guard-screen">
       <header className="top-bar">
@@ -112,6 +92,12 @@ export default function ParentZone({
           ←
         </button>
         <div className="logo">부모 존</div>
+        <button className="settings-btn" onClick={onSettings} aria-label="설정">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
       </header>
 
       <div className="guard-scroll">
@@ -345,42 +331,6 @@ export default function ParentZone({
           </div>
         </div>
 
-        <div className="guard-card">
-          <h3>⏱️ 시간 통제</h3>
-          <label className="limit-row">
-            <span>하루 대화 횟수 제한</span>
-            <input
-              type="number"
-              min="0"
-              inputMode="numeric"
-              placeholder="비우면 제한 없음"
-              value={limitInput}
-              onChange={(e) => setLimitInput(e.target.value)}
-            />
-          </label>
-          <button className="guard-btn" onClick={saveLimit}>
-            저장
-          </button>
-          {saved && <p className="guard-hint">{saved}</p>}
-        </div>
-
-        <div className="guard-card">
-          <h3>🔊 효과음</h3>
-          <label className="sound-row">
-            <span>버튼·성공 효과음</span>
-            <button
-              className={`toggle ${settings.sound ? "on" : ""}`}
-              onClick={() => onSetSound(!settings.sound)}
-              aria-label="효과음 켜기/끄기"
-            >
-              <span className="toggle-knob" />
-            </button>
-          </label>
-          <p className="guard-hint">
-            {settings.sound ? "켜짐 — 아이가 누를 때 부드러운 소리가 나요." : "꺼짐"}
-          </p>
-        </div>
-
         <div className="guard-card sub-card">
           <h3>💳 구독</h3>
           <p className="sub-lead">광고 없는 부모 구독</p>
@@ -393,22 +343,14 @@ export default function ParentZone({
           </button>
         </div>
 
-        <div className="guard-card">
-          <h3>🛡️ 안전 안내</h3>
-          <ul className="guard-info">
-            <li>AI는 '도우미 도구'로, 활동(이야기·학습·마음) 범위 안에서만 상호작용합니다.</li>
-            <li>개방형 자유 대화·역할극, 아이 대면 결제, 광고는 제공하지 않습니다.</li>
-            <li>모든 메시지는 안전 필터를 거치고, 위기 신호 시 1388을 안내합니다.</li>
-            <li>대화·기록은 서버가 아니라 이 기기(브라우저)에만 저장됩니다.</li>
-          </ul>
-        </div>
-
-        <div className="guard-card">
-          <h3>🗑️ 기록 관리</h3>
-          <button className="guard-btn danger" onClick={clearAll}>
-            모든 기록 지우기
-          </button>
-        </div>
+        <button className="guard-settings-link" onClick={onSettings}>
+          <span className="gsl-ic">⚙️</span>
+          <span className="gsl-body">
+            <b>설정</b>
+            <small>효과음 · AI 목소리 · 시간 통제 · 부모 잠금 · 기록 관리</small>
+          </span>
+          <span className="gsl-arw">›</span>
+        </button>
       </div>
     </section>
   );

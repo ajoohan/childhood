@@ -7,6 +7,7 @@ import Session from "./screens/Session.jsx";
 import Collection from "./screens/Collection.jsx";
 import VoiceMode from "./screens/VoiceMode.jsx";
 import ParentZone from "./screens/ParentZone.jsx";
+import Settings from "./screens/Settings.jsx";
 import PinGate from "./components/PinGate.jsx";
 import SparksSheet from "./components/SparksSheet.jsx";
 import MissionBoard from "./screens/MissionBoard.jsx";
@@ -23,6 +24,7 @@ import { loadStore, persist, rollDay } from "./lib/store.js";
 import { ageModeForProfile, computeAge } from "./lib/age.js";
 
 const initial = loadStore();
+const APP_VERSION = "0.2.0";
 
 // 스플래시는 "앱 구동 시 1회"만 노출. 모듈 스코프라 리마운트/HMR에는 유지되고,
 // 페이지(앱)를 완전히 재시작하면 모듈이 새로 로드되어 다시 false → 스플래시 재노출.
@@ -51,6 +53,7 @@ export default function App() {
   const [stickers, setStickers] = useState(initial.stickers);
 
   const [splash, setSplash] = useState(!splashSeen);
+  const [parentView, setParentView] = useState("main"); // main | settings
   const [pinOpen, setPinOpen] = useState(false);
   const [sparksOpen, setSparksOpen] = useState(false);
   const [guardUnlocked, setGuardUnlocked] = useState(false);
@@ -391,7 +394,7 @@ export default function App() {
           />
         )}
 
-        {zone === "parent" && (
+        {zone === "parent" && parentView === "main" && (
           <ParentZone
             activities={data.activities}
             histories={histories}
@@ -402,17 +405,31 @@ export default function App() {
             parentMissions={parentMissions}
             onAddMission={addParentMission}
             onRemoveMission={removeParentMission}
-            onBack={() => setZone("kids")}
-            onSaveLimit={(val) => setSettings((s) => ({ ...s, limitPerDay: val }))}
-            onSetSound={(v) => setSettings((s) => ({ ...s, sound: v }))}
+            onBack={() => {
+              setZone("kids");
+              setParentView("main");
+            }}
+            onSettings={() => setParentView("settings")}
             onSaveProfile={(patch) =>
               // 생년월이 바뀌면 연령 모드는 useEffect가 자동으로 다시 계산한다.
               setProfile((p) => ({ ...p, ...patch }))
             }
+          />
+        )}
+
+        {zone === "parent" && parentView === "settings" && (
+          <Settings
+            settings={settings}
+            version={APP_VERSION}
+            onBack={() => setParentView("main")}
+            onSetSound={(v) => setSettings((s) => ({ ...s, sound: v }))}
+            onSaveLimit={(val) => setSettings((s) => ({ ...s, limitPerDay: val }))}
+            onSetVoice={(v) => setSettings((s) => ({ ...s, voice: v }))}
+            onSetPin={(pin) => setSettings((s) => ({ ...s, pin }))}
             onClear={() => {
               setHistories({});
               setSafety([]);
-              setSettings((s) => ({ limitPerDay: null, ageMode: s.ageMode }));
+              setSettings((s) => ({ ...s, limitPerDay: null }));
             }}
           />
         )}

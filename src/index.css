@@ -3381,3 +3381,50 @@ input::placeholder { color: #B4AC9E !important; }
   position: absolute; top: 8px; right: 10px; font-size: 11px; font-weight: 800;
   background: rgba(255,255,255,.28); color: #fff; padding: 2px 8px; border-radius: 999px;
 }
+
+/* ============================================================
+   설정 화면 — 부모 존 헤더 기어 · 설정 진입 카드 · 목소리/PIN/정보
+   ============================================================ */
+.settings-btn {
+  margin-left: auto; width: 40px; height: 40px; border-radius: 12px; border: none;
+  background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer;
+}
+.settings-btn svg { width: 22px; height: 22px; }
+.settings-btn:active { background: var(--surface-2); }
+
+/* 부모 존 하단 설정 진입 링크 */
+.guard-settings-link {
+  display: flex; align-items: center; gap: 14px; width: 100%;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
+  padding: 16px 18px; box-shadow: 0 8px 22px rgba(60,45,30,.06); cursor: pointer; text-align: left;
+}
+.gsl-ic { font-size: 26px; }
+.gsl-body { flex: 1; }
+.gsl-body b { display: block; font-size: 16px; color: var(--text); }
+.gsl-body small { font-size: 13px; color: var(--muted); }
+.gsl-arw { color: #C9C0B4; font-size: 22px; }
+
+/* 목소리 목록 */
+.set-voices { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+
+/* PIN 관리 */
+.set-pin-state { display: flex; align-items: center; gap: 9px; margin: 4px 0 12px; }
+.set-pin-dot { width: 10px; height: 10px; border-radius: 50%; background: #C9C0B4; }
+.set-pin-dot.on { background: #37c26b; }
+.set-pin-state b { font-size: 15px; color: var(--text); }
+.set-pin-actions { display: flex; gap: 10px; }
+.set-pin-actions .guard-btn { flex: 1; }
+.set-pin-edit { display: flex; flex-direction: column; gap: 10px; }
+.guard-btn.ghost {
+  background: var(--surface-2) !important; color: var(--text) !important;
+  box-shadow: none !important; border: 1px solid var(--line) !important;
+}
+
+/* 앱 정보 */
+.set-info-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--line);
+}
+.set-info-row:first-of-type { padding-top: 2px; }
+.set-info-row span { color: var(--muted); font-size: 14px; }
+.set-info-row b { color: var(--text); font-size: 15px; }
