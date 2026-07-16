@@ -20,6 +20,7 @@ import { sfx, setSfxEnabled } from "./lib/sfx.js";
 import { earnedBadges, drawSticker } from "./lib/collectibles.js";
 import { REWARD, allMissions } from "./lib/missions.js";
 import { loadStore, persist, rollDay } from "./lib/store.js";
+import { ageModeForProfile, computeAge } from "./lib/age.js";
 
 const initial = loadStore();
 
@@ -36,7 +37,8 @@ export default function App() {
   const [safety, setSafety] = useState(initial.safety);
   const [settings, setSettings] = useState({
     limitPerDay: initial.settings.limitPerDay ?? null,
-    ageMode: initial.settings.ageMode || "kid",
+    // 연령 모드는 아이 생년월에서 자동 계산 (8세부터 아동 모드)
+    ageMode: ageModeForProfile(initial.profile),
     pin: initial.settings.pin || null,
     voice: initial.settings.voice || "shimmer",
     sound: initial.settings.sound !== false,
@@ -71,6 +73,14 @@ export default function App() {
       stickers,
     });
   }, [histories, safety, settings, profile, rewards, parentMissions, decor, badges, stickers]);
+
+  // 연령 모드 자동 전환 — 아이 생년월로 현재 나이를 계산해 모드를 맞춘다.
+  // 앱을 열 때마다(그리고 프로필이 바뀔 때) 다시 계산되므로, 아이가 8세가 되면
+  // 다음 실행부터 영유아(1–7세)에서 아동(8–13세) 모드로 자연스럽게 넘어간다.
+  useEffect(() => {
+    const mode = ageModeForProfile(profile);
+    setSettings((s) => (s.ageMode === mode ? s : { ...s, ageMode: mode }));
+  }, [profile.birthYear, profile.birthMonth, profile.age]);
 
   // 효과음 on/off 반영
   useEffect(() => {
@@ -165,10 +175,9 @@ export default function App() {
     );
 
   function completeOnboarding(p) {
-    // 나이를 연령 모드로 매핑: 0–6세 영유아 / 7세 이상 초등
-    const ageMode = p.age != null && p.age <= 6 ? "young" : "kid";
+    // 연령 모드는 생년월 기반으로 useEffect에서 자동 계산된다.
     setProfile(p);
-    setSettings((s) => ({ ...s, ageMode }));
+    setSettings((s) => ({ ...s, ageMode: ageModeForProfile(p) }));
   }
 
   // 탭 반짝임 효과 — 누르는 곳마다 별이 튄다 (아이용 즐거움)
@@ -239,7 +248,7 @@ export default function App() {
   // 온보딩 프로필을 AI 개인화용으로 변환 (관심사 id → 한글 라벨)
   const persona = {
     name: profile.name,
-    age: profile.age,
+    age: computeAge(profile) ?? profile.age,
     interests: (profile.interests || [])
       .map((id) => INTERESTS.find((x) => x.id === id)?.label)
       .filter(Boolean),
@@ -395,20 +404,10 @@ export default function App() {
             onRemoveMission={removeParentMission}
             onBack={() => setZone("kids")}
             onSaveLimit={(val) => setSettings((s) => ({ ...s, limitPerDay: val }))}
-            onSetAge={(v) => setSettings((s) => ({ ...s, ageMode: v }))}
             onSetSound={(v) => setSettings((s) => ({ ...s, sound: v }))}
             onSaveProfile={(patch) =>
-              setProfile((p) => {
-                const next = { ...p, ...patch };
-                // 나이가 바뀌면 연령 모드도 함께 맞춘다 (0–6 영유아 / 7+ 초등)
-                if (patch.age != null && patch.age !== p.age) {
-                  setSettings((s) => ({
-                    ...s,
-                    ageMode: patch.age <= 6 ? "young" : "kid",
-                  }));
-                }
-                return next;
-              })
+              // 생년월이 바뀌면 연령 모드는 useEffect가 자동으로 다시 계산한다.
+              setProfile((p) => ({ ...p, ...patch }))
             }
             onClear={() => {
               setHistories({});

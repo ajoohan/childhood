@@ -32,7 +32,15 @@ export function loadStore() {
 
 // 온보딩(회원가입)으로 채워지는 아이 프로필 — 이 기기에만 저장
 export function emptyProfile() {
-  return { onboarded: false, name: "", age: null, interests: [], plan: "free" };
+  return {
+    onboarded: false,
+    name: "",
+    age: null,
+    birthYear: null,
+    birthMonth: null,
+    interests: [],
+    plan: "free",
+  };
 }
 
 // 별 원장 + 오늘의 미션 진행 상태 (기획서 3. 보상 밸런싱)

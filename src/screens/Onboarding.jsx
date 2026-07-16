@@ -2,23 +2,24 @@ import { useEffect, useRef, useState } from "react";
 import { INTERESTS, SPLASH_DECO } from "../lib/data.js";
 import { robotHead } from "../lib/mascot.js";
 import GateDialog from "../components/GateDialog.jsx";
+import { computeAge, ageModeForAge, MODE_LABEL, CHILD_MIN } from "../lib/age.js";
 
-const AGES = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const NOW = new Date();
+const CUR_YEAR = NOW.getFullYear();
+// 만 0~13세에 해당하는 출생연도 (최신순)
+const BIRTH_YEARS = Array.from({ length: 14 }, (_, i) => CUR_YEAR - i);
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 function ageNote(age) {
-  if (age <= 6)
+  const mode = ageModeForAge(age);
+  if (mode === "young")
     return {
-      title: `${age}살`,
+      title: `만 ${age}살 · 영유아 모드`,
       body: "이른 읽기와 그림·놀이 중심의 짧고 안전한 활동에 딱 맞아요.",
     };
-  if (age <= 9)
-    return {
-      title: `${age}살`,
-      body: "읽기·간단한 셈, 그리고 궁금증을 탐구하기 좋은 나이예요.",
-    };
   return {
-    title: `${age}살`,
-    body: "스스로 질문하고 깊이 탐구하도록 단어와 주제를 맞춰 줄게요.",
+    title: `만 ${age}살 · 아동 모드`,
+    body: "읽기·간단한 셈과 궁금증을 스스로 탐구하도록 맞춰 줄게요.",
   };
 }
 
@@ -26,8 +27,11 @@ function ageNote(age) {
 export default function Onboarding({ onDone }) {
   const [step, setStep] = useState("name"); // name|age|interests|safety|loading|paywall
   const [name, setName] = useState("");
-  const [age, setAge] = useState(null);
+  const [birthYear, setBirthYear] = useState(null);
+  const [birthMonth, setBirthMonth] = useState(null);
   const [interests, setInterests] = useState([]);
+  // 생년월로 만 나이를 계산 (생일이 지났는지는 월까지만 보고 근사)
+  const age = birthYear ? computeAge({ birthYear, birthMonth }, NOW) : null;
   const [plan, setPlan] = useState("yearly"); // yearly | monthly
   const [gate, setGate] = useState(null);
   const [loadStep, setLoadStep] = useState(0);
@@ -62,7 +66,9 @@ export default function Onboarding({ onDone }) {
     onDone({
       onboarded: true,
       name: name.trim(),
-      age,
+      birthYear,
+      birthMonth,
+      age, // 저장 시점의 만 나이(생년월 기준으로 앱에서 다시 계산됨)
       interests,
       plan: chosenPlan,
     });
@@ -246,7 +252,7 @@ export default function Onboarding({ onDone }) {
   // ── 스텝 화면 (name/age/interests/safety) ──
   const canNext =
     (step === "name" && name.trim().length > 0) ||
-    (step === "age" && age != null) ||
+    (step === "age" && birthYear != null) ||
     (step === "interests" && interests.length > 0) ||
     step === "safety";
 
@@ -299,18 +305,45 @@ export default function Onboarding({ onDone }) {
 
         {step === "age" && (
           <>
-            <h1>{who}는 몇 살이에요?</h1>
-            <p className="ob-sub">나이에 맞춰 단어와 주제를 딱 맞게 조절해요</p>
-            <div className="ob-age-grid">
-              {AGES.map((n) => (
-                <button
-                  key={n}
-                  className={`ob-age ${age === n ? "on" : ""}`}
-                  onClick={() => setAge(n)}
+            <h1>{who}는 언제 태어났어요?</h1>
+            <p className="ob-sub">
+              생일에 맞춰 나이와 모드를 자동으로 맞춰 드려요
+            </p>
+            <div className="ob-birth">
+              <label className="ob-field">
+                <span>태어난 해</span>
+                <select
+                  value={birthYear ?? ""}
+                  onChange={(e) =>
+                    setBirthYear(e.target.value ? parseInt(e.target.value, 10) : null)
+                  }
                 >
-                  {n}
-                </button>
-              ))}
+                  <option value="" disabled>
+                    선택
+                  </option>
+                  {BIRTH_YEARS.map((y) => (
+                    <option key={y} value={y}>
+                      {y}년 (만 {CUR_YEAR - y}살 무렵)
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="ob-field">
+                <span>태어난 달</span>
+                <select
+                  value={birthMonth ?? ""}
+                  onChange={(e) =>
+                    setBirthMonth(e.target.value ? parseInt(e.target.value, 10) : null)
+                  }
+                >
+                  <option value="">모름</option>
+                  {MONTHS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}월
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
             {age != null && (
               <div className="ob-age-note">
@@ -318,6 +351,12 @@ export default function Onboarding({ onDone }) {
                 <div>
                   <b>{ageNote(age).title}</b>
                   <p>{ageNote(age).body}</p>
+                  {age < CHILD_MIN && (
+                    <p className="ob-age-switch">
+                      만 {CHILD_MIN}세가 되면 아동({MODE_LABEL.kid.range}) 모드로
+                      자동 전환돼요.
+                    </p>
+                  )}
                 </div>
               </div>
             )}

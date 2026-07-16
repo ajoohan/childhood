@@ -2,6 +2,12 @@ import { useState } from "react";
 import { SAFETY_LABEL, INTERESTS } from "../lib/data.js";
 import { MISSION_EMOJIS } from "../lib/missions.js";
 import { userMsgCount, messagesToday, lastTime, fmtTime } from "../lib/store.js";
+import { computeAge, ageModeForProfile, MODE_LABEL, CHILD_MIN } from "../lib/age.js";
+
+const NOW = new Date();
+const CUR_YEAR = NOW.getFullYear();
+const BIRTH_YEARS = Array.from({ length: 14 }, (_, i) => CUR_YEAR - i);
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 // Parent Zone — 성인 인증 게이트 뒤. 대시보드·시간통제·활동 로그·구독·연령·미션.
 export default function ParentZone({
@@ -16,7 +22,6 @@ export default function ParentZone({
   onRemoveMission,
   onBack,
   onSaveLimit,
-  onSetAge,
   onSetSound,
   onSaveProfile,
   onClear,
@@ -43,11 +48,21 @@ export default function ParentZone({
   );
   const [saved, setSaved] = useState("");
 
-  const prof = profile || { name: "", age: null, interests: [] };
+  const prof = profile || { name: "", birthYear: null, birthMonth: null, interests: [] };
   const [nameInput, setNameInput] = useState(prof.name || "");
-  const [ageInput, setAgeInput] = useState(prof.age != null ? String(prof.age) : "");
+  const [yearInput, setYearInput] = useState(prof.birthYear ? String(prof.birthYear) : "");
+  const [monthInput, setMonthInput] = useState(prof.birthMonth ? String(prof.birthMonth) : "");
   const [picked, setPicked] = useState(prof.interests || []);
   const [profSaved, setProfSaved] = useState("");
+
+  // 현재 프로필로 계산한 만 나이와 연령 모드 (미리보기용)
+  const previewProfile = {
+    birthYear: yearInput ? parseInt(yearInput, 10) : null,
+    birthMonth: monthInput ? parseInt(monthInput, 10) : null,
+    age: prof.age,
+  };
+  const curAge = computeAge(previewProfile, NOW);
+  const curMode = ageModeForProfile(previewProfile, NOW);
 
   function toggleInterest(id) {
     setPicked((prev) =>
@@ -57,9 +72,10 @@ export default function ParentZone({
   }
   function saveProfile() {
     const name = nameInput.trim().slice(0, 20);
-    const ageNum = ageInput.trim() ? parseInt(ageInput, 10) : null;
-    const age = Number.isFinite(ageNum) && ageNum > 0 && ageNum < 20 ? ageNum : null;
-    onSaveProfile({ name, age, interests: picked });
+    const birthYear = yearInput ? parseInt(yearInput, 10) : null;
+    const birthMonth = monthInput ? parseInt(monthInput, 10) : null;
+    const age = birthYear ? computeAge({ birthYear, birthMonth }, NOW) : null;
+    onSaveProfile({ name, birthYear, birthMonth, age, interests: picked });
     setProfSaved("프로필을 저장했어요.");
   }
 
@@ -119,20 +135,52 @@ export default function ParentZone({
             />
           </label>
           <label className="prof-row">
-            <span>나이</span>
-            <input
-              type="number"
-              min="1"
-              max="19"
-              inputMode="numeric"
-              placeholder="나이"
-              value={ageInput}
+            <span>태어난 해</span>
+            <select
+              value={yearInput}
               onChange={(e) => {
-                setAgeInput(e.target.value);
+                setYearInput(e.target.value);
                 setProfSaved("");
               }}
-            />
+            >
+              <option value="">선택</option>
+              {BIRTH_YEARS.map((y) => (
+                <option key={y} value={y}>
+                  {y}년 (만 {CUR_YEAR - y}살 무렵)
+                </option>
+              ))}
+            </select>
           </label>
+          <label className="prof-row">
+            <span>태어난 달</span>
+            <select
+              value={monthInput}
+              onChange={(e) => {
+                setMonthInput(e.target.value);
+                setProfSaved("");
+              }}
+            >
+              <option value="">모름</option>
+              {MONTHS.map((m) => (
+                <option key={m} value={m}>
+                  {m}월
+                </option>
+              ))}
+            </select>
+          </label>
+          {curAge != null && (
+            <div className={`mode-preview ${curMode}`}>
+              <b>
+                만 {curAge}살 · {MODE_LABEL[curMode].name} 모드(
+                {MODE_LABEL[curMode].range})
+              </b>
+              <span>
+                {curMode === "young"
+                  ? `만 ${CHILD_MIN}세가 되면 아동 모드로 자동 전환돼요.`
+                  : "아이 스스로 탐구하는 아동 모드예요."}
+              </span>
+            </div>
+          )}
           <div className="prof-interests-label">관심사</div>
           <div className="prof-chips">
             {INTERESTS.map((it) => (
@@ -273,20 +321,27 @@ export default function ParentZone({
 
         <div className="guard-card">
           <h3>🧒 자녀 연령 모드</h3>
+          <p className="guard-hint">
+            연령 모드는 아이 생일에 따라 <b>자동으로</b> 정해져요. 만{" "}
+            {CHILD_MIN}세가 되면 영유아 버전에서 아동 버전으로 자연스럽게
+            전환됩니다.
+          </p>
           <div className="age-switch">
-            {[
-              { v: "young", label: "영유아", sub: "0–6세 · 부모와 함께" },
-              { v: "kid", label: "초등", sub: "7–12세 · 아이 직접" },
-            ].map((o) => (
-              <button
-                key={o.v}
-                className={`age-opt ${settings.ageMode === o.v ? "on" : ""}`}
-                onClick={() => onSetAge(o.v)}
-              >
-                <b>{o.label}</b>
-                <span>{o.sub}</span>
-              </button>
-            ))}
+            {["young", "kid"].map((v) => {
+              const m = MODE_LABEL[v];
+              return (
+                <div
+                  key={v}
+                  className={`age-opt readonly ${settings.ageMode === v ? "on" : ""}`}
+                >
+                  <b>{m.name}</b>
+                  <span>
+                    {m.range} · {m.sub}
+                  </span>
+                  {settings.ageMode === v && <span className="age-now">지금 여기</span>}
+                </div>
+              );
+            })}
           </div>
         </div>
 
