@@ -1,4 +1,4 @@
-import { userMsgCount, lastTime } from "../lib/store.js";
+import { userMsgCount, lastTime, orphanHistories } from "../lib/store.js";
 
 // 활동 카테고리별 폴라로이드 사진 배경 (아이 활동을 담는 오리지널 구성)
 const PHOTO_BG = {
@@ -24,9 +24,11 @@ function photoDate(iso) {
 
 // Collection — 아이가 한 활동을 폴라로이드로 모아 보는 "저널"
 export default function Collection({ activities, histories, name, stars, onPick }) {
+  // 현재 목록에 없는 id의 지난 세션도 함께 불러와 폴라로이드로 보여 준다.
   const done = activities
     .map((a) => ({ a, n: userMsgCount(histories[a.id]), last: lastTime(histories[a.id]) }))
     .filter((x) => x.n > 0)
+    .concat(orphanHistories(activities, histories))
     .sort((x, y) => y.n - x.n);
 
   const title = name ? `${name}의 저널` : "내 저널";

@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { SAFETY_LABEL, INTERESTS } from "../lib/data.js";
 import { MISSION_EMOJIS } from "../lib/missions.js";
-import { userMsgCount, messagesToday, lastTime, fmtTime } from "../lib/store.js";
+import {
+  userMsgCount,
+  messagesToday,
+  lastTime,
+  fmtTime,
+  orphanHistories,
+} from "../lib/store.js";
 import { computeAge, ageModeForProfile, MODE_LABEL, CHILD_MIN } from "../lib/age.js";
 
 const NOW = new Date();
@@ -76,6 +82,7 @@ export default function ParentZone({
     (n, h) => n + h.filter((m) => m.role === "user").length,
     0
   );
+  // 현재 목록에 없는 id의 지난 세션도 사용 현황에 포함한다.
   const rows = activities
     .map((a) => ({
       a,
@@ -83,6 +90,7 @@ export default function ParentZone({
       last: lastTime(histories[a.id]),
     }))
     .filter((r) => r.n > 0)
+    .concat(orphanHistories(activities, histories))
     .sort((x, y) => y.n - x.n);
 
   return (

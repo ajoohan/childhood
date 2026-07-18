@@ -20,7 +20,13 @@ import { sparkleBurst } from "./lib/fx.js";
 import { sfx, setSfxEnabled } from "./lib/sfx.js";
 import { earnedBadges, drawSticker } from "./lib/collectibles.js";
 import { REWARD, allMissions } from "./lib/missions.js";
-import { loadStore, persist, rollDay } from "./lib/store.js";
+import {
+  loadStore,
+  persist,
+  rollDay,
+  loadActivitiesCache,
+  saveActivitiesCache,
+} from "./lib/store.js";
 import { ageModeForProfile, computeAge } from "./lib/age.js";
 
 const initial = loadStore();
@@ -31,7 +37,10 @@ const APP_VERSION = "0.2.0";
 let splashSeen = false;
 
 export default function App() {
-  const [data, setData] = useState({ categories: [], activities: [] });
+  // 활동 목록은 캐시로 즉시 복원 — 서버를 기다리는 동안에도 지난 세션이 보인다.
+  const [data, setData] = useState(
+    () => loadActivitiesCache() || { categories: [], activities: [] }
+  );
   const [zone, setZone] = useState("kids"); // kids | parent
   const [view, setView] = useState({ name: "home" }); // home | list | session | collection
 
@@ -205,12 +214,28 @@ export default function App() {
 
   useEffect(() => {
     let alive = true;
-    fetch("/api/activities")
-      .then((r) => r.json())
-      .then((d) => alive && setData(d))
-      .catch(() => {});
+    let timer = null;
+    // 배포 서버가 잠들었다 깨는 환경(콜드 스타트)에서도 재시도로 끝내 불러온다.
+    function load(attempt = 0) {
+      fetch("/api/activities")
+        .then((r) => {
+          if (!r.ok) throw new Error(String(r.status));
+          return r.json();
+        })
+        .then((d) => {
+          if (!alive) return;
+          setData(d);
+          saveActivitiesCache(d);
+        })
+        .catch(() => {
+          if (!alive || attempt >= 4) return;
+          timer = setTimeout(() => load(attempt + 1), 2000 * 2 ** attempt);
+        });
+    }
+    load();
     return () => {
       alive = false;
+      clearTimeout(timer);
     };
   }, []);
 

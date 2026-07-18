@@ -82,6 +82,44 @@ export function persist(state) {
   } catch {}
 }
 
+// 활동 목록 캐시 — 서버 응답이 늦거나 실패해도(배포 콜드 스타트·오프라인)
+// 지난 대화(세션)가 저널·부모 존에서 사라져 보이지 않는 일이 없게 한다.
+const ACTIVITIES_KEY = "banjjaktalk_activities_v1";
+
+export function loadActivitiesCache() {
+  try {
+    const d = JSON.parse(localStorage.getItem(ACTIVITIES_KEY));
+    if (d && Array.isArray(d.categories) && Array.isArray(d.activities)) return d;
+  } catch {}
+  return null;
+}
+
+export function saveActivitiesCache(data) {
+  try {
+    localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+// 현재 활동 목록에 없는 id로 남아 있는 지난 대화도 화면에 불러올 수 있게 한다.
+// (활동 개편 등으로 id가 사라져도 아이의 대화 기록은 계속 보여야 한다)
+export function orphanHistories(activities, histories) {
+  const known = new Set((activities || []).map((a) => a.id));
+  return Object.entries(histories || {})
+    .filter(([id]) => !known.has(id))
+    .map(([id, h]) => ({
+      a: {
+        id,
+        title: "지난 대화",
+        emoji: "💬",
+        category: null,
+        greeting: "다시 만나서 반가워! 지난 이야기를 이어서 해 볼까?",
+      },
+      n: userMsgCount(h),
+      last: lastTime(h),
+    }))
+    .filter((x) => x.n > 0);
+}
+
 export function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
