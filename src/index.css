@@ -3518,3 +3518,49 @@ input::placeholder { color: #B4AC9E !important; }
 .journal-hd { display: flex; align-items: center; gap: 10px; }
 .jhd-back { flex-shrink: 0; }
 .jhd-title { flex: 1; }
+
+/* ============================================================
+   콜렉션 완성 = 별 소진 (별이 날아가며 줄어드는 연출 · 완성 시에만)
+   ============================================================ */
+.decor-top { position: relative; }
+.decor-balance.spending { animation: bal-pulse 0.45s ease 2; }
+@keyframes bal-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+.star-spend { position: absolute; right: 20px; top: 6px; pointer-events: none; z-index: 5; }
+.star-spend i {
+  position: absolute; right: 18px; top: 4px; font-size: 20px; opacity: 0;
+  animation: star-fly 0.9s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.05s);
+}
+@keyframes star-fly {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(calc((var(--i) - 4) * 20px), -58px) scale(0.4); opacity: 0; }
+}
+.star-spend-amt {
+  position: absolute; right: 6px; top: 32px; color: var(--accent); font-weight: 800; font-size: 18px;
+  animation: amt-rise 1s ease-out forwards;
+}
+@keyframes amt-rise {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-26px); opacity: 0; }
+}
+
+/* 완성하기 버튼 */
+.decor-finish {
+  margin-top: 16px; padding: 15px; border: none; border-radius: 18px;
+  background: var(--accent); color: #fff; font-weight: 800; font-size: 17px;
+  box-shadow: 0 8px 20px rgba(255, 107, 74, 0.28); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+}
+.decor-finish.short {
+  background: var(--surface-2) !important; color: var(--muted) !important; box-shadow: none !important;
+}
+.df-cost {
+  font-size: 13px; background: rgba(255, 255, 255, 0.25);
+  padding: 3px 10px; border-radius: 999px; font-weight: 700;
+}
+.decor-done { margin-top: 16px; text-align: center; color: #37c26b; font-weight: 800; font-size: 16px; }
+.decor-subhint { margin-top: 8px; text-align: center; color: var(--muted); font-size: 13px; }

@@ -1,36 +1,43 @@
-import { useEffect, useState } from "react";
-import { THEMES, themeById, isThemeComplete } from "../lib/decor.js";
+import { useState } from "react";
+import { THEMES, themeById, isThemeFilled } from "../lib/decor.js";
 import { robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
 
-// 꾸미기 방 — 별을 소모해 오브젝트 배치 (로열매치식). 테마 완성 시 기념 사진.
+// 꾸미기 방 — 빈 칸을 자유롭게 채우고, "완성하기"를 누르면 그때 별이 한 번에
+// 소진된다(별이 날아가며 줄어드는 연출). 소진은 오직 이 콜렉션 완성 순간에만.
 export default function DecorRoom({
   decor,
   balance,
   onPlace,
   onSetTheme,
-  onCompleteTheme,
+  onComplete,
   onBack,
 }) {
   const theme = themeById(decor.theme);
   const placed = decor.placed[theme.id] || {};
   const [choosing, setChoosing] = useState(null); // 배치할 슬롯
   const [celebrate, setCelebrate] = useState(false);
+  const [spending, setSpending] = useState(false); // 별 날아가는 소진 연출 중
 
-  const complete = isThemeComplete(theme, placed);
+  const filled = isThemeFilled(theme, placed);
   const alreadyDone = decor.completed.includes(theme.id);
-
-  // 테마를 방금 완성하면 기념 사진 표시 + 완성 기록
-  useEffect(() => {
-    if (complete && !alreadyDone) {
-      onCompleteTheme(theme.id);
-      setCelebrate(true);
-    }
-  }, [complete, alreadyDone, theme.id]);
+  const affordable = balance >= theme.cost;
+  const need = Math.max(0, theme.cost - balance);
 
   function pick(slot, optIndex) {
-    const ok = onPlace(theme.id, slot, optIndex);
-    if (ok) setChoosing(null);
+    if (onPlace(theme.id, slot, optIndex)) setChoosing(null);
+  }
+
+  // 완성하기 → 별 소진(날아가는 연출) → 기념 사진
+  function finishCollection() {
+    if (alreadyDone || !filled || !affordable || spending) return;
+    const ok = onComplete(theme);
+    if (!ok) return;
+    setSpending(true);
+    setTimeout(() => {
+      setSpending(false);
+      setCelebrate(true);
+    }, 1100);
   }
 
   return (
@@ -39,9 +46,20 @@ export default function DecorRoom({
         <button className="voice-back" onClick={onBack}>
           ‹ 뒤로
         </button>
-        <span className="decor-balance">
+        <span className={`decor-balance ${spending ? "spending" : ""}`}>
           <b>{balance}</b> ⭐
         </span>
+        {/* 별이 날아가며 소진되는 연출 (완성 순간에만) */}
+        {spending && (
+          <span className="star-spend" aria-hidden="true">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <i key={i} style={{ "--i": i }}>
+                ⭐
+              </i>
+            ))}
+            <b className="star-spend-amt">−{theme.cost}</b>
+          </span>
+        )}
       </header>
 
       <div className="decor-themes">
@@ -64,23 +82,19 @@ export default function DecorRoom({
         <div className="decor-grid">
           {theme.slots.map((slot) => {
             const idx = placed[slot.id];
-            const filled = idx != null;
-            const affordable = balance >= slot.cost;
+            const isFilled = idx != null;
             return (
               <button
                 key={slot.id}
-                className={`decor-slot ${filled ? "filled" : ""}`}
-                onClick={() => !filled && setChoosing(slot)}
+                className={`decor-slot ${isFilled ? "filled" : ""}`}
+                onClick={() => !alreadyDone && setChoosing(slot)}
               >
-                {filled ? (
+                {isFilled ? (
                   <span className="ds-obj">{slot.options[idx]}</span>
                 ) : (
                   <>
                     <span className="ds-plus">＋</span>
                     <span className="ds-name">{slot.name}</span>
-                    <span className={`ds-cost ${affordable ? "" : "no"}`}>
-                      {slot.cost} ⭐
-                    </span>
                   </>
                 )}
               </button>
@@ -89,9 +103,31 @@ export default function DecorRoom({
         </div>
       </div>
 
-      <p className="decor-hint">
-        빈 자리를 눌러 별로 꾸며 보세요. 다 채우면 기념 사진을 받아요! 📸
-      </p>
+      {/* 완성하기 — 채운 뒤 누르면 별이 소진되며 콜렉션 완성 */}
+      {alreadyDone ? (
+        <div className="decor-done">✓ 완성한 콜렉션이에요</div>
+      ) : filled ? (
+        <button
+          className={`decor-finish ${affordable ? "" : "short"}`}
+          onClick={finishCollection}
+          disabled={!affordable || spending}
+        >
+          {affordable ? (
+            <>
+              완성하기 <span className="df-cost">{theme.cost} ⭐ 소진</span>
+            </>
+          ) : (
+            <>별 {need}개 더 모으면 완성! ⭐</>
+          )}
+        </button>
+      ) : (
+        <p className="decor-hint">
+          빈 자리를 눌러 자유롭게 꾸며요. 다 채우면 완성할 수 있어요! 📸
+        </p>
+      )}
+      {filled && !alreadyDone && affordable && (
+        <p className="decor-subhint">완성하면 별 {theme.cost}개가 소진돼요.</p>
+      )}
 
       {/* 오브젝트 3택 선택 */}
       {choosing && (
@@ -102,29 +138,20 @@ export default function DecorRoom({
               <span className="sparks-star">{theme.emoji}</span>
               <div>
                 <b>{choosing.name} 고르기</b>
-                <small>마음에 드는 걸 골라요 · {choosing.cost}⭐</small>
+                <small>마음에 드는 걸 골라요</small>
               </div>
-              <span className="sparks-count">
-                <b>{balance}</b> ⭐
-              </span>
             </div>
             <div className="decor-options">
               {choosing.options.map((op, i) => (
                 <button
                   key={i}
                   className="decor-option"
-                  disabled={balance < choosing.cost}
                   onClick={() => pick(choosing, i)}
                 >
                   <span className="do-emoji">{op}</span>
                 </button>
               ))}
             </div>
-            {balance < choosing.cost && (
-              <p className="decor-need">
-                별이 조금 더 필요해요! 미션을 하고 별을 모아 볼까요? ⭐
-              </p>
-            )}
           </div>
         </div>
       )}
@@ -154,7 +181,7 @@ export default function DecorRoom({
               <div className="celebrate-cap">{theme.name} 완성! 📸</div>
             </div>
             <h2>축하해요! 🎉</h2>
-            <p>멋진 {theme.name}을(를) 완성했어요. 다음 공간도 꾸며 볼까요?</p>
+            <p>별 {theme.cost}개로 멋진 {theme.name}을(를) 완성했어요!</p>
             <button className="mm-yes wide" onClick={() => setCelebrate(false)}>
               좋아!
             </button>

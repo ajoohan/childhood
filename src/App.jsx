@@ -176,14 +176,8 @@ export default function App() {
   const removeParentMission = (id) =>
     setParentMissions((p) => p.filter((x) => x.id !== id));
 
-  // 꾸미기: 별을 소모해 오브젝트 배치 (잔액 부족 시 취소)
+  // 꾸미기: 오브젝트 배치는 무료(자유롭게 꾸미기). 별은 여기서 차감하지 않는다.
   function placeDecor(themeId, slot, optIndex) {
-    if (rewards.balance < slot.cost) return false;
-    setRewards((r0) => {
-      const r = rollDay(r0);
-      if (r.balance < slot.cost) return r;
-      return { ...r, balance: r.balance - slot.cost };
-    });
     setDecor((d) => ({
       ...d,
       placed: {
@@ -194,12 +188,24 @@ export default function App() {
     return true;
   }
   const setDecorTheme = (themeId) => setDecor((d) => ({ ...d, theme: themeId }));
-  const completeTheme = (themeId) =>
+
+  // 콜렉션 완성 → 이때만 별이 소진된다(별이 날아가며 줄어드는 순간). 하루 언제든 1회.
+  // 별 잔액이 부족하면 완성 불가(false 반환).
+  function completeCollection(theme) {
+    if (decor.completed.includes(theme.id)) return false;
+    if (rewards.balance < theme.cost) return false;
+    setRewards((r0) => {
+      const r = rollDay(r0);
+      if (r.balance < theme.cost) return r;
+      return { ...r, balance: r.balance - theme.cost };
+    });
     setDecor((d) =>
-      d.completed.includes(themeId)
+      d.completed.includes(theme.id)
         ? d
-        : { ...d, completed: [...d.completed, themeId] }
+        : { ...d, completed: [...d.completed, theme.id] }
     );
+    return true;
+  }
 
   function completeOnboarding(p) {
     // 연령 모드는 생년월 기반으로 useEffect에서 자동 계산된다.
@@ -427,7 +433,7 @@ export default function App() {
             balance={rewards.balance}
             onPlace={placeDecor}
             onSetTheme={setDecorTheme}
-            onCompleteTheme={completeTheme}
+            onComplete={completeCollection}
             onBack={() => setView({ name: "collection" })}
           />
         )}
