@@ -10,13 +10,24 @@ export default function MissionBoard({
   parentMissions,
   onComplete,
   onClaimAttendance,
-  onDecor,
+  onOpenChest,
+  onCollection,
 }) {
   const missions = allMissions(parentMissions);
   const doneCount = missions.filter((m) => rewards.doneToday.includes(m.id)).length;
   const [checking, setChecking] = useState(null); // 인증 대기 미션
   const [praise, setPraise] = useState(null); // {text, reward}
   const [burst, setBurst] = useState(false); // 출석 등 짧은 컨페티
+  const [chestReward, setChestReward] = useState(null); // 보물상자 개봉 결과
+
+  function handleChest() {
+    const r = onOpenChest && onOpenChest();
+    if (r) {
+      setChestReward(r);
+      setBurst(true);
+      setTimeout(() => setBurst(false), 2200);
+    }
+  }
 
   function claimAttend() {
     if (rewards.attendance) return;
@@ -105,11 +116,31 @@ export default function MissionBoard({
         })}
       </div>
 
-      <button className="mb-decor" onClick={onDecor}>
-        <span className="mb-decor-emoji">🏠</span>
+      {/* 보물상자 — 오늘 미션을 모두 끝내면 열림 (하루 1회, 랜덤 보상) */}
+      {rewards.allClear && (
+        <button
+          className={`mb-chest ${rewards.chestOpened ? "opened" : ""}`}
+          onClick={handleChest}
+          disabled={rewards.chestOpened}
+        >
+          <span className="mb-chest-emoji">{rewards.chestOpened ? "📭" : "🎁"}</span>
+          <span className="mb-chest-body">
+            <b>{rewards.chestOpened ? "오늘 보물상자 완료!" : "보물상자가 열렸어요!"}</b>
+            <small>
+              {rewards.chestOpened
+                ? "내일 또 미션을 모두 끝내면 열 수 있어요"
+                : "미션을 모두 끝낸 선물 · 눌러서 열어 봐!"}
+            </small>
+          </span>
+          {!rewards.chestOpened && <span className="mb-chest-cta">열기</span>}
+        </button>
+      )}
+
+      <button className="mb-decor" onClick={onCollection}>
+        <span className="mb-decor-emoji">📦</span>
         <span className="mb-decor-body">
-          <b>별로 내 방 꾸미기</b>
-          <small>모은 별로 나만의 공간을 꾸며요</small>
+          <b>콜렉션 하러 가기</b>
+          <small>모은 별로 꾸미고, 스티커를 모아요</small>
         </span>
         <span className="mb-decor-arrow">›</span>
       </button>
@@ -151,6 +182,34 @@ export default function MissionBoard({
             <h2>+{praise.reward} 별!</h2>
             <p>{praise.text}</p>
             <button className="mm-yes wide" onClick={() => setPraise(null)}>
+              좋아!
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 보물상자 개봉 결과 */}
+      {chestReward && (
+        <div className="modal-backdrop" onClick={() => setChestReward(null)}>
+          <Confetti count={90} />
+          <div className="mission-modal praise" onClick={(e) => e.stopPropagation()}>
+            <div className="chest-reveal">
+              <span className="chest-reveal-box">🎁</span>
+              <span className="chest-reveal-prize">
+                {chestReward.type === "star" ? "⭐" : chestReward.emoji}
+              </span>
+            </div>
+            <h2>
+              {chestReward.type === "star"
+                ? `+${chestReward.amount} 별!`
+                : `${chestReward.name} 스티커!`}
+            </h2>
+            <p>
+              {chestReward.type === "star"
+                ? "보물상자에서 별이 나왔어요! ✨"
+                : "보물상자에서 스티커가 나왔어요! 콜렉션에 담겼어요."}
+            </p>
+            <button className="mm-yes wide" onClick={() => setChestReward(null)}>
               좋아!
             </button>
           </div>

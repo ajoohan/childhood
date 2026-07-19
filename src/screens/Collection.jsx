@@ -23,7 +23,7 @@ function photoDate(iso) {
 }
 
 // Collection — 아이가 한 활동을 폴라로이드로 모아 보는 "저널"
-export default function Collection({ activities, histories, name, stars, onPick }) {
+export default function Collection({ activities, histories, name, stars, onPick, onBack }) {
   const done = activities
     .map((a) => ({ a, n: userMsgCount(histories[a.id]), last: lastTime(histories[a.id]) }))
     .filter((x) => x.n > 0)
@@ -34,6 +34,11 @@ export default function Collection({ activities, histories, name, stars, onPick 
   return (
     <section className="collection journal">
       <header className="journal-hd">
+        {onBack && (
+          <button className="voice-back jhd-back" onClick={onBack}>
+            ‹ 뒤로
+          </button>
+        )}
         <div className="jhd-title">
           <b>📔 {title}</b>
           <small>했던 활동이 사진처럼 쌓여요</small>

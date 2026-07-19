@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { VOICES } from "./VoiceMode.jsx";
+import { MODE_LABEL } from "../lib/age.js";
 
 // 설정 화면 — 부모 존 안(성인 인증 뒤)에서 앱 환경설정을 모아 관리한다.
 // 효과음 · AI 목소리 · 시간 통제 · 부모 잠금(PIN) · 앱 정보 · 기록 관리.
@@ -221,7 +222,10 @@ export default function Settings({
           <h3>ℹ️ 앱 정보</h3>
           <div className="set-info-row">
             <span>서비스</span>
-            <b>반짝톡 · 영유아(1–7세)</b>
+            <b>
+              반짝톡 · {MODE_LABEL[settings.ageMode]?.name || "영유아"}(
+              {MODE_LABEL[settings.ageMode]?.range || MODE_LABEL.young.range})
+            </b>
           </div>
           <div className="set-info-row">
             <span>버전</span>

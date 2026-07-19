@@ -52,6 +52,7 @@ export function emptyRewards() {
     attendance: false, // 오늘 출석·AI 첫인사 보상 여부
     doneToday: [], // 오늘 완료한 미션 id
     allClear: false, // 오늘 올클리어 보너스 지급 여부
+    chestOpened: false, // 오늘 보물상자 개봉 여부 (하루 1회)
   };
 }
 
@@ -66,6 +67,7 @@ export function rollDay(r) {
       attendance: false,
       doneToday: [],
       allClear: false,
+      chestOpened: false,
     };
   }
   return base;

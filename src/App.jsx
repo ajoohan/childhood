@@ -5,6 +5,7 @@ import KidsHome from "./screens/KidsHome.jsx";
 import ActivityList from "./screens/ActivityList.jsx";
 import Session from "./screens/Session.jsx";
 import Collection from "./screens/Collection.jsx";
+import CollectionHub from "./screens/CollectionHub.jsx";
 import VoiceMode from "./screens/VoiceMode.jsx";
 import ParentZone from "./screens/ParentZone.jsx";
 import Settings from "./screens/Settings.jsx";
@@ -19,7 +20,7 @@ import { INTERESTS } from "./lib/data.js";
 import { sparkleBurst } from "./lib/fx.js";
 import { sfx, setSfxEnabled } from "./lib/sfx.js";
 import { earnedBadges, drawSticker } from "./lib/collectibles.js";
-import { REWARD, allMissions } from "./lib/missions.js";
+import { REWARD, allMissions, openTreasure } from "./lib/missions.js";
 import { loadStore, persist, rollDay } from "./lib/store.js";
 import { ageModeForProfile, computeAge } from "./lib/age.js";
 
@@ -39,7 +40,7 @@ export default function App() {
   const [safety, setSafety] = useState(initial.safety);
   const [settings, setSettings] = useState({
     limitPerDay: initial.settings.limitPerDay ?? null,
-    // 연령 모드는 아이 생년월에서 자동 계산 (8세부터 아동 모드)
+    // 연령 모드는 아이 생년월에서 자동 계산 (10세부터 아동 모드)
     ageMode: ageModeForProfile(initial.profile),
     pin: initial.settings.pin || null,
     voice: initial.settings.voice || "shimmer",
@@ -78,8 +79,8 @@ export default function App() {
   }, [histories, safety, settings, profile, rewards, parentMissions, decor, badges, stickers]);
 
   // 연령 모드 자동 전환 — 아이 생년월로 현재 나이를 계산해 모드를 맞춘다.
-  // 앱을 열 때마다(그리고 프로필이 바뀔 때) 다시 계산되므로, 아이가 8세가 되면
-  // 다음 실행부터 영유아(1–7세)에서 아동(8–13세) 모드로 자연스럽게 넘어간다.
+  // 앱을 열 때마다(그리고 프로필이 바뀔 때) 다시 계산되므로, 아이가 10세가 되면
+  // 다음 실행부터 영유아(1–9세)에서 아동(10–13세) 모드로 자연스럽게 넘어간다.
   useEffect(() => {
     const mode = ageModeForProfile(profile);
     setSettings((s) => (s.ageMode === mode ? s : { ...s, ageMode: mode }));
@@ -131,6 +132,29 @@ export default function App() {
       return { ...s, [id]: (s[id] || 0) + 1 };
     });
     sfx.success();
+  }
+
+  // 보물상자 개봉 — 하루 미션 올클리어 시 1회. 랜덤 보상(별 또는 스티커).
+  // 결제 없음·하루 1회·미션 완료로만. 반환값을 화면이 받아 연출한다.
+  function openChest() {
+    if (!rewards.allClear || rewards.chestOpened) return null;
+    const reward = openTreasure(stickers);
+    setRewards((r0) => {
+      const r = rollDay(r0);
+      if (r.chestOpened) return r;
+      const extra = reward.type === "star" ? reward.amount : 0;
+      return {
+        ...r,
+        chestOpened: true,
+        balance: r.balance + extra,
+        earnedToday: r.earnedToday + extra,
+      };
+    });
+    if (reward.type === "sticker") {
+      setStickers((s) => ({ ...s, [reward.id]: (s[reward.id] || 0) + 1 }));
+    }
+    sfx.success();
+    return reward;
   }
 
   // 출석 + AI 첫인사 (하루 1회)
@@ -294,10 +318,9 @@ export default function App() {
             onPickActivity={openActivity}
             onParent={openParent}
             onStars={() => setSparksOpen(true)}
-            onCollection={() => setView({ name: "collection" })}
+            onCollection={() => setView({ name: "history" })}
             onImageMaker={() => setView({ name: "image" })}
             onBadges={() => setView({ name: "badges" })}
-            onStickers={() => setView({ name: "stickers" })}
             imageEnabled={!!data.features?.image}
           />
         )}
@@ -313,12 +336,23 @@ export default function App() {
         )}
 
         {zone === "kids" && view.name === "collection" && (
+          <CollectionHub
+            decor={decor}
+            stickers={stickers}
+            stars={stars}
+            onDecor={() => setView({ name: "decor" })}
+            onStickers={() => setView({ name: "stickers" })}
+          />
+        )}
+
+        {zone === "kids" && view.name === "history" && (
           <Collection
             activities={data.activities}
             histories={histories}
             name={profile.name}
             stars={stars}
             onPick={openActivity}
+            onBack={() => setView({ name: "home" })}
           />
         )}
 
@@ -364,7 +398,8 @@ export default function App() {
             parentMissions={parentMissions}
             onComplete={completeMission}
             onClaimAttendance={claimAttendance}
-            onDecor={() => setView({ name: "decor" })}
+            onOpenChest={openChest}
+            onCollection={() => setView({ name: "collection" })}
           />
         )}
 
@@ -380,7 +415,10 @@ export default function App() {
         )}
 
         {zone === "kids" && view.name === "stickers" && (
-          <StickerBook stickers={stickers} onBack={() => setView({ name: "home" })} />
+          <StickerBook
+            stickers={stickers}
+            onBack={() => setView({ name: "collection" })}
+          />
         )}
 
         {zone === "kids" && view.name === "decor" && (
@@ -390,7 +428,7 @@ export default function App() {
             onPlace={placeDecor}
             onSetTheme={setDecorTheme}
             onCompleteTheme={completeTheme}
-            onBack={() => setView({ name: "missions" })}
+            onBack={() => setView({ name: "collection" })}
           />
         )}
 
@@ -458,6 +496,18 @@ export default function App() {
             <span>미션</span>
           </button>
           <button
+            className={`tab speak ${view.name === "voice" ? "active" : ""}`}
+            onClick={() => setView({ name: "voice" })}
+          >
+            <span className="tab-speak-ring">
+              <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="3" width="6" height="11" rx="3" />
+                <path d="M6 11a6 6 0 0 0 12 0M12 17v3" />
+              </svg>
+            </span>
+            <span>스피크</span>
+          </button>
+          <button
             className={`tab ${view.name === "collection" ? "active" : ""}`}
             onClick={() => setView({ name: "collection" })}
           >
@@ -465,17 +515,7 @@ export default function App() {
               <rect x="4" y="6" width="16" height="14" rx="2" />
               <path d="M4 10h16M9 6V4h6v2" />
             </svg>
-            <span>기록</span>
-          </button>
-          <button
-            className={`tab ${view.name === "voice" ? "active" : ""}`}
-            onClick={() => setView({ name: "voice" })}
-          >
-            <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="9" y="3" width="6" height="11" rx="3" />
-              <path d="M6 11a6 6 0 0 0 12 0M12 17v3" />
-            </svg>
-            <span>음성</span>
+            <span>콜렉션</span>
           </button>
           <button className="tab" onClick={openParent}>
             <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

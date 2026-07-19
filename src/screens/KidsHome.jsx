@@ -37,7 +37,6 @@ export default function KidsHome({
   onCollection,
   onImageMaker,
   onBadges,
-  onStickers,
   imageEnabled,
 }) {
   const hi = name ? `안녕, ${name}! 👋` : "안녕! 👋";
@@ -73,9 +72,8 @@ export default function KidsHome({
   }, []);
   const MENU = [
     { icon: "🏅", label: "내 배지", go: onBadges },
-    { icon: "🪄", label: "스티커 도감", go: onStickers },
     { icon: "🖼️", label: "그림 만들기", go: onImageMaker, pending: !imageEnabled },
-    { icon: "🕘", label: "내 기록", go: onCollection },
+    { icon: "🕘", label: "챗 히스토리", go: onCollection },
     { icon: "✏️", label: "프로필 수정", go: onParent },
   ];
   const bigTiles = categories.filter((c) => c.id === "story" || c.id === "heart");

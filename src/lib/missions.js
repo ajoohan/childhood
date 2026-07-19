@@ -35,3 +35,24 @@ export function praiseFor(name, seed) {
   const msg = PRAISE[Math.abs(seed) % PRAISE.length];
   return name ? `${name}야, ${msg}` : msg;
 }
+
+// ── 보물상자 (하루 미션 올클리어 보상) ──
+// 안전 원칙: 결제로 열 수 없고, 하루 1회만, '미션 완료'로만 열린다.
+// 보상은 앱 안에서 이미 얻을 수 있는 것(추가 별 또는 스티커)뿐 — 유료·독점 아이템 없음.
+// 열었을 때 별인지 스티커인지는 랜덤(작은 즐거움)이되, 손해는 없다(항상 무언가 받음).
+import { drawSticker, STICKERS } from "./collectibles.js";
+
+export const CHEST_BONUS_STARS = [2, 3, 5]; // 별이 나올 때의 보너스 후보
+
+// 소유 스티커를 받아 랜덤 보상 하나를 만든다.
+export function openTreasure(ownedStickers = {}) {
+  // 약 55% 별 / 45% 스티커
+  if (Math.random() < 0.55) {
+    const amount =
+      CHEST_BONUS_STARS[Math.floor(Math.random() * CHEST_BONUS_STARS.length)];
+    return { type: "star", amount };
+  }
+  const id = drawSticker(ownedStickers);
+  const s = STICKERS.find((x) => x.id === id) || STICKERS[0];
+  return { type: "sticker", id: s.id, emoji: s.emoji, name: s.name };
+}
