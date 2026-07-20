@@ -64,18 +64,18 @@ export default function MissionBoard({
         </span>
       </header>
 
-      <div className="mb-progress">
+      <div className="mb-progress game">
         <div className="mb-progress-bar">
           <i
             style={{
               width: `${missions.length ? (doneCount / missions.length) * 100 : 0}%`,
             }}
           />
+          <b className="mb-progress-count">
+            {doneCount}/{missions.length}
+          </b>
         </div>
-        <span>
-          {doneCount}/{missions.length} 완료
-          {rewards.allClear && " · 올클리어! 🎉"}
-        </span>
+        {rewards.allClear && <span className="mb-allclear">올클리어! 🎉</span>}
       </div>
 
       {/* 출석 + AI 첫인사 (하루 1회 +1) */}

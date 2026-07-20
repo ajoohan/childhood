@@ -3914,6 +3914,122 @@ input::placeholder { color: #B4AC9E !important; }
 .space-stickers .colhub-stk.empty, .space-stickers .colhub-stk.more { color: #7C8BAD; }
 
 /* ============================================================
+   GAME POLISH — 전체 UI 게임 감성 (베벨 버튼 · 청키 타이틀 · 게임 진행바)
+   ============================================================ */
+
+/* ── 3D 베벨 버튼: 아랫면 두꺼운 그림자 + 누르면 쏙 들어감 ── */
+.splash-primary, .ob-primary, .mm-yes, .mb-do, .ask-btn,
+.guard-btn:not(.danger):not(.ghost), .decor-finish:not(.short),
+.sw-go, .mb-chest-cta, .send-plane, .kid-now {
+  box-shadow: 0 5px 0 #C8431F, 0 10px 16px rgba(244, 80, 47, 0.25) !important;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.splash-primary:active, .ob-primary:active, .mm-yes:active, .mb-do:active,
+.ask-btn:active, .guard-btn:not(.danger):not(.ghost):active,
+.decor-finish:not(.short):active, .send-plane:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #C8431F, 0 4px 8px rgba(244, 80, 47, 0.2) !important;
+}
+.guard-btn.danger { box-shadow: 0 5px 0 #B93A47, 0 8px 14px rgba(220, 70, 90, 0.22) !important; }
+.mm-later, .splash-secondary, .pin-key {
+  box-shadow: 0 4px 0 #DCD2C0 !important;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.mm-later:active, .pin-key:active { transform: translateY(3px); box-shadow: 0 1px 0 #DCD2C0 !important; }
+.place-view { box-shadow: 0 5px 0 #2E6B0C, 0 6px 12px rgba(0, 0, 0, 0.35) !important; }
+
+/* ── 스플래시: 게임 타이틀 로고 + 큰 시작 버튼 ── */
+.splash-copy h1.splash-logo {
+  font-size: 58px !important; font-weight: 900; letter-spacing: -1px;
+  color: var(--accent) !important;
+  text-shadow: 0 3px 0 #C8431F, 0 7px 0 rgba(200, 67, 31, 0.25), 0 12px 22px rgba(244, 80, 47, 0.3);
+  line-height: 1.1 !important; margin-bottom: 6px;
+}
+.splash-logo span { color: #F5A623; text-shadow: 0 3px 0 #B8791A, 0 7px 0 rgba(184, 121, 26, 0.25), 0 12px 22px rgba(245, 166, 35, 0.35); }
+.splash-tag {
+  font-size: 17px !important; font-weight: 800; color: var(--text) !important;
+  margin-bottom: 8px;
+}
+.splash-primary.game-go {
+  background: linear-gradient(180deg, #8FD64A, #56A81E) !important;
+  border: 2.5px solid #3E7E12 !important;
+  box-shadow: 0 6px 0 #2E6B0C, 0 12px 20px rgba(86, 168, 30, 0.35) !important;
+  font-size: 21px !important; letter-spacing: 1px;
+  text-shadow: 0 2px 0 rgba(30, 70, 0, 0.45);
+}
+.splash-primary.game-go:active { transform: translateY(5px); box-shadow: 0 1px 0 #2E6B0C !important; }
+
+/* ── 온보딩: 게임식 진행바 + 카드 테두리 ── */
+.ob-progress {
+  height: 14px !important; border-radius: 999px;
+  border: 2px solid #E8D9BF; background: #F1E7D2 !important; overflow: hidden;
+}
+.ob-progress i {
+  background: linear-gradient(180deg, #FFB35C, #F58A3C) !important;
+  border-radius: 999px; box-shadow: inset 0 -3px 0 rgba(160, 80, 0, 0.25);
+}
+.ob-age-note, .ob-field, .ob-safe-card {
+  border: 2px solid #EFE3CD !important;
+  box-shadow: 0 4px 0 #EFE3CD, 0 10px 18px rgba(60, 45, 30, 0.05) !important;
+}
+
+/* ── 홈: 타일·카드에 게임식 아랫면 베벨 ── */
+.big-tile.bt-story { box-shadow: 0 6px 0 #C43A1B, 0 14px 22px rgba(244, 80, 47, 0.28) !important; }
+.big-tile.bt-heart { box-shadow: 0 6px 0 #B22B60, 0 14px 22px rgba(224, 58, 120, 0.28) !important; }
+.big-tile:active { transform: translateY(4px) scale(0.99); }
+.learn-card, .rec-card {
+  border: 2px solid #F0E7D7 !important;
+  box-shadow: 0 5px 0 #EDE3D1, 0 10px 16px rgba(60, 45, 30, 0.05) !important;
+}
+.learn-card:active, .rec-card:active { transform: translateY(3px); box-shadow: 0 1px 0 #EDE3D1 !important; }
+.premium-banner { border: 2.5px solid #E5B800 !important; box-shadow: 0 6px 0 #D9A900, 0 12px 20px rgba(220, 170, 0, 0.28) !important; }
+.premium-banner:active { transform: translateY(4px); box-shadow: 0 1px 0 #D9A900 !important; }
+
+/* ── 미션: 퀘스트 보드 느낌 ── */
+.mb-hd b {
+  font-size: 24px; color: var(--accent);
+  text-shadow: 0 2px 0 rgba(200, 67, 31, 0.3);
+}
+.mb-progress.game { display: block; }
+.mb-progress.game .mb-progress-bar {
+  position: relative; height: 28px !important; border-radius: 999px;
+  background: #E8DCC4 !important; border: 2.5px solid #D9A900; overflow: hidden;
+}
+.mb-progress.game .mb-progress-bar > i {
+  background: linear-gradient(180deg, #8FD64A, #56A81E) !important;
+  border-radius: 999px; height: 100%;
+}
+.mb-progress-count {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 15px; font-weight: 900; color: #4A3A10;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.mb-allclear { display: block; margin-top: 7px; font-weight: 800; color: #56A81E; font-size: 14px; }
+.mb-item {
+  border: 2px solid #F0E7D7 !important;
+  box-shadow: 0 5px 0 #EDE3D1, 0 10px 16px rgba(60, 45, 30, 0.05) !important;
+}
+.mb-item .mb-body small {
+  display: inline-block; background: #FFF3D6; border: 1.5px solid #F2DFA8;
+  color: #A07F30; border-radius: 999px; padding: 2px 10px; font-weight: 800; margin-top: 4px;
+}
+.mb-attend { border-width: 2px !important; }
+
+/* ── 탭바: 활성 탭 알약 배경 + 통통 ── */
+.tab { transition: transform 0.1s; }
+.tab:active { transform: scale(0.92); }
+.tab.active .tab-svg, .tab.active svg {
+  background: #FFF0EA; border-radius: 12px; padding: 3px;
+  width: 30px !important; height: 30px !important; margin-bottom: 2px;
+}
+.tab.active::after { display: none !important; }
+
+/* ── 시트/모달: 두꺼운 테두리 ── */
+.sheet, .mission-modal, .celebrate, .pin-card {
+  border: 2.5px solid #F0E4CE !important;
+}
+
+/* ============================================================
    콜렉션 완성 = 별 소진 (별이 날아가며 줄어드는 연출 · 완성 시에만)
    ============================================================ */
 .decor-top { position: relative; }

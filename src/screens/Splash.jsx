@@ -21,11 +21,10 @@ export default function Splash({ onStart, onParent }) {
       </div>
 
       <div className="splash-copy">
-        <h1>
-          우리 아이의
-          <br />
-          AI 학습 도우미
+        <h1 className="splash-logo">
+          반짝<span>톡</span>
         </h1>
+        <p className="splash-tag">우리 아이의 AI 학습 도우미</p>
         <p>
           광고 없이 안전하게,
           <br />
@@ -34,8 +33,8 @@ export default function Splash({ onStart, onParent }) {
       </div>
 
       <div className="splash-actions">
-        <button className="splash-primary" onClick={onStart}>
-          시작하기
+        <button className="splash-primary game-go" onClick={onStart}>
+          ▶ 시작하기
         </button>
         <button className="splash-secondary" onClick={onParent}>
           부모님이신가요? 부모 존 열기
