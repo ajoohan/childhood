@@ -1,8 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { recommendActivities, interestEmojis } from "../lib/data.js";
+import { timeGreeting } from "../lib/greeting.js";
 import { robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
 import FloatingStars from "../components/FloatingStars.jsx";
+
+// 요즘 인기 있는 활동 (제작사 큐레이션 — 기획서 2장 7~9번 영역, MVP는 큐레이션)
+const POPULAR_IDS = ["story_listen", "draw_idea", "feel_talk", "habit_routine"];
+const POP_GRAD = [
+  ["#FFD9A3", "#FFB35C"],
+  ["#C9E8FF", "#8FC9F5"],
+  ["#FFD1DC", "#FF9EB8"],
+  ["#D6F0C2", "#A4D97E"],
+];
 
 // 앱 실행 후 홈 첫 진입에서 환영 컨페티를 1회만
 let welcomedThisSession = false;
@@ -39,11 +49,29 @@ export default function KidsHome({
   onBadges,
   imageEnabled,
 }) {
-  const hi = name ? `안녕, ${name}! 👋` : "안녕! 👋";
+  // 시간대에 따라 바뀌는 환영 문구 (저녁 9시 → "치카치카 했어요?")
+  const greet = timeGreeting(name);
   const [menuOpen, setMenuOpen] = useState(false);
   const [face, setFace] = useState("happy");
   const [poked, setPoked] = useState(false);
   const [welcome, setWelcome] = useState(!welcomedThisSession);
+  const [scrollHint, setScrollHint] = useState(false);
+  const homeRef = useRef(null);
+
+  // 아래에 더 있으면 스크롤 유도 표시 (끝까지 내리면 사라짐)
+  useEffect(() => {
+    const el = homeRef.current;
+    if (!el) return;
+    const check = () =>
+      setScrollHint(el.scrollHeight - el.clientHeight - el.scrollTop > 24);
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => {
+      el.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
+    };
+  }, []);
 
   // 마스코트를 콕 누르면 통통 튀며 재밌는 표정
   function pokeMascot() {
@@ -84,9 +112,12 @@ export default function KidsHome({
   const recommended = recommendActivities(interests, activities, ageMode, 4);
   const emojis = interestEmojis(interests);
   const recTitle = name ? `${name}를 위한 추천` : "너를 위한 추천";
+  const popular = POPULAR_IDS.map((id) => activities.find((a) => a.id === id))
+    .filter(Boolean)
+    .filter((a) => a.ages.includes(ageMode));
 
   return (
-    <section className="kids-home">
+    <section className="kids-home" ref={homeRef}>
       <FloatingStars />
       {welcome && <Confetti count={80} />}
       <header className="home-hd">
@@ -128,8 +159,8 @@ export default function KidsHome({
           dangerouslySetInnerHTML={{ __html: robotHead(face) }}
         />
         <div className="hd-hi">
-          <b>{hi}</b>
-          <small>오늘도 반가워</small>
+          <b>{greet.hi}</b>
+          <small>{greet.sub}</small>
         </div>
         <button className="star-badge" onClick={onStars} aria-label="별 모으기">
           <b>{stars}</b> ⭐
@@ -214,6 +245,39 @@ export default function KidsHome({
           <span className="ask-text">궁금한 거 있어? 물어봐!</span>
           <span className="ask-btn">🎤 물어보기</span>
         </button>
+      )}
+
+      {popular.length > 0 && (
+        <>
+          <div className="rec-head pop-head">
+            <span>🔥 요즘 인기 있는 활동</span>
+          </div>
+          <div className="rec-row">
+            {popular.map((a, i) => {
+              const g = POP_GRAD[i % POP_GRAD.length];
+              return (
+                <button
+                  key={a.id}
+                  className="rec-card"
+                  style={{
+                    background: `linear-gradient(160deg, ${g[0]}, ${g[1]})`,
+                  }}
+                  onClick={() => onPickActivity(a)}
+                >
+                  <span className="rc-emoji">{a.emoji}</span>
+                  <span className="rc-title">{a.title}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* 아래에 더 있음을 알리는 스크롤 유도 (기획서: 하단 콘텐츠가 잘려 보이게) */}
+      {scrollHint && (
+        <div className="scroll-hint" aria-hidden="true">
+          <span className="scroll-hint-chev">⌄</span>
+        </div>
       )}
     </section>
   );

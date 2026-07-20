@@ -52,6 +52,19 @@ export function themeById(id) {
   return THEMES.find((t) => t.id === id) || THEMES[0];
 }
 
+// 장소 번호 (1부터) — 기획서 5장의 "N번 장소" 표기
+export function themePlaceNo(id) {
+  const i = THEMES.findIndex((t) => t.id === id);
+  return (i < 0 ? 0 : i) + 1;
+}
+
+// 순차 해금 — 첫 장소는 항상 열려 있고, 이전 장소를 완성해야 다음이 열린다.
+export function isThemeUnlocked(id, completed) {
+  const i = THEMES.findIndex((t) => t.id === id);
+  if (i <= 0) return true;
+  return (completed || []).includes(THEMES[i - 1].id);
+}
+
 // 해당 테마의 모든 칸이 채워졌는지 (완성하기를 누를 수 있는 상태)
 export function isThemeFilled(theme, placedForTheme) {
   const placed = placedForTheme || {};

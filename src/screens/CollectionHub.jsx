@@ -1,4 +1,9 @@
-import { THEMES, themeById } from "../lib/decor.js";
+import {
+  THEMES,
+  themeById,
+  isThemeUnlocked,
+  themePlaceNo,
+} from "../lib/decor.js";
 import { STICKERS } from "../lib/collectibles.js";
 
 // 콜렉션 허브 — 꾸미기(별로 채우는 콜렉션)와 스티커(모은 아트 오브젝트)를 한곳에.
@@ -15,6 +20,10 @@ export default function CollectionHub({
   const filled = theme.slots.filter((s) => placed[s.id] != null).length;
   const total = theme.slots.length;
   const completed = THEMES.filter((t) => (decor.completed || []).includes(t.id));
+  // 아직 잠긴 다음 장소들 (순차 해금)
+  const lockedNext = THEMES.filter(
+    (t) => !isThemeUnlocked(t.id, decor.completed)
+  );
 
   const owned = stickers || {};
   const gotCount = STICKERS.filter((s) => owned[s.id]).length;
@@ -48,6 +57,7 @@ export default function CollectionHub({
           ))}
         </span>
         <div className="colhub-decor-info">
+          <span className="colhub-place">{themePlaceNo(theme.id)}번 장소</span>
           <b>
             {theme.emoji} {theme.name}
           </b>
@@ -59,6 +69,22 @@ export default function CollectionHub({
           </small>
         </div>
       </button>
+
+      {/* 다음 장소 — 잠김 (이전 장소를 완성하면 열려요) */}
+      {lockedNext.length > 0 && (
+        <div className="colhub-next-row">
+          {lockedNext.map((t) => (
+            <div key={t.id} className="colhub-next">
+              <span className="colhub-next-thumb">🔒</span>
+              <div>
+                <span className="colhub-place">{themePlaceNo(t.id)}번 장소</span>
+                <b>{t.name}</b>
+                <small>이전 장소를 완성하면 열려요</small>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 완성한 콜렉션 */}
       {completed.length > 0 && (

@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { THEMES, themeById, isThemeFilled } from "../lib/decor.js";
+import {
+  THEMES,
+  themeById,
+  isThemeFilled,
+  isThemeUnlocked,
+  themePlaceNo,
+} from "../lib/decor.js";
 import { robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
 
@@ -21,6 +27,7 @@ export default function DecorRoom({
 
   const filled = isThemeFilled(theme, placed);
   const alreadyDone = decor.completed.includes(theme.id);
+  const unlocked = isThemeUnlocked(theme.id, decor.completed);
   const affordable = balance >= theme.cost;
   const need = Math.max(0, theme.cost - balance);
 
@@ -63,23 +70,41 @@ export default function DecorRoom({
       </header>
 
       <div className="decor-themes">
-        {THEMES.map((t) => (
-          <button
-            key={t.id}
-            className={`decor-tab ${decor.theme === t.id ? "on" : ""}`}
-            onClick={() => onSetTheme(t.id)}
-          >
-            {t.emoji} {t.name}
-            {decor.completed.includes(t.id) && " ✓"}
-          </button>
-        ))}
+        {THEMES.map((t) => {
+          const open = isThemeUnlocked(t.id, decor.completed);
+          return (
+            <button
+              key={t.id}
+              className={`decor-tab ${decor.theme === t.id ? "on" : ""} ${open ? "" : "locked"}`}
+              onClick={() => onSetTheme(t.id)}
+            >
+              {open ? t.emoji : "🔒"} {t.name}
+              {decor.completed.includes(t.id) && " ✓"}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="decor-place">
+        {themePlaceNo(theme.id)}번 장소 · {theme.name}
       </div>
 
       <div
         className="decor-stage"
         style={{ background: `linear-gradient(160deg, ${theme.bg[0]}, ${theme.bg[1]})` }}
       >
-        <div className="decor-grid">
+        {/* 잠긴 장소 — 이전 장소를 완성해야 열림 (순차 해금) */}
+        {!unlocked && (
+          <div className="decor-lock">
+            <span className="decor-lock-icon">🔒</span>
+            <b>아직 잠겨 있어요</b>
+            <p>
+              {themePlaceNo(theme.id) - 1}번 장소를 완성하면
+              <br />이 장소가 열려요!
+            </p>
+          </div>
+        )}
+        <div className={`decor-grid ${unlocked ? "" : "blur"}`}>
           {theme.slots.map((slot) => {
             const idx = placed[slot.id];
             const isFilled = idx != null;
@@ -87,7 +112,8 @@ export default function DecorRoom({
               <button
                 key={slot.id}
                 className={`decor-slot ${isFilled ? "filled" : ""}`}
-                onClick={() => !alreadyDone && setChoosing(slot)}
+                disabled={!unlocked}
+                onClick={() => unlocked && !alreadyDone && setChoosing(slot)}
               >
                 {isFilled ? (
                   <span className="ds-obj">{slot.options[idx]}</span>
@@ -104,7 +130,9 @@ export default function DecorRoom({
       </div>
 
       {/* 완성하기 — 채운 뒤 누르면 별이 소진되며 콜렉션 완성 */}
-      {alreadyDone ? (
+      {!unlocked ? (
+        <p className="decor-hint">이전 장소를 완성하면 이곳이 열려요 🔒</p>
+      ) : alreadyDone ? (
         <div className="decor-done">✓ 완성한 콜렉션이에요</div>
       ) : filled ? (
         <button
