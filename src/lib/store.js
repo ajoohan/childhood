@@ -30,6 +30,7 @@ export function emptyKid() {
     profile: emptyProfile(),
     histories: {},
     safety: [],
+    notices: [], // 부모 알림함 (푸시 발송 전 단계 — 앱 안에 쌓이는 알림)
     rewards: emptyRewards(),
     parentMissions: [],
     decor: emptyDecor(),
@@ -45,6 +46,7 @@ function normalizeKid(k) {
     profile: { ...base.profile, ...(k.profile || {}) },
     histories: k.histories || {},
     safety: Array.isArray(k.safety) ? k.safety : [],
+    notices: Array.isArray(k.notices) ? k.notices : [],
     rewards: rollDay(k.rewards || emptyRewards()),
     parentMissions: Array.isArray(k.parentMissions) ? k.parentMissions : [],
     decor: k.decor || emptyDecor(),

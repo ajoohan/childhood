@@ -9,6 +9,7 @@ export default function Settings({
   version,
   onBack,
   onSetSound,
+  onSetNotifyMissions,
   onSaveLimit,
   onSetVoice,
   onSetPin,
@@ -91,6 +92,29 @@ export default function Settings({
           </label>
           <p className="guard-hint">
             {settings.sound ? "켜짐 — 아이가 누를 때 부드러운 소리가 나요." : "꺼짐"}
+          </p>
+        </div>
+
+        {/* 부모 알림 */}
+        <div className="guard-card">
+          <h3>
+            🔔 부모 알림 <span className="push-pending-tag">푸시 발송 준비 중</span>
+          </h3>
+          <label className="sound-row">
+            <span>커스텀 미션 완료 알림</span>
+            <button
+              className={`toggle ${settings.notifyMissions ? "on" : ""}`}
+              onClick={() => onSetNotifyMissions(!settings.notifyMissions)}
+              aria-label="미션 완료 알림 켜기/끄기"
+            >
+              <span className="toggle-knob" />
+            </button>
+          </label>
+          <p className="guard-hint">
+            {settings.notifyMissions
+              ? "켜짐 — 아이가 알림이 켜진 미션을 완료하면 부모 존 알림함에 기록돼요."
+              : "꺼짐 — 미션 완료 알림을 만들지 않아요."}{" "}
+            폰으로 오는 앱 푸시는 서버 연결 후 제공될 예정이에요.
           </p>
         </div>
 

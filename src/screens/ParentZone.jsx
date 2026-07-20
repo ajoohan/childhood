@@ -14,6 +14,8 @@ export default function ParentZone({
   activities,
   histories,
   safety,
+  notices,
+  onClearNotices,
   settings,
   profile,
   rewards,
@@ -27,6 +29,7 @@ export default function ParentZone({
   const [mTitle, setMTitle] = useState("");
   const [mEmoji, setMEmoji] = useState(MISSION_EMOJIS[0]);
   const [mReward, setMReward] = useState(2);
+  const [mNotify, setMNotify] = useState(true); // 완료 시 부모 알림 (기획서: 부모 폰 앱 푸시)
 
   function addMission() {
     const title = mTitle.trim().slice(0, 30);
@@ -36,10 +39,12 @@ export default function ParentZone({
       emoji: mEmoji,
       title,
       reward: Math.max(1, Math.min(10, parseInt(mReward, 10) || 2)),
+      notify: mNotify,
     });
     setMTitle("");
     setMEmoji(MISSION_EMOJIS[0]);
     setMReward(2);
+    setMNotify(true);
   }
   const prof = profile || { name: "", birthYear: null, birthMonth: null, interests: [] };
   const [avatarInput, setAvatarInput] = useState(prof.avatar || AVATARS[0]);
@@ -226,7 +231,10 @@ export default function ParentZone({
             parentMissions.map((m) => (
               <div key={m.id} className="mission-row">
                 <span className="mr-emoji">{m.emoji}</span>
-                <span className="mr-title">{m.title}</span>
+                <span className="mr-title">
+                  {m.title}
+                  {m.notify && <span className="mr-bell" title="완료 시 부모 알림">🔔</span>}
+                </span>
                 <span className="mr-reward">+{m.reward}⭐</span>
                 <button
                   className="mr-del"
@@ -266,10 +274,55 @@ export default function ParentZone({
                 ))}
               </select>
             </div>
+            <label className="ma-notify">
+              <input
+                type="checkbox"
+                checked={mNotify}
+                onChange={(e) => setMNotify(e.target.checked)}
+              />
+              <span>
+                완료하면 부모에게 알림 🔔
+                <small>앱 푸시 발송은 준비 중 — 지금은 아래 알림함에 쌓여요</small>
+              </span>
+            </label>
             <button className="guard-btn" onClick={addMission}>
               미션 추가
             </button>
           </div>
+        </div>
+
+        {/* 알림함 — 푸시로 발송될 알림이 쌓이는 곳 (발송 인프라 연결 전 단계) */}
+        <div className="guard-card">
+          <h3>
+            🔔 알림함{" "}
+            <span className="push-pending-tag">푸시 발송 준비 중</span>
+          </h3>
+          <p className="guard-hint">
+            아이가 알림이 켜진 미션을 완료하면 여기에 기록돼요. 앱 푸시 발송은
+            서버 연결 후 제공되며, 그때 이 알림이 부모님 폰으로도 전송됩니다.
+          </p>
+          {(notices || []).length === 0 ? (
+            <p className="guard-empty">아직 알림이 없어요.</p>
+          ) : (
+            <>
+              {notices.slice(0, 20).map((n, i) => (
+                <div key={i} className="notice-item">
+                  <span className="notice-emoji">{n.emoji || "🎯"}</span>
+                  <div className="notice-body">
+                    <b>
+                      {n.kidName || "아이"}가 '{n.title}' 미션을 완료했어요!
+                    </b>
+                    <small>
+                      +{n.reward}⭐ · {fmtTime(n.t)}
+                    </small>
+                  </div>
+                </div>
+              ))}
+              <button className="guard-btn ghost" onClick={onClearNotices}>
+                알림함 비우기
+              </button>
+            </>
+          )}
         </div>
 
         <div className="guard-card alert-card">

@@ -43,6 +43,7 @@ export default function App() {
   const [kids, setKids] = useState(initial.kids);
   const [histories, setHistories] = useState(initKid.histories);
   const [safety, setSafety] = useState(initKid.safety);
+  const [notices, setNotices] = useState(initKid.notices || []);
   const [settings, setSettings] = useState({
     limitPerDay: initial.settings.limitPerDay ?? null,
     // 연령 모드는 아이 생년월에서 자동 계산 (10세부터 아동 모드)
@@ -50,6 +51,7 @@ export default function App() {
     pin: initial.settings.pin || null,
     voice: initial.settings.voice || "shimmer",
     sound: initial.settings.sound !== false,
+    notifyMissions: initial.settings.notifyMissions !== false, // 커스텀 미션 완료 부모 알림
   });
   const [profile, setProfile] = useState(initKid.profile);
   const [rewards, setRewards] = useState(initKid.rewards);
@@ -74,6 +76,7 @@ export default function App() {
     profile,
     histories,
     safety,
+    notices,
     rewards,
     parentMissions,
     decor,
@@ -87,13 +90,14 @@ export default function App() {
       activeKid,
       kids: { ...kids, [activeKid]: kidSnapshot() },
     });
-  }, [histories, safety, settings, profile, rewards, parentMissions, decor, badges, stickers, activeKid, kids]);
+  }, [histories, safety, notices, settings, profile, rewards, parentMissions, decor, badges, stickers, activeKid, kids]);
 
   // 아이 슬라이스 일괄 로드 (전환/추가 시)
   function loadKidSlices(k) {
     setProfile(k.profile);
     setHistories(k.histories);
     setSafety(k.safety);
+    setNotices(k.notices || []);
     setRewards(rollDay(k.rewards));
     setParentMissions(k.parentMissions);
     setDecor(k.decor);
@@ -194,6 +198,23 @@ export default function App() {
       const id = drawSticker(s);
       return { ...s, [id]: (s[id] || 0) + 1 };
     });
+    // 부모 알림 — 알림 켜진 커스텀 미션이면 부모 알림함에 적재
+    // (앱 푸시 발송은 서버 연결 후 이 지점에서 함께 전송)
+    if (mission.notify && settings.notifyMissions) {
+      setNotices((n) =>
+        [
+          {
+            t: new Date().toISOString(),
+            type: "mission",
+            kidName: profile.name,
+            emoji: mission.emoji,
+            title: mission.title,
+            reward: mission.reward || REWARD.mission,
+          },
+          ...n,
+        ].slice(0, 50)
+      );
+    }
     sfx.success();
   }
 
@@ -517,6 +538,8 @@ export default function App() {
             activities={data.activities}
             histories={histories}
             safety={safety}
+            notices={notices}
+            onClearNotices={() => setNotices([])}
             settings={settings}
             profile={profile}
             rewards={rewards}
@@ -541,6 +564,7 @@ export default function App() {
             version={APP_VERSION}
             onBack={() => setParentView("main")}
             onSetSound={(v) => setSettings((s) => ({ ...s, sound: v }))}
+            onSetNotifyMissions={(v) => setSettings((s) => ({ ...s, notifyMissions: v }))}
             onSaveLimit={(val) => setSettings((s) => ({ ...s, limitPerDay: val }))}
             onSetVoice={(v) => setSettings((s) => ({ ...s, voice: v }))}
             onSetPin={(pin) => setSettings((s) => ({ ...s, pin }))}

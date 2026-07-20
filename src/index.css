@@ -3649,6 +3649,38 @@ input::placeholder { color: #B4AC9E !important; }
   border-radius: 999px; padding: 4px 11px; flex-shrink: 0;
 }
 
+/* ============================================================
+   부모 알림 (푸시 UI) — 알림함 · 미션별 알림 · 준비 중 태그
+   ============================================================ */
+.push-pending-tag {
+  display: inline-block; vertical-align: middle; margin-left: 6px;
+  font-size: 11px; font-weight: 800; color: #A07F30;
+  background: #FFF3D6; border: 1px solid #F2DFA8; border-radius: 999px;
+  padding: 3px 9px;
+}
+.mr-bell { margin-left: 5px; font-size: 13px; }
+.ma-notify {
+  display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; cursor: pointer;
+}
+.ma-notify input {
+  width: 20px; height: 20px; margin-top: 2px; accent-color: var(--accent);
+  flex-shrink: 0;
+}
+.ma-notify span { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.ma-notify small { display: block; font-size: 12.5px; font-weight: 500; color: var(--muted); margin-top: 2px; }
+
+.notice-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 11px 0; border-bottom: 1px solid var(--line);
+}
+.notice-item:last-of-type { border-bottom: none; }
+.notice-emoji {
+  width: 40px; height: 40px; border-radius: 12px; background: #FFF0EA;
+  display: grid; place-items: center; font-size: 21px; flex-shrink: 0;
+}
+.notice-body b { display: block; font-size: 14.5px; color: var(--text); line-height: 1.4; }
+.notice-body small { font-size: 12.5px; color: var(--muted); }
+
 /* 부모존 아바타 선택 그리드 */
 .ava-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 12px; }
 .ava-pick {
