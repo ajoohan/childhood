@@ -39,7 +39,11 @@ export default function KidsHome({
   ageMode,
   stars,
   name,
+  avatar,
   interests,
+  kidList,
+  onSwitchKid,
+  onAddKid,
   onPickCategory,
   onPickActivity,
   onParent,
@@ -52,6 +56,7 @@ export default function KidsHome({
   // 시간대에 따라 바뀌는 환영 문구 (저녁 9시 → "치카치카 했어요?")
   const greet = timeGreeting(name);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [switcherOpen, setSwitcherOpen] = useState(false); // 유저 변경 시트
   const [face, setFace] = useState("happy");
   const [poked, setPoked] = useState(false);
   const [welcome, setWelcome] = useState(!welcomedThisSession);
@@ -98,11 +103,13 @@ export default function KidsHome({
     }, 3800);
     return () => clearInterval(id);
   }, []);
+  // 프로필(아바타) 팝업 메뉴 — 기획서 2장 1번: 편집·유저 변경·업적·히스토리
   const MENU = [
+    { icon: "✏️", label: "프로필 편집", go: onParent },
+    { icon: "👥", label: "유저 변경", go: () => setSwitcherOpen(true) },
     { icon: "🏅", label: "내 배지", go: onBadges },
-    { icon: "🖼️", label: "그림 만들기", go: onImageMaker, pending: !imageEnabled },
     { icon: "🕘", label: "챗 히스토리", go: onCollection },
-    { icon: "✏️", label: "프로필 수정", go: onParent },
+    { icon: "🖼️", label: "그림 만들기", go: onImageMaker, pending: !imageEnabled },
   ];
   const bigTiles = categories.filter((c) => c.id === "story" || c.id === "heart");
   const learn = activities.filter(
@@ -123,11 +130,11 @@ export default function KidsHome({
       <header className="home-hd">
         <div className="hd-menu-wrap">
           <button
-            className="hd-menu-btn"
+            className="hd-profile-btn"
             onClick={() => setMenuOpen((v) => !v)}
-            aria-label="메뉴"
+            aria-label="프로필 메뉴"
           >
-            ☰
+            {avatar || "🙂"}
           </button>
           {menuOpen && (
             <>
@@ -277,6 +284,54 @@ export default function KidsHome({
       {scrollHint && (
         <div className="scroll-hint" aria-hidden="true">
           <span className="scroll-hint-chev">⌄</span>
+        </div>
+      )}
+
+      {/* 유저 변경 시트 — 한 기기에서 형제·자매 프로필 전환 */}
+      {switcherOpen && (
+        <div className="sheet-backdrop" onClick={() => setSwitcherOpen(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-grip" />
+            <div className="sparks-hd">
+              <span className="sparks-star">👥</span>
+              <div>
+                <b>유저 변경</b>
+                <small>누가 이야기할까요?</small>
+              </div>
+            </div>
+            <div className="kid-list">
+              {(kidList || []).map((k) => (
+                <button
+                  key={k.id}
+                  className={`kid-item ${k.active ? "on" : ""}`}
+                  onClick={() => {
+                    setSwitcherOpen(false);
+                    if (!k.active) onSwitchKid(k.id);
+                  }}
+                >
+                  <span className="kid-ava">{k.avatar}</span>
+                  <span className="kid-body">
+                    <b>{k.name || "이름 없음"}</b>
+                    <small>{k.age != null ? `만 ${k.age}살` : ""}</small>
+                  </span>
+                  {k.active && <span className="kid-now">지금</span>}
+                </button>
+              ))}
+              <button
+                className="kid-item add"
+                onClick={() => {
+                  setSwitcherOpen(false);
+                  onAddKid();
+                }}
+              >
+                <span className="kid-ava">➕</span>
+                <span className="kid-body">
+                  <b>새 아이 추가</b>
+                  <small>형제·자매 프로필을 만들어요</small>
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </section>

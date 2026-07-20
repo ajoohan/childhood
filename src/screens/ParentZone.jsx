@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SAFETY_LABEL, INTERESTS } from "../lib/data.js";
+import { SAFETY_LABEL, INTERESTS, AVATARS } from "../lib/data.js";
 import { MISSION_EMOJIS } from "../lib/missions.js";
 import { userMsgCount, messagesToday, lastTime, fmtTime } from "../lib/store.js";
 import { computeAge, ageModeForProfile, MODE_LABEL, CHILD_MIN } from "../lib/age.js";
@@ -42,6 +42,7 @@ export default function ParentZone({
     setMReward(2);
   }
   const prof = profile || { name: "", birthYear: null, birthMonth: null, interests: [] };
+  const [avatarInput, setAvatarInput] = useState(prof.avatar || AVATARS[0]);
   const [nameInput, setNameInput] = useState(prof.name || "");
   const [yearInput, setYearInput] = useState(prof.birthYear ? String(prof.birthYear) : "");
   const [monthInput, setMonthInput] = useState(prof.birthMonth ? String(prof.birthMonth) : "");
@@ -68,7 +69,14 @@ export default function ParentZone({
     const birthYear = yearInput ? parseInt(yearInput, 10) : null;
     const birthMonth = monthInput ? parseInt(monthInput, 10) : null;
     const age = birthYear ? computeAge({ birthYear, birthMonth }, NOW) : null;
-    onSaveProfile({ name, birthYear, birthMonth, age, interests: picked });
+    onSaveProfile({
+      name,
+      birthYear,
+      birthMonth,
+      age,
+      avatar: avatarInput,
+      interests: picked,
+    });
     setProfSaved("프로필을 저장했어요.");
   }
 
@@ -107,6 +115,21 @@ export default function ParentZone({
             온보딩에서 입력한 이름·나이·관심사예요. AI가 활동 안에서 이 정보를
             참고해 아이에게 맞춰 줍니다. 언제든 수정할 수 있어요.
           </p>
+          <div className="prof-interests-label">프로필 아바타</div>
+          <div className="ava-grid">
+            {AVATARS.map((a) => (
+              <button
+                key={a}
+                className={`ava-pick ${avatarInput === a ? "on" : ""}`}
+                onClick={() => {
+                  setAvatarInput(a);
+                  setProfSaved("");
+                }}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
           <label className="prof-row">
             <span>이름</span>
             <input

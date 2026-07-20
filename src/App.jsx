@@ -16,15 +16,16 @@ import DecorRoom from "./screens/DecorRoom.jsx";
 import ImageMaker from "./screens/ImageMaker.jsx";
 import BadgeBook from "./screens/BadgeBook.jsx";
 import StickerBook from "./screens/StickerBook.jsx";
-import { INTERESTS } from "./lib/data.js";
+import { INTERESTS, AVATARS } from "./lib/data.js";
 import { sparkleBurst } from "./lib/fx.js";
 import { sfx, setSfxEnabled } from "./lib/sfx.js";
 import { earnedBadges, drawSticker } from "./lib/collectibles.js";
 import { REWARD, allMissions, openTreasure } from "./lib/missions.js";
-import { loadStore, persist, rollDay } from "./lib/store.js";
+import { loadStore, persist, rollDay, emptyKid, newKidId } from "./lib/store.js";
 import { ageModeForProfile, computeAge } from "./lib/age.js";
 
 const initial = loadStore();
+const initKid = initial.kids[initial.activeKid];
 const APP_VERSION = "0.2.0";
 
 // 스플래시는 "앱 구동 시 1회"만 노출. 모듈 스코프라 리마운트/HMR에는 유지되고,
@@ -36,22 +37,26 @@ export default function App() {
   const [zone, setZone] = useState("kids"); // kids | parent
   const [view, setView] = useState({ name: "home" }); // home | list | session | collection
 
-  const [histories, setHistories] = useState(initial.histories);
-  const [safety, setSafety] = useState(initial.safety);
+  // 멀티 프로필: 활성 아이의 데이터만 개별 state로 풀어 두고,
+  // 나머지 아이들은 kids 맵에 스냅샷으로 보관한다.
+  const [activeKid, setActiveKid] = useState(initial.activeKid);
+  const [kids, setKids] = useState(initial.kids);
+  const [histories, setHistories] = useState(initKid.histories);
+  const [safety, setSafety] = useState(initKid.safety);
   const [settings, setSettings] = useState({
     limitPerDay: initial.settings.limitPerDay ?? null,
     // 연령 모드는 아이 생년월에서 자동 계산 (10세부터 아동 모드)
-    ageMode: ageModeForProfile(initial.profile),
+    ageMode: ageModeForProfile(initKid.profile),
     pin: initial.settings.pin || null,
     voice: initial.settings.voice || "shimmer",
     sound: initial.settings.sound !== false,
   });
-  const [profile, setProfile] = useState(initial.profile);
-  const [rewards, setRewards] = useState(initial.rewards);
-  const [parentMissions, setParentMissions] = useState(initial.parentMissions);
-  const [decor, setDecor] = useState(initial.decor);
-  const [badges, setBadges] = useState(initial.badges);
-  const [stickers, setStickers] = useState(initial.stickers);
+  const [profile, setProfile] = useState(initKid.profile);
+  const [rewards, setRewards] = useState(initKid.rewards);
+  const [parentMissions, setParentMissions] = useState(initKid.parentMissions);
+  const [decor, setDecor] = useState(initKid.decor);
+  const [badges, setBadges] = useState(initKid.badges);
+  const [stickers, setStickers] = useState(initKid.stickers);
 
   const [splash, setSplash] = useState(!splashSeen);
   const [parentView, setParentView] = useState("main"); // main | settings
@@ -64,19 +69,69 @@ export default function App() {
     setSplash(false);
   };
 
+  // 현재 화면의 활성 아이 슬라이스를 한 덩어리로
+  const kidSnapshot = () => ({
+    profile,
+    histories,
+    safety,
+    rewards,
+    parentMissions,
+    decor,
+    badges,
+    stickers,
+  });
+
   useEffect(() => {
     persist({
-      histories,
-      safety,
       settings,
-      profile,
-      rewards,
-      parentMissions,
-      decor,
-      badges,
-      stickers,
+      activeKid,
+      kids: { ...kids, [activeKid]: kidSnapshot() },
     });
-  }, [histories, safety, settings, profile, rewards, parentMissions, decor, badges, stickers]);
+  }, [histories, safety, settings, profile, rewards, parentMissions, decor, badges, stickers, activeKid, kids]);
+
+  // 아이 슬라이스 일괄 로드 (전환/추가 시)
+  function loadKidSlices(k) {
+    setProfile(k.profile);
+    setHistories(k.histories);
+    setSafety(k.safety);
+    setRewards(rollDay(k.rewards));
+    setParentMissions(k.parentMissions);
+    setDecor(k.decor);
+    setBadges(k.badges);
+    setStickers(k.stickers);
+  }
+
+  // 유저 변경 — 현재 아이를 스냅샷으로 저장하고 다른 아이 데이터를 불러온다.
+  function switchKid(id) {
+    if (id === activeKid || !kids[id]) return;
+    setKids((m) => ({ ...m, [activeKid]: kidSnapshot() }));
+    setActiveKid(id);
+    loadKidSlices(kids[id]);
+    setZone("kids");
+    setView({ name: "home" });
+  }
+
+  // 새 아이 추가 — 빈 프로필로 시작하면 온보딩 흐름이 자동으로 뜬다.
+  function addKid() {
+    const id = newKidId();
+    const k = emptyKid();
+    setKids((m) => ({ ...m, [activeKid]: kidSnapshot(), [id]: k }));
+    setActiveKid(id);
+    loadKidSlices(k);
+    setZone("kids");
+    setView({ name: "home" });
+  }
+
+  // 홈 아바타 팝업·유저 변경 시트에서 쓰는 아이 목록
+  const kidList = Object.entries({ ...kids, [activeKid]: kidSnapshot() })
+    .filter(([, k]) => k.profile.onboarded)
+    .map(([id, k]) => ({
+      id,
+      name: k.profile.name,
+      avatar: k.profile.avatar || AVATARS[0],
+      age: computeAge(k.profile),
+      active: id === activeKid,
+    }));
 
   // 연령 모드 자동 전환 — 아이 생년월로 현재 나이를 계산해 모드를 맞춘다.
   // 앱을 열 때마다(그리고 프로필이 바뀔 때) 다시 계산되므로, 아이가 10세가 되면
@@ -85,6 +140,14 @@ export default function App() {
     const mode = ageModeForProfile(profile);
     setSettings((s) => (s.ageMode === mode ? s : { ...s, ageMode: mode }));
   }, [profile.birthYear, profile.birthMonth, profile.age]);
+
+  // 아바타 없는 기존(v1 마이그레이션) 프로필에 자동 배정
+  useEffect(() => {
+    if (profile.onboarded && !profile.avatar) {
+      const seed = (profile.name || "").split("").reduce((n, c) => n + c.charCodeAt(0), 0);
+      setProfile((p) => ({ ...p, avatar: AVATARS[seed % AVATARS.length] }));
+    }
+  }, [profile.onboarded, profile.avatar]);
 
   // 효과음 on/off 반영
   useEffect(() => {
@@ -208,9 +271,12 @@ export default function App() {
   }
 
   function completeOnboarding(p) {
+    // 아바타 미선택 시 이름 기반으로 하나 배정 (부모존에서 언제든 변경 가능)
+    const seed = (p.name || "").split("").reduce((n, c) => n + c.charCodeAt(0), 0);
+    const withAvatar = { ...p, avatar: p.avatar || AVATARS[seed % AVATARS.length] };
     // 연령 모드는 생년월 기반으로 useEffect에서 자동 계산된다.
-    setProfile(p);
-    setSettings((s) => ({ ...s, ageMode: ageModeForProfile(p) }));
+    setProfile(withAvatar);
+    setSettings((s) => ({ ...s, ageMode: ageModeForProfile(withAvatar) }));
   }
 
   // 탭 반짝임 효과 — 누르는 곳마다 별이 튄다 (아이용 즐거움)
@@ -319,7 +385,11 @@ export default function App() {
             ageMode={settings.ageMode}
             stars={stars}
             name={profile.name}
+            avatar={profile.avatar}
             interests={profile.interests}
+            kidList={kidList}
+            onSwitchKid={switchKid}
+            onAddKid={addKid}
             onPickCategory={(c) => setView({ name: "list", category: c })}
             onPickActivity={openActivity}
             onParent={openParent}

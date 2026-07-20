@@ -3618,6 +3618,50 @@ input::placeholder { color: #B4AC9E !important; }
 .decor-lock p { font-size: 13.5px; line-height: 1.5; opacity: 0.95; text-shadow: 0 1px 6px rgba(0,0,0,.4); }
 
 /* ============================================================
+   프로필 아바타 · 유저 변경(멀티 프로필) — 기획서 2장 1번
+   ============================================================ */
+.hd-profile-btn {
+  width: 46px; height: 46px; border-radius: 16px; border: 1px solid var(--line);
+  background: var(--surface); font-size: 25px; cursor: pointer;
+  display: grid; place-items: center; flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(60, 45, 30, 0.06);
+}
+.hd-profile-btn:active { transform: scale(0.94); }
+
+.kid-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.kid-item {
+  display: flex; align-items: center; gap: 13px; width: 100%; text-align: left;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+  padding: 12px 15px; cursor: pointer;
+}
+.kid-item.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.kid-item.add { border-style: dashed; background: var(--surface-2); }
+.kid-ava {
+  width: 46px; height: 46px; border-radius: 14px; background: #FFE7D6;
+  display: grid; place-items: center; font-size: 25px; flex-shrink: 0;
+}
+.kid-item.add .kid-ava { background: #EDE5D8; font-size: 20px; }
+.kid-body { flex: 1; min-width: 0; }
+.kid-body b { display: block; font-size: 16px; color: var(--text); }
+.kid-body small { font-size: 13px; color: var(--muted); }
+.kid-now {
+  background: var(--accent); color: #fff; font-size: 12px; font-weight: 800;
+  border-radius: 999px; padding: 4px 11px; flex-shrink: 0;
+}
+
+/* 부모존 아바타 선택 그리드 */
+.ava-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 12px; }
+.ava-pick {
+  aspect-ratio: 1 / 1; border-radius: 14px; border: 1px solid var(--line);
+  background: var(--surface-2); font-size: 24px; cursor: pointer;
+  display: grid; place-items: center;
+}
+.ava-pick.on {
+  background: #FFF0EA; border-color: var(--accent);
+  box-shadow: 0 0 0 1.5px var(--accent);
+}
+
+/* ============================================================
    콜렉션 완성 = 별 소진 (별이 날아가며 줄어드는 연출 · 완성 시에만)
    ============================================================ */
 .decor-top { position: relative; }
