@@ -264,14 +264,17 @@ export default function Speak({
   }
 
   const statusText = notice
-    ? "오늘은 여기까지! 내일 또 만나요"
+    ? "오늘은 여기까지!"
     : speech.listening
       ? "듣고 있어요…"
       : status === "thinking"
         ? "생각 중이에요…"
         : status === "speaking"
-          ? `${curVoice.name}가 이야기하고 있어요`
-          : "마이크를 누르고 말해 봐!";
+          ? "이야기하는 중…"
+          : "준비됐어요!";
+  const statusSub = notice
+    ? "내일 또 만나요"
+    : `${curVoice.name}와 이야기하는 중`;
 
   const mascotExpr = notice
     ? "sleepy"
@@ -325,7 +328,20 @@ export default function Speak({
         </header>
 
         <main className="chat" ref={chatRef}>
-          <div className="ai-note">🤖 나는 AI 도우미예요. 진짜 사람은 아니에요!</div>
+          {/* 첫 대화 안내 카드 (DM 스타일) — AI 도우미 고지 포함 */}
+          <div className="dm-intro">
+            <span
+              className="dm-intro-ava"
+              dangerouslySetInnerHTML={{ __html: robotHead("happy") }}
+            />
+            <b className="dm-intro-name">별이</b>
+            <small className="dm-intro-id">@banjjaktalk · AI 도우미</small>
+            <h2 className="dm-intro-title">별이와의 대화</h2>
+            <p className="dm-intro-note">
+              별이는 AI 도우미예요. 진짜 사람이 아니에요! 불편한 이야기가
+              나오면 언제든 부모님과 함께 확인할 수 있어요.
+            </p>
+          </div>
           {activity && <Bubble role="bot" expr="love">{activity.greeting}</Bubble>}
           {(history || []).map((m, i) => (
             <Bubble key={i} role={m.role === "user" ? "user" : "bot"}>
@@ -370,8 +386,16 @@ export default function Speak({
               if (e.key === "Enter" && !e.nativeEvent.isComposing) sendText();
             }}
           />
-          <button onClick={sendText} disabled={streaming !== null} aria-label="보내기">
-            보내기 🚀
+          <button
+            className="send-plane"
+            onClick={sendText}
+            disabled={streaming !== null}
+            aria-label="보내기"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 2L11 13" />
+              <path d="M22 2l-7 20-4-9-9-4z" />
+            </svg>
           </button>
         </footer>
       </section>
@@ -395,8 +419,9 @@ export default function Speak({
           className={`voice-robot ${status === "speaking" ? "talking" : ""}`}
           dangerouslySetInnerHTML={{ __html: robotMascot(mascotExpr) }}
         />
-        <div className="voice-note">🤖 나는 AI 도우미예요. 진짜 사람은 아니에요!</div>
         <h1 className="voice-status">{statusText}</h1>
+        <p className="voice-sub">{statusSub}</p>
+        <div className="voice-note">🤖 나는 AI 도우미예요. 진짜 사람은 아니에요!</div>
 
         {/* 자막(캡션) — 아이가 읽기 쉽게 */}
         {(speech.listening || recording) && (

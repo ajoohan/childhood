@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { recommendActivities, interestEmojis } from "../lib/data.js";
 import { timeGreeting } from "../lib/greeting.js";
-import { robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
 import FloatingStars from "../components/FloatingStars.jsx";
 
@@ -16,7 +15,6 @@ const POP_GRAD = [
 
 // 앱 실행 후 홈 첫 진입에서 환영 컨페티를 1회만
 let welcomedThisSession = false;
-const FACE_CYCLE = ["happy", "happy", "wink", "happy", "love", "happy", "proud", "cool"];
 
 const LEARN_GRAD = [
   ["#FFC48A", "#FF8A3D"],
@@ -57,8 +55,6 @@ export default function KidsHome({
   const greet = timeGreeting(name);
   const [menuOpen, setMenuOpen] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false); // 유저 변경 시트
-  const [face, setFace] = useState("happy");
-  const [poked, setPoked] = useState(false);
   const [welcome, setWelcome] = useState(!welcomedThisSession);
   const [scrollHint, setScrollHint] = useState(false);
   const homeRef = useRef(null);
@@ -78,30 +74,12 @@ export default function KidsHome({
     };
   }, []);
 
-  // 마스코트를 콕 누르면 통통 튀며 재밌는 표정
-  function pokeMascot() {
-    const fun = ["wow", "love", "excited", "cool", "proud"];
-    setFace(fun[Math.floor(Math.random() * fun.length)]);
-    setPoked(true);
-    setTimeout(() => setPoked(false), 700);
-  }
-
   // 홈 첫 진입 환영 컨페티 (앱 실행당 1회)
   useEffect(() => {
     if (welcomedThisSession) return;
     welcomedThisSession = true;
     const t = setTimeout(() => setWelcome(false), 2600);
     return () => clearTimeout(t);
-  }, []);
-
-  // 마스코트 표정 주기적 변화
-  useEffect(() => {
-    let i = 0;
-    const id = setInterval(() => {
-      i = (i + 1) % FACE_CYCLE.length;
-      setFace(FACE_CYCLE[i]);
-    }, 3800);
-    return () => clearInterval(id);
   }, []);
   // 프로필(아바타) 팝업 메뉴 — 기획서 2장 1번: 편집·유저 변경·업적·히스토리
   const MENU = [
@@ -158,29 +136,25 @@ export default function KidsHome({
             </>
           )}
         </div>
-        <span
-          className={`hd-ava ${poked ? "poked" : ""}`}
-          onClick={pokeMascot}
-          role="button"
-          aria-label="별이 콕 누르기"
-          dangerouslySetInnerHTML={{ __html: robotHead(face) }}
-        />
         <div className="hd-hi">
           <b>{greet.hi}</b>
           <small>{greet.sub}</small>
         </div>
-        <button className="star-badge" onClick={onStars} aria-label="별 모으기">
-          <b>{stars}</b> ⭐
+        <button className="star-badge star3d" onClick={onStars} aria-label="별 모으기">
+          <b>{stars}</b>
+          <span className="star3d-icon">⭐</span>
         </button>
       </header>
 
-      <button className="parent-banner" onClick={onParent}>
-        <span className="pb-icon">🔒</span>
-        <span className="pb-text">
-          <b>부모님 공간</b>
-          <small>설정 · 안전 리포트 · 구독</small>
+      {/* 프리미엄 배너 — 누르면 부모 인증(PIN) 뒤 부모 존 구독으로. 아이 직접 결제 없음 */}
+      <button className="premium-banner" onClick={onParent}>
+        <span className="prb-icon">
+          <svg viewBox="0 0 24 24" fill="#fff">
+            <path d="M3 8l4.5 3.5L12 5l4.5 6.5L21 8l-1.6 10H4.6z" />
+          </svg>
         </span>
-        <span className="pb-arrow">›</span>
+        <b>프리미엄으로 업그레이드!</b>
+        <span className="prb-arrow">›</span>
       </button>
 
       <div className="big-tiles">
@@ -188,14 +162,21 @@ export default function KidsHome({
           <button
             key={c.id}
             className={`big-tile bt-${c.id}`}
-            style={{
-              background: `linear-gradient(150deg, ${c.theme[0]}, ${c.theme[1]})`,
-            }}
             onClick={() => onPickCategory(c)}
           >
-            <span className="bt-emoji">{c.emoji}</span>
+            <span className="bt-ic">
+              {c.id === "story" ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="3" width="6" height="11" rx="3" />
+                  <path d="M6 11a6 6 0 0 0 12 0M12 17v3" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="#fff">
+                  <path d="M12 21s-7-4.6-9.2-8.3C1 9.6 2.8 6 6.2 6 8.3 6 9.6 7.3 12 9.9 14.4 7.3 15.7 6 17.8 6c3.4 0 5.2 3.6 3.4 6.7C19 16.4 12 21 12 21z" />
+                </svg>
+              )}
+            </span>
             <span className="bt-title">{c.title}</span>
-            <span className="bt-desc">{c.desc}</span>
           </button>
         ))}
       </div>
@@ -229,7 +210,12 @@ export default function KidsHome({
         </>
       )}
 
-      <div className="learn-head">💡 새로운 걸 배워요</div>
+      <div className="learn-head">
+        <svg className="lh-bulb" viewBox="0 0 24 24" fill="#E8447F">
+          <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2zM9.5 19h5v1a2.5 2.5 0 0 1-5 0z" />
+        </svg>
+        새로운 걸 배워요
+      </div>
       <div className="learn-row">
         {learn.map((a, i) => {
           const g = LEARN_GRAD[i % LEARN_GRAD.length];
@@ -248,10 +234,33 @@ export default function KidsHome({
       </div>
 
       {ask && (
-        <button className="ask-bar" onClick={() => onPickActivity(ask)}>
-          <span className="ask-text">궁금한 거 있어? 물어봐!</span>
-          <span className="ask-btn">🎤 물어보기</span>
-        </button>
+        <div className="ask-bar">
+          <span
+            className="ask-cam"
+            role="button"
+            aria-label="그림 만들기"
+            onClick={onImageMaker}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="7" width="18" height="13" rx="3" />
+              <circle cx="12" cy="13.5" r="3.5" />
+              <path d="M9 7l1.2-2h3.6L15 7" />
+            </svg>
+          </span>
+          <span className="ask-text" onClick={() => onPickActivity(ask)}>
+            궁금한 거 있어? 물어봐!
+          </span>
+          <span
+            className="ask-btn"
+            role="button"
+            onClick={() => onPickActivity(ask)}
+          >
+            <svg className="ask-wave" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round">
+              <path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4" />
+            </svg>
+            물어보기
+          </span>
+        </div>
       )}
 
       {popular.length > 0 && (

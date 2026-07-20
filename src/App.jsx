@@ -437,7 +437,10 @@ export default function App() {
             decor={decor}
             stickers={stickers}
             stars={stars}
-            onDecor={() => setView({ name: "decor" })}
+            onOpenTheme={(id) => {
+              setDecorTheme(id);
+              setView({ name: "decor" });
+            }}
             onStickers={() => setView({ name: "stickers" })}
           />
         )}
