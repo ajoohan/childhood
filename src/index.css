@@ -3520,6 +3520,49 @@ input::placeholder { color: #B4AC9E !important; }
 .jhd-title { flex: 1; }
 
 /* ============================================================
+   스피크 — 통화식 컨트롤 바(음성) + 텍스트 챗 전환 (기획서 3장)
+   ============================================================ */
+.call-bar {
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  margin: 0 auto 26px; padding: 12px 18px; width: fit-content;
+  background: #3A342C; border-radius: 999px;
+  box-shadow: 0 12px 30px rgba(40, 32, 22, 0.28);
+}
+.call-btn {
+  width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
+  display: grid; place-items: center;
+  background: rgba(255, 255, 255, 0.14); color: #fff;
+  transition: transform 0.12s, background 0.15s;
+}
+.call-btn:active { transform: scale(0.92); }
+.call-btn svg { width: 24px; height: 24px; }
+.call-btn.off { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.45); }
+.call-btn.mic {
+  width: 62px; height: 62px; background: #fff !important; color: #3A342C;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+.call-btn.mic svg { width: 28px; height: 28px; }
+.call-btn.mic.on {
+  background: var(--accent) !important; color: #fff;
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 74, 0.45); }
+  50% { box-shadow: 0 0 0 12px rgba(255, 107, 74, 0); }
+}
+.call-btn.end { background: #E5484D; }
+.call-btn.end:active { background: #C93A3F; }
+.call-btn:disabled { opacity: 0.5; }
+
+/* 텍스트 챗 헤더의 음성 전환 버튼 */
+.speak-mode-btn {
+  margin-left: auto; width: 42px; height: 42px; border-radius: 50%; border: none;
+  background: var(--surface-2); color: var(--accent); cursor: pointer;
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.speak-mode-btn svg { width: 21px; height: 21px; }
+
+/* ============================================================
    콜렉션 완성 = 별 소진 (별이 날아가며 줄어드는 연출 · 완성 시에만)
    ============================================================ */
 .decor-top { position: relative; }

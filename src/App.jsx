@@ -6,7 +6,7 @@ import ActivityList from "./screens/ActivityList.jsx";
 import Session from "./screens/Session.jsx";
 import Collection from "./screens/Collection.jsx";
 import CollectionHub from "./screens/CollectionHub.jsx";
-import VoiceMode from "./screens/VoiceMode.jsx";
+import Speak from "./screens/Speak.jsx";
 import ParentZone from "./screens/ParentZone.jsx";
 import Settings from "./screens/Settings.jsx";
 import PinGate from "./components/PinGate.jsx";
@@ -363,11 +363,15 @@ export default function App() {
         )}
 
         {zone === "kids" && view.name === "voice" && (
-          <VoiceMode
+          <Speak
             activity={data.activities.find((a) => a.id === "learn_ask")}
             history={histories["learn_ask"] || []}
+            histories={histories}
+            settings={settings}
             persona={persona}
             voice={settings.voice}
+            // 10세 미만은 음성 통화, 10세 이상은 텍스트 챗이 기본 (기획서 3장)
+            defaultMode={settings.ageMode === "kid" ? "text" : "voice"}
             onSetVoice={(v) => setSettings((s) => ({ ...s, voice: v }))}
             onUserMessage={addUser}
             onBotMessage={addBot}

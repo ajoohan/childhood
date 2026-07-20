@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { VOICES } from "./VoiceMode.jsx";
+import { VOICES } from "./Speak.jsx";
 import { MODE_LABEL } from "../lib/age.js";
 
 // 설정 화면 — 부모 존 안(성인 인증 뒤)에서 앱 환경설정을 모아 관리한다.
