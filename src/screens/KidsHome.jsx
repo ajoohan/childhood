@@ -1,36 +1,32 @@
 import { useEffect, useRef, useState } from "react";
-import { recommendActivities, interestEmojis } from "../lib/data.js";
+import { recommendActivities } from "../lib/data.js";
 import { timeGreeting } from "../lib/greeting.js";
+import { robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
 import FloatingStars from "../components/FloatingStars.jsx";
 
-// 요즘 인기 있는 활동 (제작사 큐레이션 — 기획서 2장 7~9번 영역, MVP는 큐레이션)
-const POPULAR_IDS = ["story_listen", "draw_idea", "feel_talk", "habit_routine"];
-const POP_GRAD = [
-  ["#FFD9A3", "#FFB35C"],
-  ["#C9E8FF", "#8FC9F5"],
-  ["#FFD1DC", "#FF9EB8"],
-  ["#D6F0C2", "#A4D97E"],
+// 요즘 인기 있는(유익한) 활동 (제작사 큐레이션 — MVP)
+const POPULAR_IDS = ["learn_hangul", "draw_idea", "feel_talk", "habit_routine"];
+
+// 활동 카드의 따뜻한 '사진' 톤 배경 (실제 3D 이미지는 추후 에셋으로 교체)
+const CARD_TONE = [
+  ["#F6D9C0", "#E9B892"],
+  ["#E7D6C4", "#D2B79A"],
+  ["#DCE6D2", "#B9CFA6"],
+  ["#EAD6DE", "#D3AEBE"],
+  ["#D8E0EC", "#B4C2D8"],
 ];
+
+// 큰 액션 타일 — 시안 라벨/부제
+const TILE = {
+  story: { title: "이야기 하기", desc: "하고 싶은 얘기가 있어요~" },
+  heart: { title: "마음 나누기", desc: "오늘 기분이 어때?" },
+};
 
 // 앱 실행 후 홈 첫 진입에서 환영 컨페티를 1회만
 let welcomedThisSession = false;
 
-const LEARN_GRAD = [
-  ["#FFC48A", "#FF8A3D"],
-  ["#8FD0F5", "#5AA9EE"],
-  ["#B7E88F", "#7CC24A"],
-  ["#FFB0C9", "#FF7EA8"],
-];
-
-const REC_GRAD = [
-  ["#FFB27A", "#FF7A3D"],
-  ["#9FD8F7", "#5AA9EE"],
-  ["#C6E88F", "#7CC24A"],
-  ["#FFB0C9", "#FF7EA8"],
-];
-
-// Kids Zone 홈 — 인사 헤더 + 큰 액션 타일 + 배움 카드. 결제·설정 진입점 없음.
+// Kids Zone 홈 (피그마 시안 반영) — 라벤더→크림 배경, 보라 포인트, 이미지 카드
 export default function KidsHome({
   categories,
   activities,
@@ -51,28 +47,12 @@ export default function KidsHome({
   onBadges,
   imageEnabled,
 }) {
-  // 시간대에 따라 바뀌는 환영 문구 (저녁 9시 → "치카치카 했어요?")
+  // 시간대에 따라 바뀌는 질문 (아랫줄 큰 글씨). 예: 9~12시 → "오늘은 뭐 하고 놀까?"
   const greet = timeGreeting(name);
   const [menuOpen, setMenuOpen] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false); // 유저 변경 시트
   const [welcome, setWelcome] = useState(!welcomedThisSession);
-  const [scrollHint, setScrollHint] = useState(false);
   const homeRef = useRef(null);
-
-  // 아래에 더 있으면 스크롤 유도 표시 (끝까지 내리면 사라짐)
-  useEffect(() => {
-    const el = homeRef.current;
-    if (!el) return;
-    const check = () =>
-      setScrollHint(el.scrollHeight - el.clientHeight - el.scrollTop > 24);
-    check();
-    el.addEventListener("scroll", check, { passive: true });
-    window.addEventListener("resize", check);
-    return () => {
-      el.removeEventListener("scroll", check);
-      window.removeEventListener("resize", check);
-    };
-  }, []);
 
   // 홈 첫 진입 환영 컨페티 (앱 실행당 1회)
   useEffect(() => {
@@ -81,7 +61,8 @@ export default function KidsHome({
     const t = setTimeout(() => setWelcome(false), 2600);
     return () => clearTimeout(t);
   }, []);
-  // 프로필(아바타) 팝업 메뉴 — 기획서 2장 1번: 편집·유저 변경·업적·히스토리
+
+  // 프로필(아바타) 팝업 메뉴 — 편집·유저 변경·업적·히스토리
   const MENU = [
     { icon: "✏️", label: "프로필 편집", go: onParent },
     { icon: "👥", label: "유저 변경", go: () => setSwitcherOpen(true) },
@@ -94,21 +75,49 @@ export default function KidsHome({
     (a) => a.category === "learn" && a.ages.includes(ageMode)
   );
   const ask = activities.find((a) => a.id === "learn_ask");
-  const recommended = recommendActivities(interests, activities, ageMode, 4);
-  const emojis = interestEmojis(interests);
-  const recTitle = name ? `${name}를 위한 추천` : "너를 위한 추천";
+  const recommended = recommendActivities(interests, activities, ageMode, 6);
   const popular = POPULAR_IDS.map((id) => activities.find((a) => a.id === id))
     .filter(Boolean)
     .filter((a) => a.ages.includes(ageMode));
+  const recTitle = name ? `${name}~이 에게 추천!` : "너에게 추천!";
+  // "새로운 유익한 놀이" = 배움 + 인기, 중복 제거
+  const recIds = new Set(recommended.map((a) => a.id));
+  const playSeen = new Set();
+  const learnPlay = learn.concat(popular).filter((a) => {
+    if (playSeen.has(a.id)) return false;
+    playSeen.add(a.id);
+    return true;
+  });
+
+  // 가로 스크롤 이미지 카드 한 줄
+  const CardRow = ({ items, offset = 0 }) => (
+    <div className="act-row">
+      {items.map((a, i) => {
+        const g = CARD_TONE[(i + offset) % CARD_TONE.length];
+        return (
+          <button key={a.id} className="act-card" onClick={() => onPickActivity(a)}>
+            <span
+              className="act-photo"
+              style={{ background: `linear-gradient(155deg, ${g[0]}, ${g[1]})` }}
+            >
+              <span className="act-emoji">{a.emoji}</span>
+            </span>
+            <span className="act-label">{a.title}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 
   return (
-    <section className="kids-home" ref={homeRef}>
+    <section className="kids-home figma" ref={homeRef}>
       <FloatingStars />
-      {welcome && <Confetti count={80} />}
+      {welcome && <Confetti count={70} />}
+
       <header className="home-hd">
         <div className="hd-menu-wrap">
           <button
-            className="hd-profile-btn"
+            className="hd-profile-btn round"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="프로필 메뉴"
           >
@@ -137,8 +146,8 @@ export default function KidsHome({
           )}
         </div>
         <div className="hd-hi">
-          <b>{greet.hi}</b>
-          <small>{greet.sub}</small>
+          <small>안녕, {name || "친구"}~</small>
+          <b>{greet.sub}</b>
         </div>
         <button className="star-badge star3d" onClick={onStars} aria-label="별 모으기">
           <b>{stars}</b>
@@ -146,153 +155,80 @@ export default function KidsHome({
         </button>
       </header>
 
-      {/* 프리미엄 배너 — 누르면 부모 인증(PIN) 뒤 부모 존 구독으로. 아이 직접 결제 없음 */}
-      <button className="premium-banner" onClick={onParent}>
-        <span className="prb-icon">
-          <svg viewBox="0 0 24 24" fill="#fff">
-            <path d="M3 8l4.5 3.5L12 5l4.5 6.5L21 8l-1.6 10H4.6z" />
+      {/* 프리미엄 배너 (보라) — 누르면 부모 인증(PIN) 뒤 부모 존 구독. 아이 직접 결제 없음 */}
+      <button className="premium-banner purple" onClick={onParent}>
+        <span className="prb-crown">👑</span>
+        <b>프리미엄으로 업그레이드!</b>
+        <span className="prb-go">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 6l6 6-6 6" />
           </svg>
         </span>
-        <b>프리미엄으로 업그레이드!</b>
-        <span className="prb-arrow">›</span>
       </button>
 
+      {/* 큰 타일 — 크림 카드 + 3D 아이콘 + 부제 */}
       <div className="big-tiles">
         {bigTiles.map((c) => (
           <button
             key={c.id}
-            className={`big-tile bt-${c.id}`}
+            className={`big-tile soft bt-${c.id}`}
             onClick={() => onPickCategory(c)}
           >
-            <span className="bt-ic">
-              {c.id === "story" ? (
-                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="9" y="3" width="6" height="11" rx="3" />
-                  <path d="M6 11a6 6 0 0 0 12 0M12 17v3" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" fill="#fff">
-                  <path d="M12 21s-7-4.6-9.2-8.3C1 9.6 2.8 6 6.2 6 8.3 6 9.6 7.3 12 9.9 14.4 7.3 15.7 6 17.8 6c3.4 0 5.2 3.6 3.4 6.7C19 16.4 12 21 12 21z" />
-                </svg>
-              )}
+            <span className={`bt-ic3d ${c.id}`}>
+              {c.id === "story" ? "💬" : "❤️"}
             </span>
-            <span className="bt-title">{c.title}</span>
+            <span className="bt-title">{TILE[c.id]?.title || c.title}</span>
+            <span className="bt-sub">{TILE[c.id]?.desc || c.desc}</span>
           </button>
         ))}
       </div>
 
+      {/* 추천 — 마스코트 살짝 + 이미지 카드 */}
       {recommended.length > 0 && (
         <>
-          <div className="rec-head">
-            <span>✨ {recTitle}</span>
-            {emojis.length > 0 && (
-              <span className="rec-emojis">{emojis.join(" ")}</span>
-            )}
+          <div className="sec-head">
+            <span>{recTitle}</span>
+            <span
+              className="sec-mascot"
+              dangerouslySetInnerHTML={{ __html: robotHead("wow") }}
+            />
           </div>
-          <div className="rec-row">
-            {recommended.map((a, i) => {
-              const g = REC_GRAD[i % REC_GRAD.length];
-              return (
-                <button
-                  key={a.id}
-                  className="rec-card"
-                  style={{
-                    background: `linear-gradient(160deg, ${g[0]}, ${g[1]})`,
-                  }}
-                  onClick={() => onPickActivity(a)}
-                >
-                  <span className="rc-emoji">{a.emoji}</span>
-                  <span className="rc-title">{a.title}</span>
-                </button>
-              );
-            })}
-          </div>
+          <CardRow items={recommended} />
         </>
       )}
 
-      <div className="learn-head">
-        <svg className="lh-bulb" viewBox="0 0 24 24" fill="#E8447F">
-          <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.4 1 2.3h6c0-.9.4-1.8 1-2.3A7 7 0 0 0 12 2zM9.5 19h5v1a2.5 2.5 0 0 1-5 0z" />
-        </svg>
-        새로운 걸 배워요
-      </div>
-      <div className="learn-row">
-        {learn.map((a, i) => {
-          const g = LEARN_GRAD[i % LEARN_GRAD.length];
-          return (
-            <button
-              key={a.id}
-              className="learn-card"
-              style={{ background: `linear-gradient(160deg, ${g[0]}, ${g[1]})` }}
-              onClick={() => onPickActivity(a)}
-            >
-              <span className="lc-emoji">{a.emoji}</span>
-              <span className="lc-title">{a.title}</span>
-            </button>
-          );
-        })}
-      </div>
+      {/* 새로운 유익한 놀이 */}
+      {learnPlay.length > 0 && (
+        <>
+          <div className="sec-head">
+            <span>새로운 유익한 놀이가 있어요~</span>
+          </div>
+          <CardRow items={learnPlay} offset={2} />
+        </>
+      )}
 
+      {/* 하단 고정 입력 바 (뭐든지 물어봐요) — 보라 톤 */}
       {ask && (
-        <div className="ask-bar">
-          <span
-            className="ask-cam"
-            role="button"
-            aria-label="그림 만들기"
-            onClick={onImageMaker}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="7" width="18" height="13" rx="3" />
-              <circle cx="12" cy="13.5" r="3.5" />
-              <path d="M9 7l1.2-2h3.6L15 7" />
+        <div className="home-composer">
+          <button className="hc-plus" onClick={onImageMaker} aria-label="더보기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
             </svg>
+          </button>
+          <span className="hc-text" onClick={() => onPickActivity(ask)}>
+            뭐든지 물어봐요~!
           </span>
-          <span className="ask-text" onClick={() => onPickActivity(ask)}>
-            궁금한 거 있어? 물어봐!
-          </span>
-          <span
-            className="ask-btn"
-            role="button"
-            onClick={() => onPickActivity(ask)}
-          >
-            <svg className="ask-wave" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round">
+          <button className="hc-ic" onClick={() => onPickActivity(ask)} aria-label="말하기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="3" width="6" height="11" rx="3" />
+              <path d="M6 11a6 6 0 0 0 12 0M12 17v3" />
+            </svg>
+          </button>
+          <button className="hc-ic wave" onClick={() => onPickActivity(ask)} aria-label="물어보기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
               <path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4" />
             </svg>
-            물어보기
-          </span>
-        </div>
-      )}
-
-      {popular.length > 0 && (
-        <>
-          <div className="rec-head pop-head">
-            <span>🔥 요즘 인기 있는 활동</span>
-          </div>
-          <div className="rec-row">
-            {popular.map((a, i) => {
-              const g = POP_GRAD[i % POP_GRAD.length];
-              return (
-                <button
-                  key={a.id}
-                  className="rec-card"
-                  style={{
-                    background: `linear-gradient(160deg, ${g[0]}, ${g[1]})`,
-                  }}
-                  onClick={() => onPickActivity(a)}
-                >
-                  <span className="rc-emoji">{a.emoji}</span>
-                  <span className="rc-title">{a.title}</span>
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {/* 아래에 더 있음을 알리는 스크롤 유도 (기획서: 하단 콘텐츠가 잘려 보이게) */}
-      {scrollHint && (
-        <div className="scroll-hint" aria-hidden="true">
-          <span className="scroll-hint-chev">⌄</span>
+          </button>
         </div>
       )}
 

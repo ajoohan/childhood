@@ -597,8 +597,8 @@ export default function App() {
             onClick={() => setView({ name: "missions" })}
           >
             <svg className="tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="8" />
-              <circle cx="12" cy="12" r="3" />
+              <circle cx="12" cy="9" r="5" />
+              <path d="M9 13.5L7.5 21 12 18.5 16.5 21 15 13.5" />
             </svg>
             <span>미션</span>
           </button>
@@ -612,7 +612,7 @@ export default function App() {
                 <path d="M6 11a6 6 0 0 0 12 0M12 17v3" />
               </svg>
             </span>
-            <span>스피크</span>
+            <span>말하기</span>
           </button>
           <button
             className={`tab ${view.name === "collection" ? "active" : ""}`}

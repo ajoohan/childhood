@@ -8,7 +8,7 @@ export function timeGreeting(name, now = new Date()) {
   if (h >= 5 && h < 9)
     return { hi: `좋은 아침, ${who}! ☀️`, sub: "일찍 일어났네, 대단해!" };
   if (h >= 9 && h < 12)
-    return { hi: `안녕, ${who}! 👋`, sub: "오늘은 뭐 하고 놀까?" };
+    return { hi: `안녕, ${who}! 👋`, sub: "오늘은 뭐하고 놀까?" };
   if (h >= 12 && h < 15)
     return { hi: `안녕, ${who}! 🍚`, sub: "점심 맛있게 먹었어?" };
   if (h >= 15 && h < 18)
