@@ -26,6 +26,20 @@ const TILE = {
 // 앱 실행 후 홈 첫 진입에서 환영 컨페티를 1회만
 let welcomedThisSession = false;
 
+// 에셋 이미지 오버레이 — /img/{name}.png 가 있으면 그 위에 덮어 씌우고,
+// 파일이 없으면(404) 스스로 사라져 이모지/기본 아이콘이 보인다. (플러그앤플레이)
+function AssetImg({ src, className }) {
+  return (
+    <img
+      className={className}
+      src={src}
+      alt=""
+      loading="lazy"
+      onError={(e) => e.currentTarget.remove()}
+    />
+  );
+}
+
 // Kids Zone 홈 (피그마 시안 반영) — 라벤더→크림 배경, 보라 포인트, 이미지 카드
 export default function KidsHome({
   categories,
@@ -101,6 +115,7 @@ export default function KidsHome({
               style={{ background: `linear-gradient(155deg, ${g[0]}, ${g[1]})` }}
             >
               <span className="act-emoji">{a.emoji}</span>
+              <AssetImg className="act-img" src={`/img/act-${a.id}.png`} />
             </span>
             <span className="act-label">{a.title}</span>
           </button>
@@ -121,7 +136,8 @@ export default function KidsHome({
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="프로필 메뉴"
           >
-            {avatar || "🙂"}
+            <span className="hp-emoji">{avatar || "🙂"}</span>
+            <AssetImg className="hp-img" src={`/img/avatar-${avatar || "default"}.png`} />
           </button>
           {menuOpen && (
             <>
@@ -157,7 +173,10 @@ export default function KidsHome({
 
       {/* 프리미엄 배너 (보라) — 누르면 부모 인증(PIN) 뒤 부모 존 구독. 아이 직접 결제 없음 */}
       <button className="premium-banner purple" onClick={onParent}>
-        <span className="prb-crown">👑</span>
+        <span className="prb-crown">
+          <span className="prb-crown-emoji">👑</span>
+          <AssetImg className="prb-crown-img" src="/img/crown.png" />
+        </span>
         <b>프리미엄으로 업그레이드!</b>
         <span className="prb-go">
           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -175,7 +194,8 @@ export default function KidsHome({
             onClick={() => onPickCategory(c)}
           >
             <span className={`bt-ic3d ${c.id}`}>
-              {c.id === "story" ? "💬" : "❤️"}
+              <span className="bt-emoji3d">{c.id === "story" ? "💬" : "❤️"}</span>
+              <AssetImg className="bt-img" src={`/img/tile-${c.id}.png`} />
             </span>
             <span className="bt-title">{TILE[c.id]?.title || c.title}</span>
             <span className="bt-sub">{TILE[c.id]?.desc || c.desc}</span>
@@ -188,10 +208,10 @@ export default function KidsHome({
         <>
           <div className="sec-head">
             <span>{recTitle}</span>
-            <span
-              className="sec-mascot"
-              dangerouslySetInnerHTML={{ __html: robotHead("wow") }}
-            />
+            <span className="sec-mascot">
+              <span dangerouslySetInnerHTML={{ __html: robotHead("wow") }} />
+              <AssetImg className="sec-mascot-img" src="/img/mascot.png" />
+            </span>
           </div>
           <CardRow items={recommended} />
         </>

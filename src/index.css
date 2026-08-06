@@ -4177,3 +4177,15 @@ input::placeholder { color: #B4AC9E !important; }
 .tab { color: #A99BC0 !important; }
 .tab.active, .tab.speak.active { color: #F2724B !important; }
 .tab.active > span:last-child, .tab.speak.active > span:last-child { color: #F2724B !important; }
+
+/* ── 에셋 이미지 오버레이 (파일 있으면 이모지/기본 위에 덮임) ── */
+.act-photo { position: relative; }
+.act-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 18px 18px 0 0; }
+.hd-profile-btn.round { position: relative; overflow: hidden; }
+.hp-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bt-ic3d { position: relative; display: inline-grid; place-items: center; width: 56px; height: 56px; }
+.bt-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.prb-crown { position: relative; display: inline-grid; place-items: center; width: 30px; height: 30px; }
+.prb-crown-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.sec-mascot { position: relative; display: inline-block; }
+.sec-mascot-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
