@@ -6,7 +6,7 @@ import Confetti from "../components/Confetti.jsx";
 import FloatingStars from "../components/FloatingStars.jsx";
 
 // 요즘 인기 있는(유익한) 활동 (제작사 큐레이션 — MVP)
-const POPULAR_IDS = ["learn_hangul", "draw_idea", "feel_talk", "habit_routine"];
+const POPULAR_IDS = ["learn_hangul", "learn_science", "habit_routine", "draw_idea", "feel_talk"];
 
 // 활동 카드의 따뜻한 '사진' 톤 배경 (실제 3D 이미지는 추후 에셋으로 교체)
 const CARD_TONE = [
@@ -36,6 +36,11 @@ function AssetImg({ src, className }) {
       alt=""
       loading="lazy"
       onError={(e) => e.currentTarget.remove()}
+      onLoad={(e) => {
+        // 이미지가 있으면 뒤의 이모지 폴백을 숨긴다
+        const prev = e.currentTarget.previousElementSibling;
+        if (prev) prev.style.visibility = "hidden";
+      }}
     />
   );
 }

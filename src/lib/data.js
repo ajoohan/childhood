@@ -188,16 +188,16 @@ export const INTERESTS = [
 
 // 관심사(id) → 어울리는 활동(id) 매핑. 관심사 기반 홈 추천에 사용.
 export const INTEREST_ACT = {
-  science: ["learn_ask", "story_make"],
-  animals: ["story_make", "learn_ask"],
-  space: ["learn_ask", "story_make"],
+  science: ["learn_science", "learn_ask"],
+  animals: ["story_make", "learn_science"],
+  space: ["learn_science", "learn_ask"],
   reading: ["story_listen", "story_make"],
   art: ["draw_idea", "story_make"],
   math: ["learn_homework", "learn_ask"],
   music: ["story_make", "draw_idea"],
-  dino: ["learn_ask", "story_make"],
+  dino: ["learn_science", "story_make"],
   sports: ["habit_routine", "feel_talk"],
-  body: ["learn_ask", "habit_routine"],
+  body: ["learn_science", "habit_routine"],
 };
 
 // 아이의 관심사에 맞는 활동을 점수순으로 추천 (연령 모드로 필터, 최대 max개)
