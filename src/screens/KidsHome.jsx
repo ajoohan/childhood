@@ -23,7 +23,7 @@ let welcomedThisSession = false;
 
 // 에셋 이미지 오버레이 — /img/{name}.png 가 있으면 이모지 폴백을 덮어 씌우고,
 // 파일이 없으면(404) 스스로 사라져 이모지가 보인다.
-function AssetImg({ src, className }) {
+function AssetImg({ src, className, hideFallback = true }) {
   return (
     <img
       className={className}
@@ -32,6 +32,8 @@ function AssetImg({ src, className }) {
       loading="lazy"
       onError={(e) => e.currentTarget.remove()}
       onLoad={(e) => {
+        // 바로 앞 형제가 이모지 폴백일 때만 숨긴다 (장식 레이어는 hideFallback=false)
+        if (!hideFallback) return;
         const prev = e.currentTarget.previousElementSibling;
         if (prev) prev.style.visibility = "hidden";
       }}
@@ -196,7 +198,7 @@ export default function KidsHome({
           <span className="fx-mascot">
             <span className="fx-mascot-emoji">🤖</span>
             <AssetImg className="fx-mascot-img" src="/img/mascot.png" />
-            <AssetImg className="fx-mascot-spark" src="/img/mascot-sparkle.png" />
+            <AssetImg className="fx-mascot-spark" src="/img/mascot-sparkle.png" hideFallback={false} />
           </span>
           <div className="fx-row">
             {recommended.map((a) => (
