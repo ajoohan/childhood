@@ -335,7 +335,7 @@ export default function Speak({
               dangerouslySetInnerHTML={{ __html: robotHead("happy") }}
             />
             <b className="dm-intro-name">별이</b>
-            <small className="dm-intro-id">@banjjaktalk · AI 도우미</small>
+            <small className="dm-intro-id">@childhood · AI 도우미</small>
             <h2 className="dm-intro-title">별이와의 대화</h2>
             <p className="dm-intro-note">
               별이는 AI 도우미예요. 진짜 사람이 아니에요! 불편한 이야기가

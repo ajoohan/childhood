@@ -247,7 +247,7 @@ export default function Settings({
           <div className="set-info-row">
             <span>서비스</span>
             <b>
-              반짝톡 · {MODE_LABEL[settings.ageMode]?.name || "영유아"}(
+              Childhood · {MODE_LABEL[settings.ageMode]?.name || "영유아"}(
               {MODE_LABEL[settings.ageMode]?.range || MODE_LABEL.young.range})
             </b>
           </div>

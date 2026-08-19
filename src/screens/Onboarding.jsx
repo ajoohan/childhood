@@ -144,7 +144,7 @@ export default function Onboarding({ onDone }) {
           </div>
 
           <h1 className="ob-pw-title">
-            {who}에게 반짝톡을
+            {who}에게 Childhood를
             <br />
             마음껏 선물하세요
           </h1>
@@ -188,7 +188,7 @@ export default function Onboarding({ onDone }) {
               <b>4.8</b> · 부모 후기 평점
             </p>
             <div className="ob-pw-review">
-              "책이 지루하다던 아이가 이제 '5분만 더' 하며 반짝톡을 찾아요."
+              "책이 지루하다던 아이가 이제 '5분만 더' 하며 Childhood를 찾아요."
               <span>— 어느 부모님</span>
             </div>
           </div>

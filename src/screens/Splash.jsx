@@ -22,7 +22,7 @@ export default function Splash({ onStart, onParent }) {
 
       <div className="splash-copy">
         <h1 className="splash-logo">
-          반짝<span>톡</span>
+          Child<span>hood</span>
         </h1>
         <p className="splash-tag">우리 아이의 AI 학습 도우미</p>
         <p>

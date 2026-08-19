@@ -2,7 +2,7 @@
 
 // ── 배지: 특정 성취를 달성하면 잠금 해제 ──
 export const BADGES = [
-  { id: "first", emoji: "🐣", name: "첫걸음", desc: "반짝톡을 시작했어요" },
+  { id: "first", emoji: "🐣", name: "첫걸음", desc: "Childhood를 시작했어요" },
   { id: "talk", emoji: "💬", name: "첫 대화", desc: "별이와 처음 이야기했어요" },
   { id: "story", emoji: "📖", name: "이야기꾼", desc: "이야기 활동을 해봤어요" },
   { id: "mission1", emoji: "🎯", name: "미션 도전", desc: "미션을 완료했어요" },
