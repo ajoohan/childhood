@@ -64,7 +64,8 @@ npm start
 2. [render.com](https://render.com) 가입 후 **New → Blueprint** 선택
 3. 저장소를 고르면 `render.yaml`대로 자동 설정됨
 4. 배포 화면에서 환경변수 **`ANTHROPIC_API_KEY`** 에 실제 키 입력
-5. 배포가 끝나면 `https://<이름>.onrender.com` 주소가 생성됨 → 누구나 접속 가능
+5. 배포가 끝나면 `https://<서비스이름>.onrender.com` 주소가 생성됨 → 누구나 접속 가능
+   (현재 배포 서비스 이름은 `Childhood` → https://childhood.onrender.com)
 
 무료 플랜은 일정 시간 미사용 시 잠들었다가 첫 요청에 몇십 초 걸릴 수 있습니다.
 
@@ -73,8 +74,8 @@ npm start
 `Dockerfile`이 포함되어 있어 컨테이너 호스팅 어디서든 실행됩니다.
 
 ```bash
-docker build -t banjjaktalk .
-docker run -p 3000:3000 -e ANTHROPIC_API_KEY=sk-... banjjaktalk
+docker build -t childhood .
+docker run -p 3000:3000 -e ANTHROPIC_API_KEY=sk-... childhood
 ```
 
 호스팅에서는 `ANTHROPIC_API_KEY` 환경변수만 설정하면 됩니다. 서버는 `PORT` 환경변수를 자동으로 따릅니다.

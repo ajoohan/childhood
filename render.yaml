@@ -2,7 +2,7 @@
 # https://render.com > New > Blueprint > 이 저장소 선택
 services:
   - type: web
-    name: banjjaktalk
+    name: Childhood
     runtime: node
     plan: free
     branch: claude/ai-chat-kids-service-seznwa
