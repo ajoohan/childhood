@@ -4074,118 +4074,196 @@ input::placeholder { color: #B4AC9E !important; }
 }
 .decor-done { margin-top: 16px; text-align: center; color: #37c26b; font-weight: 800; font-size: 16px; }
 .decor-subhint { margin-top: 8px; text-align: center; color: var(--muted); font-size: 13px; }
-
 /* ============================================================
-   FIGMA 메인 시안 반영 — 라벤더/보라 홈 (2026-07)
+   Figma "AI for Kids" — Home (node 62:27) 반영
+   402px 프레임 기준 수치를 그대로 옮김. 색상은 시안 원본 HEX.
    ============================================================ */
-.kids-home.figma {
-  background: linear-gradient(180deg, #E9DEF4 0%, #F4ECE0 30%, #FBF4EC 52%, #EADEF4 100%) !important;
-  padding-bottom: 8px;
+.kids-home.fx {
+  padding: 0 30px 0;
+  background: linear-gradient(155.3deg, #FFFDEF 0%, #F7EFFF 100%) !important;
+  gap: 0;
+}
+.kids-home.fx::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.2;
+  background: url("/img/bg-pattern.png") center / cover no-repeat;
+}
+.kids-home.fx > * { position: relative; z-index: 1; }
+
+/* ── 헤더 (프로필 80 / 인사 / 별) ── */
+.fx-hd { display: flex; align-items: flex-start; gap: 11px; padding: 50px 0 0; }
+.fx-ava {
+  width: 80px; height: 80px; flex-shrink: 0; position: relative; overflow: hidden;
+  border-radius: 50%; border: none; padding: 0; cursor: pointer;
+  background: #F7EFFF; display: grid; place-items: center; font-size: 40px;
+}
+.fx-ava-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fx-hi { flex: 1; min-width: 0; padding-top: 17px; }
+.fx-hi-1 { margin: 0; font-size: 14px; color: #000; line-height: normal; }
+.fx-hi-1 b { color: #7C59BA; font-weight: 700; }
+.fx-hi-2 {
+  margin: 4px 0 0; font-size: 20px; font-weight: 700; color: #7C59BA;
+  line-height: normal; letter-spacing: -0.4px; white-space: nowrap;
+}
+.fx-star {
+  position: relative; flex-shrink: 0; border: none; background: none;
+  padding: 0; margin-top: 14px; width: 73px; height: 38px; cursor: pointer;
+}
+.fx-star-pill {
+  position: absolute; left: 0; top: 14px; width: 60px; height: 24px;
+  border-radius: 26px; background: #DB6A00; color: #FFF183;
+  font-size: 14px; font-weight: 700; display: grid; place-items: center;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.fx-star-ic {
+  position: absolute; right: 0; top: 0; width: 36px; height: 35px;
+  display: grid; place-items: center; font-size: 30px; line-height: 1;
+  filter: drop-shadow(0 4px 4px rgba(91, 45, 31, 0.25));
+}
+.fx-star-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+
+/* ── 프리미엄 배너 ── */
+.fx-premium {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  height: 45px; margin-top: 12px; padding: 0 8px 0 12px;
+  background: #7C59BA; border: none; border-radius: 29px; cursor: pointer;
+}
+.fx-premium:active { transform: scale(0.985); }
+.fx-crown {
+  position: relative; width: 32px; height: 28px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 22px; line-height: 1;
+}
+.fx-crown-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.fx-premium b {
+  flex: 1; text-align: left; font-size: 15px; font-weight: 700; color: #FFF9C8;
+}
+.fx-premium-go {
+  width: 29px; height: 29px; border-radius: 50%; background: #F7EFFF;
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.fx-premium-go svg { width: 13px; height: 13px; }
+
+/* ── 큰 타일 2개 ── */
+.fx-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.fx-tile {
+  height: 140px; border-radius: 16px; cursor: pointer;
+  background: #FFEEE2; border: 1px solid #E9C8B1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+}
+.fx-tile:active { transform: scale(0.98); }
+.fx-tile-ic {
+  position: relative; width: 55px; height: 49px; margin-bottom: 12px;
+  display: grid; place-items: center; font-size: 40px; line-height: 1;
+}
+.fx-tile-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.fx-tile b { font-size: 14px; font-weight: 700; color: #702A14; }
+.fx-tile small { margin-top: 5px; font-size: 11px; color: #747474; }
+
+/* ── 섹션 헤딩 + 마스코트 ── */
+.fx-sec { position: relative; margin-top: 20px; }
+.fx-sec-hd { margin: 0 0 12px; font-size: 14px; font-weight: 400; color: #000; }
+.fx-sec-hd b { font-weight: 700; color: #7C59BA; }
+.fx-mascot {
+  position: absolute; right: 8px; top: -18px; width: 62px; height: 56px; z-index: 2;
+  display: grid; place-items: center; font-size: 34px; line-height: 1;
+  transform: rotate(15.83deg);
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.3));
+}
+.fx-mascot-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.fx-mascot-spark {
+  position: absolute; right: -14px; top: -8px; width: 22px; height: 30px;
+  object-fit: contain; transform: rotate(-15.83deg);
 }
 
-/* 헤더: 둥근 아바타 + 보라 인사(작게) / 질문(크게) */
-.figma .hd-profile-btn.round { border-radius: 50% !important; width: 56px; height: 56px; font-size: 30px; }
-.figma .hd-hi { display: flex; flex-direction: column; }
-.figma .hd-hi small { order: -1; font-size: 15px; font-weight: 800; color: #9B84C6 !important; margin-bottom: 1px; }
-.figma .hd-hi b { font-size: 22px !important; font-weight: 900; color: #6A4FA0 !important; letter-spacing: -1px; line-height: 1.2; word-break: keep-all; }
-.figma .hd-hi { min-width: 0; flex: 1; }
-
-/* 프리미엄 배너 — 보라 그라데이션 + 원형 화살표 */
-.premium-banner.purple {
-  background: linear-gradient(100deg, #9C7BD8, #7B57BE) !important;
-  border: none !important;
-  box-shadow: 0 8px 20px rgba(123, 87, 190, 0.35), 0 5px 0 #6A49AC !important;
-  border-radius: 20px; padding: 15px 16px;
-}
-.premium-banner.purple:active { transform: translateY(4px); box-shadow: 0 1px 0 #6A49AC !important; }
-.prb-crown { font-size: 24px; flex-shrink: 0; }
-.premium-banner.purple b { flex: 1; text-align: left; margin-left: 12px; color: #fff !important; font-size: 17.5px; font-weight: 800; text-shadow: 0 1px 2px rgba(70, 40, 120, 0.4); }
-.prb-go {
-  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.22); display: grid; place-items: center;
-}
-.prb-go svg { width: 17px; height: 17px; }
-
-/* 큰 타일 — 크림 카드 + 3D 아이콘 + 부제 */
-.figma .big-tiles { gap: 13px; }
-.big-tile.soft {
-  min-height: 150px !important; border-radius: 24px !important;
-  background: linear-gradient(160deg, #FDF1E6, #F8E4D4) !important;
-  border: 1.5px solid #F1DECC !important;
-  box-shadow: 0 6px 0 #EAD6C3, 0 12px 20px rgba(120, 80, 50, 0.08) !important;
-  display: flex !important; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; padding: 20px 12px !important;
-}
-.big-tile.soft:active { transform: translateY(4px); box-shadow: 0 1px 0 #EAD6C3 !important; }
-.bt-ic3d { font-size: 44px; line-height: 1; filter: drop-shadow(0 6px 8px rgba(120, 60, 40, 0.28)); }
-.big-tile.soft .bt-title { color: #3E3357 !important; font-size: 19px !important; font-weight: 800; }
-.bt-sub { font-size: 11.5px; color: #A08FB8; font-weight: 600; white-space: nowrap; }
-
-/* 섹션 헤딩 (보라) + 마스코트 살짝 */
-.figma .sec-head {
-  display: flex; align-items: center; gap: 8px; position: relative;
-  margin: 20px 2px 12px; font-size: 16px; font-weight: 800; color: #6A4FA0;
-}
-.figma .sec-mascot { position: absolute; right: 2px; bottom: -6px; width: 46px; height: 46px; }
-.figma .sec-mascot svg { width: 100%; height: 100%; filter: drop-shadow(0 4px 6px rgba(90, 60, 140, 0.25)); }
-
-/* 이미지 카드 가로 스크롤 */
-.act-row {
-  display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 6px;
+/* ── 이미지 카드 가로 스크롤 (라벨은 이미지 위) ── */
+.fx-row {
+  display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px;
+  margin: 0 -30px; padding-left: 30px; padding-right: 30px;
   scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch;
 }
-.act-row::-webkit-scrollbar { display: none; }
-.act-card {
-  flex: 0 0 118px; background: #fff; border: none; border-radius: 18px;
-  padding: 0 0 8px; cursor: pointer; scroll-snap-align: start; overflow: hidden;
-  box-shadow: 0 6px 16px rgba(90, 60, 120, 0.1);
+.fx-row::-webkit-scrollbar { display: none; }
+.fx-card {
+  position: relative; flex: 0 0 100px; height: 140px; border: none; padding: 0;
+  border-radius: 16px; overflow: hidden; cursor: pointer; scroll-snap-align: start;
+  background: #EFE3D8; display: grid; place-items: center; font-size: 42px;
 }
-.act-card:active { transform: scale(0.97); }
-.act-photo {
-  display: grid; place-items: center; height: 96px; border-radius: 18px 18px 0 0;
+.fx-card.wide { flex-basis: 140px; height: 120px; }
+.fx-card:active { transform: scale(0.97); }
+.fx-card-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fx-card-veil {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 50.365%, rgba(34, 0, 3, 0.5) 100%);
 }
-.act-emoji { font-size: 46px; filter: drop-shadow(0 4px 6px rgba(80, 50, 30, 0.2)); }
-.act-label {
-  display: block; padding: 8px 10px 2px; font-size: 14px; font-weight: 800;
-  color: #4A3F5E; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.fx-card-label {
+  position: absolute; left: 14px; right: 8px; bottom: 8px; text-align: left;
+  font-size: 13px; font-weight: 700; color: #fff;
+  text-shadow: 2px 3px 3px rgba(0, 0, 0, 0.3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* 하단 입력 바 — 흰 알약 (보라 톤 배경 위) */
-.home-composer {
+/* ── 바로가기 리스트 3행 ── */
+.fx-quick { margin-top: 20px; display: flex; flex-direction: column; gap: 11px; }
+.fx-qrow {
+  display: flex; align-items: center; gap: 10px; height: 45px; padding: 0 10px 0 0;
+  background: #fff; border: 1px solid #EDE6F5; border-radius: 16px; cursor: pointer;
+}
+.fx-qrow:active { transform: scale(0.99); }
+.fx-qic {
+  position: relative; width: 42px; height: 42px; flex-shrink: 0; margin-left: 0;
+  display: grid; place-items: center; font-size: 26px; line-height: 1;
+  filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.2));
+}
+.fx-qic-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.fx-qlabel { flex: 1; text-align: left; font-size: 14px; font-weight: 500; color: #220003; }
+.fx-qgo { width: 20px; height: 20px; flex-shrink: 0; color: #220003; }
+
+/* ── 하단 입력 바 (탭바와 하나의 다크 패널) ── */
+.fx-composer {
   position: sticky; bottom: 0; z-index: 6;
-  display: flex; align-items: center; gap: 8px;
-  margin: 14px 2px 2px; padding: 8px 10px 8px 14px;
-  background: #fff; border-radius: 999px;
-  box-shadow: 0 8px 24px rgba(90, 60, 140, 0.18), 0 2px 0 rgba(120, 90, 170, 0.1);
-  border: 1.5px solid #EFE6F6;
+  display: flex; align-items: center; gap: 6px;
+  margin: 22px -30px 0; padding: 20px 30px 20px;
+  background: linear-gradient(180deg, rgba(154, 85, 100, 0) 0%, #9A5564 26%, #8B4F65 100%);
 }
-.hc-plus {
-  width: 30px; height: 30px; border-radius: 50%; border: none; flex-shrink: 0;
-  background: #F1EAF8; color: #8A6DB8; display: grid; place-items: center; cursor: pointer;
+.fx-composer > :not(.fx-ctext) { flex-shrink: 0; }
+.fx-composer::before {
+  content: ""; position: absolute; left: 30px; right: 30px; top: 20px; bottom: 20px;
+  background: #fff; border-radius: 26px;
 }
-.hc-plus svg { width: 18px; height: 18px; }
-.hc-text { flex: 1; color: #A99BC0; font-size: 15px; font-weight: 600; cursor: pointer; }
-.hc-ic {
-  width: 34px; height: 34px; border-radius: 50%; border: none; flex-shrink: 0;
-  background: transparent; color: #8A6DB8; display: grid; place-items: center; cursor: pointer;
+.fx-composer > * { position: relative; }
+.fx-cplus {
+  width: 26px; height: 26px; margin-left: 20px; border: none; background: none;
+  color: #220003; display: grid; place-items: center; cursor: pointer;
 }
-.hc-ic svg { width: 20px; height: 20px; }
-.hc-ic.wave { background: #7B57BE; color: #fff; }
+.fx-cplus svg { width: 15px; height: 15px; }
+.fx-ctext { flex: 1; font-size: 16px; color: #BCBCBC; cursor: pointer; }
+.fx-cmic {
+  width: 26px; height: 26px; border: none; background: none; color: #220003;
+  display: grid; place-items: center; cursor: pointer;
+}
+.fx-cmic svg { width: 19px; height: 19px; }
+.fx-cai {
+  width: 32px; height: 32px; margin-right: 14px; border-radius: 50%; border: none;
+  background: linear-gradient(150deg, #9C7BD8, #7C59BA);
+  display: grid; place-items: center; cursor: pointer;
+}
+.fx-cai svg { width: 17px; height: 17px; }
 
-/* 하단 탭 — 라벤더 톤 */
-.tab-bar { background: #F3EDFB !important; border-top: 1px solid #E7DDF3 !important; }
-.tab { color: #A99BC0 !important; }
-.tab.active, .tab.speak.active { color: #F2724B !important; }
-.tab.active > span:last-child, .tab.speak.active > span:last-child { color: #F2724B !important; }
+/* ── 하단 탭바 — 시안의 다크 그라데이션 ── */
+.tab-bar {
+  background: linear-gradient(180deg, #8B4F65 0%, #443361 100%) !important;
+  border-top: none !important;
+  padding: 12px 0 16px !important;
+}
+.tab { color: rgba(255, 255, 255, 0.4) !important; font-weight: 700; }
+.tab .tab-svg { opacity: 0.4; }
+.tab.active, .tab.speak.active { color: #FFEEE2 !important; }
+.tab.active .tab-svg, .tab.speak.active .tab-svg { opacity: 1; }
+.tab.active > span:last-child, .tab.speak.active > span:last-child { color: #FFEEE2 !important; }
 
-/* ── 에셋 이미지 오버레이 (파일 있으면 이모지/기본 위에 덮임) ── */
-.act-photo { position: relative; }
-.act-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 18px 18px 0 0; }
-.hd-profile-btn.round { position: relative; overflow: hidden; }
-.hp-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.bt-ic3d { position: relative; display: inline-grid; place-items: center; width: 56px; height: 56px; }
-.bt-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-.prb-crown { position: relative; display: inline-grid; place-items: center; width: 30px; height: 30px; }
-.prb-crown-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-.sec-mascot { position: relative; display: inline-block; }
-.sec-mascot-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+/* ── 시안 대조 후 보정 ── */
+/* 인사 문구가 별 배지와 겹치지 않게 (시안 Noto Sans KR 대비 시스템 폰트가 넓음) */
+.fx-hi { overflow: hidden; }
+.fx-hi-2 { font-size: 19px; letter-spacing: -0.8px; }
+/* 가로 스크롤 행: 좌측은 컨테이너 여백에서 시작, 우측만 화면 밖으로 흘림 */
+.fx-row { margin: 0 -30px 0 0; padding: 0 30px 2px 0; scroll-padding-left: 0; }
+/* 활성 탭의 흰 배경 칩 제거 — 시안은 색조만 바뀜 */
+.tab.active .tab-svg, .tab.active svg { background: none !important; padding: 0 !important; border-radius: 0 !important; }

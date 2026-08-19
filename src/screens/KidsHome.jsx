@@ -1,33 +1,28 @@
 import { useEffect, useRef, useState } from "react";
 import { recommendActivities } from "../lib/data.js";
-import { timeGreeting } from "../lib/greeting.js";
-import { robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
-import FloatingStars from "../components/FloatingStars.jsx";
 
-// 요즘 인기 있는(유익한) 활동 (제작사 큐레이션 — MVP)
-const POPULAR_IDS = ["learn_hangul", "learn_science", "habit_routine", "draw_idea", "feel_talk"];
+// 시안 "새로운 유익한 놀이" 3카드 (Figma Home 62:78)
+const NEW_IDS = ["learn_hangul", "learn_nature", "learn_science"];
 
-// 활동 카드의 따뜻한 '사진' 톤 배경 (실제 3D 이미지는 추후 에셋으로 교체)
-const CARD_TONE = [
-  ["#F6D9C0", "#E9B892"],
-  ["#E7D6C4", "#D2B79A"],
-  ["#DCE6D2", "#B9CFA6"],
-  ["#EAD6DE", "#D3AEBE"],
-  ["#D8E0EC", "#B4C2D8"],
+// 시안 하단 리스트 3행 (Figma Home 62:96 / 62:101 / 62:106)
+const QUICK_ROWS = [
+  { id: "story_listen", label: "동화책 읽어줘", icon: "icon-book", emoji: "📖" },
+  { id: "game_word", label: "낱말 게임 하자!", icon: "icon-word", emoji: "🔤" },
+  { id: "game_fun", label: "재미있는 게임한번 해볼래?", icon: "icon-game", emoji: "🎲" },
 ];
 
-// 큰 액션 타일 — 시안 라벨/부제
+// 큰 액션 타일 — 시안 라벨/부제 (62:37 / 62:48)
 const TILE = {
-  story: { title: "이야기 하기", desc: "하고 싶은 얘기가 있어요~" },
-  heart: { title: "마음 나누기", desc: "오늘 기분이 어때?" },
+  story: { title: "이야기 하기", desc: "하고 싶은 얘기가 있어요~", icon: "tile-story", emoji: "💬" },
+  heart: { title: "마음 나누기", desc: "오늘 기분이 어때?", icon: "tile-heart", emoji: "❤️" },
 };
 
 // 앱 실행 후 홈 첫 진입에서 환영 컨페티를 1회만
 let welcomedThisSession = false;
 
-// 에셋 이미지 오버레이 — /img/{name}.png 가 있으면 그 위에 덮어 씌우고,
-// 파일이 없으면(404) 스스로 사라져 이모지/기본 아이콘이 보인다. (플러그앤플레이)
+// 에셋 이미지 오버레이 — /img/{name}.png 가 있으면 이모지 폴백을 덮어 씌우고,
+// 파일이 없으면(404) 스스로 사라져 이모지가 보인다.
 function AssetImg({ src, className }) {
   return (
     <img
@@ -37,7 +32,6 @@ function AssetImg({ src, className }) {
       loading="lazy"
       onError={(e) => e.currentTarget.remove()}
       onLoad={(e) => {
-        // 이미지가 있으면 뒤의 이모지 폴백을 숨긴다
         const prev = e.currentTarget.previousElementSibling;
         if (prev) prev.style.visibility = "hidden";
       }}
@@ -45,7 +39,7 @@ function AssetImg({ src, className }) {
   );
 }
 
-// Kids Zone 홈 (피그마 시안 반영) — 라벤더→크림 배경, 보라 포인트, 이미지 카드
+// Kids Zone 홈 — Figma "Home"(62:27) 시안 반영
 export default function KidsHome({
   categories,
   activities,
@@ -66,8 +60,6 @@ export default function KidsHome({
   onBadges,
   imageEnabled,
 }) {
-  // 시간대에 따라 바뀌는 질문 (아랫줄 큰 글씨). 예: 9~12시 → "오늘은 뭐 하고 놀까?"
-  const greet = timeGreeting(name);
   const [menuOpen, setMenuOpen] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false); // 유저 변경 시트
   const [welcome, setWelcome] = useState(!welcomedThisSession);
@@ -89,60 +81,43 @@ export default function KidsHome({
     { icon: "🕘", label: "챗 히스토리", go: onCollection },
     { icon: "🖼️", label: "그림 만들기", go: onImageMaker, pending: !imageEnabled },
   ];
-  const bigTiles = categories.filter((c) => c.id === "story" || c.id === "heart");
-  const learn = activities.filter(
-    (a) => a.category === "learn" && a.ages.includes(ageMode)
-  );
-  const ask = activities.find((a) => a.id === "learn_ask");
-  const recommended = recommendActivities(interests, activities, ageMode, 6);
-  const popular = POPULAR_IDS.map((id) => activities.find((a) => a.id === id))
-    .filter(Boolean)
-    .filter((a) => a.ages.includes(ageMode));
-  const recTitle = name ? `${name}~이 에게 추천!` : "너에게 추천!";
-  // "새로운 유익한 놀이" = 배움 + 인기, 중복 제거
-  const recIds = new Set(recommended.map((a) => a.id));
-  const playSeen = new Set();
-  const learnPlay = learn.concat(popular).filter((a) => {
-    if (playSeen.has(a.id)) return false;
-    playSeen.add(a.id);
-    return true;
-  });
 
-  // 가로 스크롤 이미지 카드 한 줄
-  const CardRow = ({ items, offset = 0 }) => (
-    <div className="act-row">
-      {items.map((a, i) => {
-        const g = CARD_TONE[(i + offset) % CARD_TONE.length];
-        return (
-          <button key={a.id} className="act-card" onClick={() => onPickActivity(a)}>
-            <span
-              className="act-photo"
-              style={{ background: `linear-gradient(155deg, ${g[0]}, ${g[1]})` }}
-            >
-              <span className="act-emoji">{a.emoji}</span>
-              <AssetImg className="act-img" src={`/img/act-${a.id}.png`} />
-            </span>
-            <span className="act-label">{a.title}</span>
-          </button>
-        );
-      })}
-    </div>
+  const byId = (id) => activities.find((a) => a.id === id);
+  const bigTiles = categories.filter((c) => c.id === "story" || c.id === "heart");
+  const ask = byId("learn_ask");
+  const recommended = recommendActivities(interests, activities, ageMode, 6);
+  const fresh = NEW_IDS.map(byId).filter(Boolean).filter((a) => a.ages.includes(ageMode));
+  const quick = QUICK_ROWS.map((r) => ({ ...r, act: byId(r.id) })).filter(
+    (r) => r.act && r.act.ages.includes(ageMode)
+  );
+
+  // 이미지 카드 한 장 (라벨이 이미지 위에 얹히고 아래쪽에 어두운 그라데이션)
+  const Card = ({ a, wide }) => (
+    <button
+      className={`fx-card ${wide ? "wide" : ""}`}
+      onClick={() => onPickActivity(a)}
+    >
+      <span className="fx-card-emoji">{a.emoji}</span>
+      <AssetImg className="fx-card-img" src={`/img/act-${a.id}.png`} />
+      <span className="fx-card-veil" />
+      <span className="fx-card-label">{a.title}</span>
+    </button>
   );
 
   return (
-    <section className="kids-home figma" ref={homeRef}>
-      <FloatingStars />
+    <section className="kids-home fx" ref={homeRef}>
       {welcome && <Confetti count={70} />}
 
-      <header className="home-hd">
+      {/* 헤더 — 아바타 80, 인사 2줄, 별 배지 */}
+      <header className="fx-hd">
         <div className="hd-menu-wrap">
           <button
-            className="hd-profile-btn round"
+            className="fx-ava"
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="프로필 메뉴"
           >
-            <span className="hp-emoji">{avatar || "🙂"}</span>
-            <AssetImg className="hp-img" src={`/img/avatar-${avatar || "default"}.png`} />
+            <span className="fx-ava-emoji">{avatar || "🙂"}</span>
+            <AssetImg className="fx-ava-img" src="/img/avatar-default.png" />
           </button>
           {menuOpen && (
             <>
@@ -166,91 +141,120 @@ export default function KidsHome({
             </>
           )}
         </div>
-        <div className="hd-hi">
-          <small>안녕, {name || "친구"}~</small>
-          <b>{greet.sub}</b>
+        <div className="fx-hi">
+          <p className="fx-hi-1">
+            안녕, <b>{name || "친구"}~</b>
+          </p>
+          <p className="fx-hi-2">오늘은 뭐하고 놀까?</p>
         </div>
-        <button className="star-badge star3d" onClick={onStars} aria-label="별 모으기">
-          <b>{stars}</b>
-          <span className="star3d-icon">⭐</span>
+        <button className="fx-star" onClick={onStars} aria-label="별 모으기">
+          <span className="fx-star-pill">{stars}</span>
+          <span className="fx-star-ic">
+            <span className="fx-star-emoji">⭐</span>
+            <AssetImg className="fx-star-img" src="/img/icon-star.png" />
+          </span>
         </button>
       </header>
 
-      {/* 프리미엄 배너 (보라) — 누르면 부모 인증(PIN) 뒤 부모 존 구독. 아이 직접 결제 없음 */}
-      <button className="premium-banner purple" onClick={onParent}>
-        <span className="prb-crown">
-          <span className="prb-crown-emoji">👑</span>
-          <AssetImg className="prb-crown-img" src="/img/crown.png" />
+      {/* 프리미엄 배너 — 누르면 부모 인증(PIN) 뒤 부모 존 구독. 아이 직접 결제 없음 */}
+      <button className="fx-premium" onClick={onParent}>
+        <span className="fx-crown">
+          <span className="fx-crown-emoji">👑</span>
+          <AssetImg className="fx-crown-img" src="/img/crown.png" />
         </span>
         <b>프리미엄으로 업그레이드!</b>
-        <span className="prb-go">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 6l6 6-6 6" />
+        <span className="fx-premium-go">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#7C59BA" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 5l7 7-7 7" />
           </svg>
         </span>
       </button>
 
-      {/* 큰 타일 — 크림 카드 + 3D 아이콘 + 부제 */}
-      <div className="big-tiles">
-        {bigTiles.map((c) => (
-          <button
-            key={c.id}
-            className={`big-tile soft bt-${c.id}`}
-            onClick={() => onPickCategory(c)}
-          >
-            <span className={`bt-ic3d ${c.id}`}>
-              <span className="bt-emoji3d">{c.id === "story" ? "💬" : "❤️"}</span>
-              <AssetImg className="bt-img" src={`/img/tile-${c.id}.png`} />
+      {/* 큰 타일 2개 */}
+      <div className="fx-tiles">
+        {bigTiles.map((c) => {
+          const t = TILE[c.id] || {};
+          return (
+            <button key={c.id} className="fx-tile" onClick={() => onPickCategory(c)}>
+              <span className="fx-tile-ic">
+                <span className="fx-tile-emoji">{t.emoji}</span>
+                <AssetImg className="fx-tile-img" src={`/img/${t.icon}.png`} />
+              </span>
+              <b>{t.title || c.title}</b>
+              <small>{t.desc || c.desc}</small>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 추천 — 마스코트가 헤딩 오른쪽에 살짝 걸침 */}
+      {recommended.length > 0 && (
+        <section className="fx-sec">
+          <h2 className="fx-sec-hd">
+            <b>{name || "친구"}~</b>이 에게 추천!
+          </h2>
+          <span className="fx-mascot">
+            <span className="fx-mascot-emoji">🤖</span>
+            <AssetImg className="fx-mascot-img" src="/img/mascot.png" />
+            <AssetImg className="fx-mascot-spark" src="/img/mascot-sparkle.png" />
+          </span>
+          <div className="fx-row">
+            {recommended.map((a) => (
+              <Card key={a.id} a={a} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 새로운 유익한 놀이 */}
+      {fresh.length > 0 && (
+        <section className="fx-sec">
+          <h2 className="fx-sec-hd">
+            <b>새로운 유익한 놀이</b> 가 있어요~
+          </h2>
+          <div className="fx-row">
+            {fresh.map((a) => (
+              <Card key={a.id} a={a} wide />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 바로가기 리스트 3행 */}
+      <div className="fx-quick">
+        {quick.map((r) => (
+          <button key={r.id} className="fx-qrow" onClick={() => onPickActivity(r.act)}>
+            <span className="fx-qic">
+              <span className="fx-qic-emoji">{r.emoji}</span>
+              <AssetImg className="fx-qic-img" src={`/img/${r.icon}.png`} />
             </span>
-            <span className="bt-title">{TILE[c.id]?.title || c.title}</span>
-            <span className="bt-sub">{TILE[c.id]?.desc || c.desc}</span>
+            <span className="fx-qlabel">{r.label}</span>
+            <svg className="fx-qgo" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         ))}
       </div>
 
-      {/* 추천 — 마스코트 살짝 + 이미지 카드 */}
-      {recommended.length > 0 && (
-        <>
-          <div className="sec-head">
-            <span>{recTitle}</span>
-            <span className="sec-mascot">
-              <span dangerouslySetInnerHTML={{ __html: robotHead("wow") }} />
-              <AssetImg className="sec-mascot-img" src="/img/mascot.png" />
-            </span>
-          </div>
-          <CardRow items={recommended} />
-        </>
-      )}
-
-      {/* 새로운 유익한 놀이 */}
-      {learnPlay.length > 0 && (
-        <>
-          <div className="sec-head">
-            <span>새로운 유익한 놀이가 있어요~</span>
-          </div>
-          <CardRow items={learnPlay} offset={2} />
-        </>
-      )}
-
-      {/* 하단 고정 입력 바 (뭐든지 물어봐요) — 보라 톤 */}
+      {/* 하단 입력 바 — 탭바와 하나의 다크 그라데이션 패널을 이룬다 */}
       {ask && (
-        <div className="home-composer">
-          <button className="hc-plus" onClick={onImageMaker} aria-label="더보기">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+        <div className="fx-composer">
+          <button className="fx-cplus" onClick={onImageMaker} aria-label="더보기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
               <path d="M12 5v14M5 12h14" />
             </svg>
           </button>
-          <span className="hc-text" onClick={() => onPickActivity(ask)}>
+          <span className="fx-ctext" onClick={() => onPickActivity(ask)}>
             뭐든지 물어봐요~!
           </span>
-          <button className="hc-ic" onClick={() => onPickActivity(ask)} aria-label="말하기">
+          <button className="fx-cmic" onClick={() => onPickActivity(ask)} aria-label="말하기">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="9" y="3" width="6" height="11" rx="3" />
               <path d="M6 11a6 6 0 0 0 12 0M12 17v3" />
             </svg>
           </button>
-          <button className="hc-ic wave" onClick={() => onPickActivity(ask)} aria-label="물어보기">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+          <button className="fx-cai" onClick={() => onPickActivity(ask)} aria-label="물어보기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
               <path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4" />
             </svg>
           </button>
