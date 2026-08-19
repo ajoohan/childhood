@@ -5,7 +5,7 @@ services:
     name: Childhood
     runtime: node
     plan: free
-    branch: claude/ai-chat-kids-service-seznwa
+    branch: main
     buildCommand: npm install && npm run build
     startCommand: node server.js
     healthCheckPath: /
