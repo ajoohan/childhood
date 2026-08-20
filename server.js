@@ -470,6 +470,15 @@ app.post("/api/chat", rateLimit, async (req, res) => {
   }
 });
 
+// SPA 폴백 — dist에 없는 GET 경로는 index.html로 넘겨 클라이언트가 처리한다.
+// (/api/* 는 제외해서 없는 API가 HTML을 돌려주지 않도록 한다.)
+app.get(/^\/(?!api\/).*/, (req, res, next) => {
+  if (req.method !== "GET") return next();
+  res.sendFile("index.html", { root: "dist" }, (err) => {
+    if (err) next(err);
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`⭐ 별이 채팅 서버가 http://localhost:${PORT} 에서 실행 중이에요.`);
 });
