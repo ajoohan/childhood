@@ -8,13 +8,23 @@ function Bubble({ role, children, typing, expr = "happy" }) {
     <div className={`message ${role}`}>
       <div className="avatar">
         {role === "bot" ? (
-          <span
-            className="ava-svg"
-            dangerouslySetInnerHTML={{ __html: robotHead(expr) }}
-          />
-        ) : (
-          "🙂"
-        )}
+          <>
+            <span
+              className="ava-svg"
+              dangerouslySetInnerHTML={{ __html: robotHead(expr) }}
+            />
+            <img
+              className="ava-img3d"
+              src="/img/chat-ai.png"
+              alt=""
+              onError={(e) => e.currentTarget.remove()}
+              onLoad={(e) => {
+                const prev = e.currentTarget.previousElementSibling;
+                if (prev) prev.style.display = "none";
+              }}
+            />
+          </>
+        ) : null}
       </div>
       <div className={`bubble ${typing ? "typing" : ""}`}>{children}</div>
     </div>
@@ -150,23 +160,15 @@ export default function Session({
           : "happy";
 
   return (
-    <section className="chat-screen session">
-      <header className="header">
-        <button className="back-btn" onClick={onBack} aria-label="뒤로">
-          ←
+    <section className="chat-screen session cx">
+      <header className="cx-hd">
+        <button className="cx-btn back" onClick={onBack} aria-label="뒤로">
+          <img src="/img/btn-back.svg" alt="" />
         </button>
-        <div className="header-star">
-          <span
-            className="ava-svg"
-            dangerouslySetInnerHTML={{ __html: robotHead(headExpr) }}
-          />
-        </div>
-        <div className="header-text">
-          <h1>
-            {activity.emoji} {activity.title}
-          </h1>
-          <p>별이가 도와줄게 · AI 도우미</p>
-        </div>
+        <h1 className="cx-title">Kids AI 채팅</h1>
+        <span className="cx-btn more" aria-hidden="true">
+          <img src="/img/btn-more.svg" alt="" />
+        </span>
       </header>
 
       <main className="chat" ref={chatRef}>
@@ -199,23 +201,17 @@ export default function Session({
         </div>
       )}
 
-      <footer className="composer">
-        {speech.supported && (
-          <button
-            className={`mic-btn ${speech.listening ? "on" : ""}`}
-            onClick={speech.toggle}
-            disabled={busy}
-            aria-label="음성으로 말하기"
-            title="음성으로 말하기"
-          >
-            🎤
-          </button>
-        )}
+      <footer className="cx-composer">
+        <span className="cx-plus" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </span>
         <input
           ref={inputRef}
           type="text"
           maxLength={1000}
-          placeholder={speech.listening ? "듣고 있어요…" : "하고 싶은 말을 써 봐!"}
+          placeholder={speech.listening ? "듣고 있어요…" : "뭐든지 물어봐요~!"}
           autoComplete="off"
           value={input}
           disabled={busy}
@@ -224,8 +220,19 @@ export default function Session({
             if (e.key === "Enter" && !e.nativeEvent.isComposing) send();
           }}
         />
-        <button onClick={send} disabled={busy} aria-label="보내기">
-          보내기 🚀
+        {speech.supported && (
+          <button
+            className={`cx-mic ${speech.listening ? "on" : ""}`}
+            onClick={speech.toggle}
+            disabled={busy}
+            aria-label="음성으로 말하기"
+            title="음성으로 말하기"
+          >
+            <img src="/img/icon-mic-s.svg" alt="" />
+          </button>
+        )}
+        <button className="cx-send" onClick={send} disabled={busy} aria-label="보내기">
+          <img src="/img/icon-aisearch.svg" alt="" />
         </button>
       </footer>
     </section>

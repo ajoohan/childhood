@@ -4267,3 +4267,111 @@ input::placeholder { color: #B4AC9E !important; }
 .fx-row { margin: 0 -30px 0 0; padding: 0 30px 2px 0; scroll-padding-left: 0; }
 /* 활성 탭의 흰 배경 칩 제거 — 시안은 색조만 바뀜 */
 .tab.active .tab-svg, .tab.active svg { background: none !important; padding: 0 !important; border-radius: 0 !important; }
+
+/* ============================================================
+   Figma "AI for Kids" — Chat (node 43:107) 반영
+   402px 프레임 기준. 홈과 같은 배경/보라 팔레트를 공유한다.
+   ============================================================ */
+.chat-screen.cx {
+  background: linear-gradient(155.3deg, #FFFDEF 0%, #F7EFFF 100%) !important;
+  position: relative;
+}
+.chat-screen.cx::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.2;
+  background: url("/img/bg-pattern.png") center / cover no-repeat;
+}
+.chat-screen.cx > * { position: relative; z-index: 1; }
+
+/* ── 헤더: 뒤로 40 / 타이틀 18 bold / 더보기 40 ── */
+.cx-hd {
+  display: flex; align-items: center; gap: 12px;
+  padding: 20px 30px 14px;
+  background: none !important; border-radius: 0 !important; box-shadow: none !important;
+}
+.cx-btn {
+  width: 40px; height: 40px; flex-shrink: 0; border: none; background: none;
+  padding: 0; cursor: pointer; display: grid; place-items: center;
+}
+.cx-btn img { width: 100%; height: 100%; display: block; }
+.cx-btn.back:active { transform: scale(0.92); }
+.cx-title {
+  flex: 1; text-align: center; font-size: 18px; font-weight: 700;
+  color: #000; margin: 0; letter-spacing: -0.3px;
+}
+
+/* ── 대화 영역 ── */
+.chat-screen.cx .chat { padding: 10px 30px 8px; gap: 14px; }
+.chat-screen.cx .ai-note {
+  align-self: center; background: rgba(255, 255, 255, 0.7);
+  color: #8A7BA8; border: 1px solid #EDE6F5;
+  font-size: 12px; padding: 6px 14px; border-radius: 999px;
+}
+
+/* 봇: 3D 캐릭터 아바타 + 흰 말풍선(왼쪽 꼬리) */
+.chat-screen.cx .message { max-width: 88%; align-items: flex-start; gap: 10px; }
+.chat-screen.cx .message.bot .avatar { width: 70px; height: 69px; position: relative; }
+.chat-screen.cx .avatar .ava-img3d { width: 100%; height: 100%; object-fit: contain; display: block; }
+.chat-screen.cx .message.user .avatar { display: none; }
+
+.chat-screen.cx .bubble {
+  position: relative; padding: 10px 16px; border-radius: 16px;
+  font-size: 14px; line-height: 20px; box-shadow: none;
+}
+.chat-screen.cx .message.bot .bubble {
+  background: #fff !important; color: #000 !important;
+  border: 1px solid #EDE6F5; border-bottom-left-radius: 16px;
+}
+/* 말풍선 꼬리 — 시안의 Union 셰이프를 CSS로 (길이가 가변이라 SVG 고정폭 불가) */
+.chat-screen.cx .message.bot .bubble::before {
+  content: ""; position: absolute; left: -7px; top: 16px;
+  border: 7px solid transparent; border-right-color: #EDE6F5; border-left: 0;
+}
+.chat-screen.cx .message.bot .bubble::after {
+  content: ""; position: absolute; left: -6px; top: 16px;
+  border: 7px solid transparent; border-right-color: #fff; border-left: 0;
+}
+/* 사용자: 보라 말풍선(오른쪽 꼬리) */
+.chat-screen.cx .message.user .bubble {
+  background: #7C59BA !important; color: #fff !important;
+  font-weight: 500; border-bottom-right-radius: 16px;
+}
+.chat-screen.cx .message.user .bubble::after {
+  content: ""; position: absolute; right: -6px; top: 16px;
+  border: 7px solid transparent; border-left-color: #7C59BA; border-right: 0;
+}
+
+/* ── 하단 입력바: 342x70, radius 35, border 2px #D2C4E0 ── */
+.cx-composer {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 30px 50px; padding: 0 14px 0 16px; height: 70px;
+  background: #fff; border: 2px solid #D2C4E0; border-radius: 35px;
+}
+.cx-plus { width: 22px; height: 22px; flex-shrink: 0; color: #220003; display: grid; place-items: center; }
+.cx-plus svg { width: 100%; height: 100%; }
+.cx-composer input {
+  flex: 1; min-width: 0; border: none; outline: none; background: none;
+  font-size: 18px; color: #220003;
+}
+.cx-composer input::placeholder { color: #BCBCBC; }
+.cx-mic, .cx-send {
+  flex-shrink: 0; border: none; background: none; padding: 0; cursor: pointer;
+  display: grid; place-items: center;
+}
+.cx-mic { width: 22px; height: 26px; }
+.cx-mic img { width: 12px; height: 19px; display: block; }
+.cx-mic.on { filter: drop-shadow(0 0 6px #7C59BA); }
+.cx-send { width: 32px; height: 32px; }
+.cx-send img { width: 100%; height: 100%; display: block; }
+.cx-send:disabled, .cx-mic:disabled { opacity: 0.45; cursor: default; }
+.cx-send:active { transform: scale(0.92); }
+
+/* ── Chat 시안 보정: 전역 !important 규칙보다 뒤에서 이겨야 하는 값들 ── */
+/* 말풍선은 시안 그대로 14px / 20px (전역 .bubble 18px 규칙을 되돌림) */
+.chat-screen.cx .bubble { font-size: 14px !important; line-height: 20px !important; }
+/* 입력창은 알약 컨테이너 안에 들어가므로 자체 테두리·배경이 없어야 한다 */
+.cx-composer input {
+  background: none !important; border: none !important; outline: none !important;
+  padding: 0 !important; border-radius: 0 !important;
+  font-size: 18px !important; color: #220003 !important;
+}
+.cx-composer input::placeholder { color: #BCBCBC !important; }
