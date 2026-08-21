@@ -65,7 +65,8 @@ npm start
 3. 저장소를 고르면 `render.yaml`대로 자동 설정됨
 4. 배포 화면에서 환경변수 **`ANTHROPIC_API_KEY`** 에 실제 키 입력
 5. 배포가 끝나면 `https://<서비스이름>.onrender.com` 주소가 생성됨 → 누구나 접속 가능
-   (현재 배포 서비스 이름은 `Childhood` → https://childhood.onrender.com)
+   (현재 배포 주소: https://banjjaktalk.onrender.com — Render는 서비스 이름을 바꿔도
+   `.onrender.com` 주소가 생성 시점 그대로 유지된다. 주소를 바꾸려면 커스텀 도메인을 연결한다.)
 
 무료 플랜은 일정 시간 미사용 시 잠들었다가 첫 요청에 몇십 초 걸릴 수 있습니다.
 

@@ -4375,3 +4375,13 @@ input::placeholder { color: #B4AC9E !important; }
   font-size: 18px !important; color: #220003 !important;
 }
 .cx-composer input::placeholder { color: #BCBCBC !important; }
+
+/* ============================================================
+   전수점검 보정 — 앱 전체 배경 통일
+   시안(Home 62:27 / Chat 43:107)의 배경을 앱 셸에 한 번만 정의하고
+   각 화면은 투명하게 두어, 화면마다 팔레트가 갈리지 않게 한다.
+   (콜렉션의 .colhub.space 남색은 의도된 '우주' 테마라 그대로 둔다)
+   ============================================================ */
+.app { background: linear-gradient(155.3deg, #FFFDEF 0%, #F7EFFF 100%); }
+/* 말하기 화면이 자체 그라데이션(크림→하늘)을 덮어쓰던 것을 해제 */
+.voice-mode { background: transparent !important; }

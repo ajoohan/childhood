@@ -2,7 +2,9 @@
 # https://render.com > New > Blueprint > 이 저장소 선택
 services:
   - type: web
-    name: Childhood
+    # Render는 이름으로 블루프린트를 매칭한다. 대시보드의 실제 서비스명과
+    # 일치해야 Sync 때 서비스가 새로 생기지 않는다.
+    name: banjjaktalk
     runtime: node
     plan: free
     branch: main

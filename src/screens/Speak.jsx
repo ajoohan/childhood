@@ -274,7 +274,7 @@ export default function Speak({
           : "준비됐어요!";
   const statusSub = notice
     ? "내일 또 만나요"
-    : `${curVoice.name}와 이야기하는 중`;
+    : `별이와 이야기하는 중 · ${curVoice.name} 목소리`;
 
   const mascotExpr = notice
     ? "sleepy"
@@ -436,7 +436,7 @@ export default function Speak({
 
         {status === "speaking" && reply && (
           <div className="caption caption-out">
-            <span className="cap-label">🔊 {curVoice.name}가 하는 말</span>
+            <span className="cap-label">🔊 별이가 하는 말</span>
             <p className="cap-text">
               <span className="cap-spoken">{reply.slice(0, capIdx)}</span>
               <span className="cap-rest">{reply.slice(capIdx)}</span>
