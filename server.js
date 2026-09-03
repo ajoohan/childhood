@@ -307,6 +307,13 @@ function sanitizeMessages(raw) {
     }))
     .slice(-MAX_HISTORY_MESSAGES);
 
+  // 대화는 user/assistant가 번갈아 쌓이므로, 짝수 개를 잘라내면 첫 항목이
+  // assistant가 될 수 있다. Anthropic API는 첫 메시지가 user가 아니면 400을
+  // 내므로, 앞쪽 assistant를 버려 항상 user로 시작하게 맞춘다.
+  while (messages.length > 0 && messages[0].role !== "user") {
+    messages.shift();
+  }
+
   if (messages.length === 0 || messages[messages.length - 1].role !== "user") {
     return null;
   }

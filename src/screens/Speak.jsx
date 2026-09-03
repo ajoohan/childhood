@@ -22,7 +22,18 @@ function speak(text, voiceId, { onBoundary, onEnd } = {}) {
     u.rate = v.rate;
     if (onBoundary)
       u.onboundary = (e) => onBoundary(typeof e.charIndex === "number" ? e.charIndex : 0);
-    if (onEnd) u.onend = onEnd;
+    // onend만 걸면 합성 실패(interrupted, synthesis-failed)에서 콜백이 오지
+    // 않아 화면이 "이야기하는 중"에 갇힌다. onerror도 같은 종료로 처리한다.
+    if (onEnd) {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        onEnd();
+      };
+      u.onend = finish;
+      u.onerror = finish;
+    }
     synth.cancel();
     synth.speak(u);
   } catch {
@@ -200,6 +211,15 @@ export default function Speak({
           profile: persona,
         }),
       });
+      if (!res.ok || !res.body) {
+        // 요청 제한(429) 등은 본문에 아이용 문구가 들어온다. 조용히 삼키지 않는다.
+        let msg = null;
+        try {
+          const j = await res.json();
+          if (j && j.error) msg = j.error;
+        } catch {}
+        throw new Error(msg || "지금은 대답하기 어려워요. 조금 뒤에 다시 해 볼까?");
+      }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";

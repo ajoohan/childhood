@@ -61,7 +61,7 @@ export default function Settings({
   }
 
   function clearAll() {
-    if (!window.confirm("모든 대화·알림·설정 기록을 지울까요? 되돌릴 수 없어요.")) return;
+    if (!window.confirm("모든 대화 기록과 알림, 사용 시간 제한을 지울까요?\n(PIN·목소리·소리 설정은 그대로 남아요.) 되돌릴 수 없어요.")) return;
     onClear();
     setLimitInput("");
     setSavedLimit("");

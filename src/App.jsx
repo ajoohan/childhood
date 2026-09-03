@@ -111,6 +111,7 @@ export default function App() {
     setKids((m) => ({ ...m, [activeKid]: kidSnapshot() }));
     setActiveKid(id);
     loadKidSlices(kids[id]);
+    setGuardUnlocked(false);
     setZone("kids");
     setView({ name: "home" });
   }
@@ -122,6 +123,7 @@ export default function App() {
     setKids((m) => ({ ...m, [activeKid]: kidSnapshot(), [id]: k }));
     setActiveKid(id);
     loadKidSlices(k);
+    setGuardUnlocked(false);
     setZone("kids");
     setView({ name: "home" });
   }
@@ -185,8 +187,12 @@ export default function App() {
       let earnedToday = r.earnedToday + gain;
       let allClear = r.allClear;
       // 오늘의 모든 미션(기본+부모)을 다 했으면 올클리어 보너스
-      const total = allMissions(parentMissions).length;
-      if (!allClear && doneToday.length >= total && total > 0) {
+      // 개수로 비교하면 삭제된 부모 미션의 id가 doneToday에 남아 보너스를
+      // 잘못 유발한다. 지금 존재하는 미션이 모두 들어있는지로 판정한다.
+      const ids = allMissions(parentMissions).map((m) => m.id);
+      const doneSet = new Set(doneToday);
+      const total = ids.length;
+      if (!allClear && total > 0 && ids.every((id) => doneSet.has(id))) {
         balance += REWARD.allClear;
         earnedToday += REWARD.allClear;
         allClear = true;
@@ -550,6 +556,9 @@ export default function App() {
             onAddMission={addParentMission}
             onRemoveMission={removeParentMission}
             onBack={() => {
+              // 부모 존을 나가면 다시 잠근다. 안 그러면 아이가 부모 탭을 눌러
+              // PIN 없이 재진입해 기록 열람·설정 변경·PIN 삭제까지 할 수 있다.
+              setGuardUnlocked(false);
               setZone("kids");
               setParentView("main");
             }}
@@ -574,6 +583,7 @@ export default function App() {
             onClear={() => {
               setHistories({});
               setSafety([]);
+              setNotices([]); // 확인 문구가 약속한 '알림'도 실제로 지운다
               setSettings((s) => ({ ...s, limitPerDay: null }));
             }}
           />
