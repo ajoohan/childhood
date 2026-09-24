@@ -21,7 +21,14 @@ import { sparkleBurst } from "./lib/fx.js";
 import { sfx, setSfxEnabled } from "./lib/sfx.js";
 import { earnedBadges, drawSticker } from "./lib/collectibles.js";
 import { REWARD, allMissions, openTreasure } from "./lib/missions.js";
-import { loadStore, persist, rollDay, emptyKid, newKidId } from "./lib/store.js";
+import {
+  loadStore,
+  persist,
+  rollDay,
+  emptyKid,
+  newKidId,
+  MAX_STORED_MESSAGES,
+} from "./lib/store.js";
 import { ageModeForProfile, computeAge } from "./lib/age.js";
 
 const initial = loadStore();
@@ -360,9 +367,15 @@ export default function App() {
   ) : null;
 
   const addUser = (id, msg) =>
-    setHistories((h) => ({ ...h, [id]: [...(h[id] || []), msg] }));
+    setHistories((h) => ({
+      ...h,
+      [id]: [...(h[id] || []), msg].slice(-MAX_STORED_MESSAGES),
+    }));
   const addBot = (id, msg) =>
-    setHistories((h) => ({ ...h, [id]: [...(h[id] || []), msg] }));
+    setHistories((h) => ({
+      ...h,
+      [id]: [...(h[id] || []), msg].slice(-MAX_STORED_MESSAGES),
+    }));
   const addSafety = (ev) => setSafety((s) => [ev, ...s].slice(0, 100));
 
   const openActivity = (a) => setView({ name: "session", activity: a });

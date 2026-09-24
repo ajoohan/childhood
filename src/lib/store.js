@@ -138,10 +138,30 @@ export function emptyDecor() {
   return { theme: "room", placed: {}, completed: [] };
 }
 
+// 활동별로 보관하는 최대 대화 수. 서버는 최근 30개만 쓰므로(MAX_HISTORY_MESSAGES)
+// 화면 연속성을 위해 약간의 여유만 둔다. 상한이 없으면 localStorage가 가득 차
+// 저장이 통째로 실패한다.
+export const MAX_STORED_MESSAGES = 40;
+
 export function persist(state) {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
-  } catch {}
+    return true;
+  } catch {
+    // 용량 초과로 추정. 대화 기록은 버리더라도 프로필·별·콜렉션은 지킨다.
+    try {
+      const lean = {
+        ...state,
+        kids: Object.fromEntries(
+          Object.entries(state.kids || {}).map(([id, k]) => [id, { ...k, histories: {} }])
+        ),
+      };
+      localStorage.setItem(STORE_KEY, JSON.stringify(lean));
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
 
 export function todayKey() {
