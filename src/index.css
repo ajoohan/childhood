@@ -4403,3 +4403,7 @@ input::placeholder { color: #B4AC9E !important; }
 }
 .eb-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #6A49AC; }
 .eb small { margin-top: 6px; font-size: 13px; color: #A99BC0; }
+.eb-reset {
+  margin-top: 4px; padding: 10px 22px; border: 1.5px solid #D2C4E0; border-radius: 999px;
+  background: transparent; color: #8C857B; font-size: 14px; font-weight: 700; cursor: pointer;
+}

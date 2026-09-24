@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { SAFETY_LABEL, INTERESTS, AVATARS } from "../lib/data.js";
 import { MISSION_EMOJIS } from "../lib/missions.js";
-import { userMsgCount, messagesToday, lastTime, fmtTime } from "../lib/store.js";
+import { userMsgCount, lastTime, fmtTime } from "../lib/store.js";
 import { computeAge, ageModeForProfile, MODE_LABEL, CHILD_MIN } from "../lib/age.js";
 
 const NOW = new Date();
@@ -11,6 +11,7 @@ const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 // Parent Zone — 성인 인증 게이트 뒤. 대시보드·시간통제·활동 로그·구독·연령·미션.
 export default function ParentZone({
+  usedToday = 0,
   activities,
   histories,
   safety,
@@ -364,7 +365,7 @@ export default function ParentZone({
         <div className="guard-card">
           <h3>📊 사용 현황</h3>
           <p className="usage-summary">
-            오늘 <b>{messagesToday(histories)}</b>번 · 전체 <b>{total}</b>번 대화했어요.
+            오늘 <b>{usedToday}</b>번 · 전체 <b>{total}</b>번 대화했어요.
           </p>
           {rows.length === 0 ? (
             <p className="guard-hint">아직 활동 기록이 없어요.</p>

@@ -366,11 +366,18 @@ export default function App() {
     />
   ) : null;
 
-  const addUser = (id, msg) =>
+  // 보관하는 대화는 활동당 40개로 잘리므로, 하루 사용량은 기록에서 세지 않고
+  // 별도 카운터로 누적한다. (기록에서 세면 부모의 하루 제한이 무력해진다)
+  const addUser = (id, msg) => {
     setHistories((h) => ({
       ...h,
       [id]: [...(h[id] || []), msg].slice(-MAX_STORED_MESSAGES),
     }));
+    setRewards((r0) => {
+      const r = rollDay(r0);
+      return { ...r, msgsToday: (r.msgsToday || 0) + 1 };
+    });
+  };
   const addBot = (id, msg) =>
     setHistories((h) => ({
       ...h,
@@ -380,6 +387,7 @@ export default function App() {
 
   const openActivity = (a) => setView({ name: "session", activity: a });
   const stars = rewards.balance; // 별 잔액 (미션으로 획득, 꾸미기로 소모)
+  const usedToday = rollDay(rewards).msgsToday || 0; // 오늘 보낸 메시지 수
   const history =
     view.name === "session" && view.activity
       ? histories[view.activity.id] || []
@@ -468,6 +476,7 @@ export default function App() {
           <Collection
             activities={data.activities}
             histories={histories}
+            usedToday={usedToday}
             name={profile.name}
             stars={stars}
             onPick={openActivity}
@@ -480,6 +489,7 @@ export default function App() {
             activity={data.activities.find((a) => a.id === "learn_ask")}
             history={histories["learn_ask"] || []}
             histories={histories}
+            usedToday={usedToday}
             settings={settings}
             persona={persona}
             voice={settings.voice}
@@ -498,6 +508,7 @@ export default function App() {
             activity={view.activity}
             history={history}
             histories={histories}
+            usedToday={usedToday}
             settings={settings}
             persona={persona}
             onBack={() =>
@@ -559,6 +570,7 @@ export default function App() {
           <ParentZone
             activities={data.activities}
             histories={histories}
+            usedToday={usedToday}
             safety={safety}
             notices={notices}
             onClearNotices={() => setNotices([])}

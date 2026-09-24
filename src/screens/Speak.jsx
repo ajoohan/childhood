@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { robotMascot, robotHead } from "../lib/mascot.js";
 import { useSpeech } from "../lib/useSpeech.js";
-import { messagesToday } from "../lib/store.js";
 
 // 음성 목소리 프리셋 (브라우저 TTS의 pitch/rate로 개성 부여)
 export const VOICES = [
@@ -63,6 +62,7 @@ function Bubble({ role, children, typing, expr = "happy" }) {
 // 10세 미만 디폴트=음성, 10세 이상 디폴트=텍스트 (기획서 3장).
 // 두 모드는 동일한 대화 스코프(learn_ask)·기록을 공유해 동선이 헷갈리지 않는다.
 export default function Speak({
+  usedToday = 0,
   activity,
   history,
   histories,
@@ -122,7 +122,7 @@ export default function Speak({
   // 하루 대화 제한 (부모 설정) — 두 모드 공통
   function limitReached() {
     const limit = settings?.limitPerDay;
-    if (limit && messagesToday(histories) >= limit) {
+    if (limit && usedToday >= limit) {
       setNotice(
         `오늘은 이야기를 ${limit}번이나 나눴대! 오늘은 여기까지 하고 내일 또 만나자 😊`
       );

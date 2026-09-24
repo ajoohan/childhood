@@ -44,7 +44,7 @@ function normalizeKid(k) {
   if (!k || typeof k !== "object") return base;
   return {
     profile: { ...base.profile, ...(k.profile || {}) },
-    histories: k.histories || {},
+    histories: normalizeHistories(k.histories),
     safety: Array.isArray(k.safety) ? k.safety : [],
     notices: Array.isArray(k.notices) ? k.notices : [],
     rewards: rollDay(k.rewards || emptyRewards()),
@@ -104,6 +104,19 @@ export function loadStore() {
 }
 
 // 별 원장 + 오늘의 미션 진행 상태 (기획서 3. 보상 밸런싱)
+// 저장값이 손상돼도(문자열·null·배열 등) 렌더가 터지지 않도록 형태를 맞춘다.
+// 잘못된 값이 그대로 들어오면 매 기동마다 같은 지점에서 실패해 새로고침이 반복된다.
+function normalizeHistories(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const out = {};
+  for (const [id, list] of Object.entries(raw)) {
+    if (Array.isArray(list)) {
+      out[id] = list.filter((m) => m && typeof m === "object" && typeof m.role === "string");
+    }
+  }
+  return out;
+}
+
 export function emptyRewards() {
   return {
     day: todayKey(),
@@ -113,6 +126,7 @@ export function emptyRewards() {
     doneToday: [], // 오늘 완료한 미션 id
     allClear: false, // 오늘 올클리어 보너스 지급 여부
     chestOpened: false, // 오늘 보물상자 개봉 여부 (하루 1회)
+    msgsToday: 0, // 오늘 아이가 보낸 메시지 수 (부모의 하루 제한 판정용)
   };
 }
 
@@ -128,6 +142,7 @@ export function rollDay(r) {
       doneToday: [],
       allClear: false,
       chestOpened: false,
+      msgsToday: 0,
     };
   }
   return base;
@@ -172,14 +187,6 @@ export function userMsgCount(history) {
   return (history || []).filter((m) => m.role === "user").length;
 }
 
-export function messagesToday(histories) {
-  const t = todayKey();
-  let n = 0;
-  for (const h of Object.values(histories || {})) {
-    for (const m of h) if (m.role === "user" && (m.t || "").slice(0, 10) === t) n++;
-  }
-  return n;
-}
 
 export function lastTime(history) {
   const h = history || [];

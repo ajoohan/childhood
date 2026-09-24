@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { robotHead } from "../lib/mascot.js";
-import { messagesToday } from "../lib/store.js";
 import { useSpeech } from "../lib/useSpeech.js";
 
 function Bubble({ role, children, typing, expr = "happy" }) {
@@ -33,6 +32,7 @@ function Bubble({ role, children, typing, expr = "happy" }) {
 
 // 활동 스코프 안에서의 AI 도우미 세션 (개방형 대화가 아님)
 export default function Session({
+  usedToday = 0,
   activity,
   history,
   histories,
@@ -69,7 +69,7 @@ export default function Session({
     if (!text || busy) return;
 
     const limit = settings.limitPerDay;
-    if (limit && messagesToday(histories) >= limit) {
+    if (limit && usedToday >= limit) {
       setInput("");
       setNotice(
         `오늘은 이야기를 ${limit}번이나 나눴대! 오늘은 여기까지 하고 내일 또 만나자 😊`
