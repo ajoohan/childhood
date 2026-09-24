@@ -63,6 +63,9 @@ npm start
 
 ## 테스트
 
+푸시·PR마다 GitHub Actions가 로직·화면 테스트, 배포와 동일한 조건의 빌드,
+의존성 취약점 점검을 돌립니다 (`.github/workflows/ci.yml`).
+
 ```bash
 npm test        # 로직 (빠름, 브라우저 불필요)
 npm run test:ui # 화면 (빌드 필요: npm run build)
@@ -78,7 +81,8 @@ Node 내장 러너(`node --test`)를 씁니다.
 **화면** — 실제 브라우저(Playwright)로 빌드된 앱을 띄워 확인: 홈의 시안 요소,
 탭 5개와 각 화면 전환, 채팅 진입, 깨진 이미지 없음, OG 메타,
 **부모 PIN이 나갔다 오면 다시 잠기는지**, **하루 제한이 실제로 막는지**,
-손상된 저장값에서도 흰 화면이 아닌지.
+손상된 저장값에서도 흰 화면이 아닌지, 미션 완료→별 지급과 저장,
+신규 사용자의 온보딩 진입, 콜렉션 장소 목록.
 
 화면 테스트는 `devDependencies`의 Playwright를 쓰며, 배포 빌드는
 `npm install --omit=dev`라 브라우저를 내려받지 않습니다.

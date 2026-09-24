@@ -19,9 +19,12 @@ export const BADGES = [
 // 현재 상태로 달성한 배지 id 목록
 export function earnedBadges({ profile, histories, rewards, decor, stickers }) {
   const ids = [];
-  const has = (id) => (histories && histories[id] && histories[id].length) || 0;
+  // 이 함수는 렌더 중 호출되므로, 저장값이 예상과 다르면 화면 전체가 죽는다.
+  // store가 정상화해 주지만 여기서도 배열만 센다.
+  const list = (id) => (Array.isArray(histories?.[id]) ? histories[id] : []);
+  const has = (id) => list(id).length;
   const totalUser = Object.values(histories || {}).reduce(
-    (n, h) => n + h.filter((m) => m.role === "user").length,
+    (n, h) => n + (Array.isArray(h) ? h.filter((m) => m?.role === "user").length : 0),
     0
   );
   if (profile && profile.onboarded) ids.push("first");
