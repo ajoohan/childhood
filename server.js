@@ -498,6 +498,13 @@ app.get(/^\/(?!api\/).*/, (req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`⭐ 별이 채팅 서버가 http://localhost:${PORT} 에서 실행 중이에요.`);
-});
+// 테스트에서 이 모듈의 순수 함수만 불러올 수 있도록, NODE_ENV가 명시적으로
+// "test"일 때만 리스닝을 건너뛴다. (값이 없거나 production이면 항상 기동)
+if (process.env.NODE_ENV !== "test") {
+  app.listen(PORT, () => {
+    console.log(`⭐ 별이 채팅 서버가 http://localhost:${PORT} 에서 실행 중이에요.`);
+  });
+}
+
+// 테스트 대상 순수 함수 (요청 처리와 무관하게 단독 검증 가능)
+export { activityById, scrubForPrompt, sanitizeProfile, sanitizeMessages, personaBlock };

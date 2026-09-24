@@ -20,7 +20,7 @@ import { INTERESTS, AVATARS } from "./lib/data.js";
 import { sparkleBurst } from "./lib/fx.js";
 import { sfx, setSfxEnabled } from "./lib/sfx.js";
 import { earnedBadges, drawSticker } from "./lib/collectibles.js";
-import { REWARD, allMissions, openTreasure } from "./lib/missions.js";
+import { REWARD, isAllClear, openTreasure } from "./lib/missions.js";
 import {
   loadStore,
   persist,
@@ -194,12 +194,7 @@ export default function App() {
       let earnedToday = r.earnedToday + gain;
       let allClear = r.allClear;
       // 오늘의 모든 미션(기본+부모)을 다 했으면 올클리어 보너스
-      // 개수로 비교하면 삭제된 부모 미션의 id가 doneToday에 남아 보너스를
-      // 잘못 유발한다. 지금 존재하는 미션이 모두 들어있는지로 판정한다.
-      const ids = allMissions(parentMissions).map((m) => m.id);
-      const doneSet = new Set(doneToday);
-      const total = ids.length;
-      if (!allClear && total > 0 && ids.every((id) => doneSet.has(id))) {
+      if (!allClear && isAllClear(doneToday, parentMissions)) {
         balance += REWARD.allClear;
         earnedToday += REWARD.allClear;
         allClear = true;

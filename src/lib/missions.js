@@ -56,3 +56,13 @@ export function openTreasure(ownedStickers = {}) {
   const s = STICKERS.find((x) => x.id === id) || STICKERS[0];
   return { type: "sticker", id: s.id, emoji: s.emoji, name: s.name };
 }
+
+// 오늘의 미션을 모두 마쳤는가. 개수 비교(doneToday.length >= total)로 판정하면
+// 삭제된 부모 미션의 id가 doneToday에 남아 보너스를 잘못 지급하므로,
+// "지금 존재하는 미션이 전부 들어있는가"로 본다.
+export function isAllClear(doneToday, parentMissions) {
+  const ids = allMissions(parentMissions).map((m) => m.id);
+  if (!ids.length) return false;
+  const done = new Set(doneToday || []);
+  return ids.every((id) => done.has(id));
+}
