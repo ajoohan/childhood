@@ -8,7 +8,9 @@ services:
     runtime: node
     plan: free
     branch: main
-    buildCommand: npm install && npm run build
+    # 빌드에 필요한 패키지는 모두 dependencies에 있다. devDependencies에는
+    # 테스트용 playwright가 있어 배포 때 브라우저를 내려받지 않도록 제외한다.
+    buildCommand: npm install --omit=dev && npm run build
     startCommand: node server.js
     healthCheckPath: /
     envVars:
