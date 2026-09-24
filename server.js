@@ -226,16 +226,27 @@ ${disclosure}
 ${SAFETY_CORE}`;
 }
 
-// 클라이언트가 보낸 프로필을 안전하게 정리한다(길이·개수 제한).
+// 프로필 값은 시스템 프롬프트 안에 그대로 놓인다. /api/chat은 공개 엔드포인트라
+// 누구든 임의의 프로필을 보낼 수 있으므로, 프롬프트의 블록 구조(<...>)나 인용을
+// 흉내 내 지시를 끼워 넣지 못하도록 개행·꺾쇠·따옴표를 제거한다.
+function scrubForPrompt(text) {
+  return text
+    .replace(/[<>"'`]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// 클라이언트가 보낸 프로필을 안전하게 정리한다(길이·개수 제한 + 프롬프트 이스케이프).
 function sanitizeProfile(raw) {
   const p = raw && typeof raw === "object" ? raw : {};
-  const name = typeof p.name === "string" ? p.name.trim().slice(0, 20) : "";
+  const name =
+    typeof p.name === "string" ? scrubForPrompt(p.name).slice(0, 20) : "";
   const age =
     Number.isFinite(p.age) && p.age > 0 && p.age < 20 ? Math.floor(p.age) : null;
   const interests = Array.isArray(p.interests)
     ? p.interests
         .filter((s) => typeof s === "string")
-        .map((s) => s.trim().slice(0, 20))
+        .map((s) => scrubForPrompt(s).slice(0, 20))
         .filter(Boolean)
         .slice(0, 12)
     : [];
