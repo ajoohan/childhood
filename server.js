@@ -15,6 +15,12 @@ app.use((req, res, next) =>
     : express.json({ limit: "100kb" })(req, res, next)
 );
 // Vite 빌드 결과물(React SPA)을 서빙한다. `npm run build` → dist/
+// assets/ 는 파일명에 해시가 붙어 내용이 바뀌면 이름도 바뀌므로(폰트 포함) 1년 캐시한다.
+// index.html 등 나머지는 배포 직후 새 버전을 받도록 기본 캐시 정책을 둔다.
+app.use(
+  "/assets",
+  express.static("dist/assets", { immutable: true, maxAge: "1y" })
+);
 app.use(express.static("dist"));
 
 const PORT = process.env.PORT || 3000;

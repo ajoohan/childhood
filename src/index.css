@@ -1,5 +1,7 @@
-/* Pretendard — 모던·세련된 한글 폰트 (오픈, 웹 임베딩 가능) */
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css");
+/* Pretendard — 모던·세련된 한글 폰트 (OFL-1.1). 외부 CDN 없이 자체 호스팅한다.
+   npm 패키지의 dynamic-subset 판을 Vite가 dist/assets/ 로 번들하고,
+   브라우저는 화면에 쓰인 글자가 든 조각(unicode-range)만 내려받는다. */
+@import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 
 * {
   margin: 0;
