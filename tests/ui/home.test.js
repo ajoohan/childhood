@@ -52,6 +52,17 @@ test("활동 카드를 누르면 채팅 화면이 열린다", async () => {
   await page.close();
 });
 
+test("홈이 다시 그려져도 카드가 새로 만들어지지 않는다 (탭이 사라지지 않는다)", async () => {
+  // 홈 진입 2.6초 뒤 환영 컨페티가 꺼지며 재렌더가 일어난다. 카드가 컴포넌트 안에서
+  // 정의돼 있으면 그때 전부 새로 만들어져, 그 순간의 탭이 허공으로 사라진다.
+  const { page } = await openApp(browser);
+  const card = (await page.$$(".fx-card"))[0];
+  await page.waitForSelector(".confetti", { state: "detached", timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(3200); // 컨페티 종료(2.6s) 이후까지
+  assert.ok(await card.evaluate((n) => n.isConnected), "재렌더 뒤에도 같은 카드 요소여야 한다");
+  await page.close();
+});
+
 test("에셋: 홈의 이미지가 실제로 로드된다 (깨진 링크 없음)", async () => {
   const { page } = await openApp(browser);
   const broken = await page.$$eval("img", (imgs) =>

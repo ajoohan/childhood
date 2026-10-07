@@ -41,6 +41,20 @@ function AssetImg({ src, className, hideFallback = true }) {
   );
 }
 
+// 이미지 카드 한 장 (라벨이 이미지 위에 얹히고 아래쪽에 어두운 그라데이션).
+// 반드시 컴포넌트 바깥에 둔다: KidsHome 안에서 정의하면 렌더마다 새 타입이 되어
+// 카드가 통째로 다시 만들어지고, 그 순간 누른 탭이 사라진다.
+function Card({ a, wide, onPick }) {
+  return (
+    <button className={`fx-card ${wide ? "wide" : ""}`} onClick={() => onPick(a)}>
+      <span className="fx-card-emoji">{a.emoji}</span>
+      <AssetImg className="fx-card-img" src={`/img/act-${a.id}.png`} />
+      <span className="fx-card-veil" />
+      <span className="fx-card-label">{a.title}</span>
+    </button>
+  );
+}
+
 // Kids Zone 홈 — Figma "Home"(62:27) 시안 반영
 export default function KidsHome({
   categories,
@@ -91,19 +105,6 @@ export default function KidsHome({
   const fresh = NEW_IDS.map(byId).filter(Boolean).filter((a) => a.ages.includes(ageMode));
   const quick = QUICK_ROWS.map((r) => ({ ...r, act: byId(r.id) })).filter(
     (r) => r.act && r.act.ages.includes(ageMode)
-  );
-
-  // 이미지 카드 한 장 (라벨이 이미지 위에 얹히고 아래쪽에 어두운 그라데이션)
-  const Card = ({ a, wide }) => (
-    <button
-      className={`fx-card ${wide ? "wide" : ""}`}
-      onClick={() => onPickActivity(a)}
-    >
-      <span className="fx-card-emoji">{a.emoji}</span>
-      <AssetImg className="fx-card-img" src={`/img/act-${a.id}.png`} />
-      <span className="fx-card-veil" />
-      <span className="fx-card-label">{a.title}</span>
-    </button>
   );
 
   return (
@@ -202,7 +203,7 @@ export default function KidsHome({
           </span>
           <div className="fx-row">
             {recommended.map((a) => (
-              <Card key={a.id} a={a} />
+              <Card key={a.id} a={a} onPick={onPickActivity} />
             ))}
           </div>
         </section>
@@ -216,7 +217,7 @@ export default function KidsHome({
           </h2>
           <div className="fx-row">
             {fresh.map((a) => (
-              <Card key={a.id} a={a} wide />
+              <Card key={a.id} a={a} wide onPick={onPickActivity} />
             ))}
           </div>
         </section>
