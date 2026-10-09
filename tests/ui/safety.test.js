@@ -42,6 +42,55 @@ test("PIN: 틀린 번호로는 부모 존이 열리지 않는다", async () => {
   await page.close();
 });
 
+test("PIN: 다섯 번 틀리면 잠기고, 그 사이에는 맞는 번호도 받지 않는다", async () => {
+  const { page } = await openApp(browser, seed({ settings: { pin: "1234" } }));
+  await parentTab(page);
+  await page.waitForSelector(".pin-card", { timeout: 8000 });
+  for (let i = 0; i < 5; i++) {
+    await pinKeys(page, "9999");
+    await page.waitForTimeout(350);
+  }
+  assert.match(await page.innerText(".pin-card"), /너무 여러 번 틀렸어요/, "잠금 안내가 보여야 한다");
+
+  await pinKeys(page, "1234"); // 잠긴 동안은 정답이어도 열리면 안 된다
+  await page.waitForTimeout(600);
+  assert.ok(!(await page.$(".guard-screen")), "잠긴 동안 부모 존이 열리면 안 된다");
+  await page.close();
+});
+
+test("PIN: '잊으셨나요?' 확인 문제는 아이가 어림으로 맞힐 수 없는 곱셈이고, 틀리면 문제가 바뀐다", async () => {
+  const { page } = await openApp(browser, seed({ settings: { pin: "1234" } }));
+  await parentTab(page);
+  await page.waitForSelector(".pin-card", { timeout: 8000 });
+  await page.click(".pin-link");
+  await page.waitForSelector(".gate-q", { timeout: 8000 });
+  const q1 = await page.innerText(".gate-q");
+  assert.match(q1, /\d+ × \d+ \+ \d+/, "곱셈 문제여야 한다");
+
+  await page.fill(".pin-forgot-input", "1");
+  await page.press(".pin-forgot-input", "Enter");
+  await page.waitForTimeout(300);
+  assert.ok(!(await page.$(".guard-screen")), "틀린 답으로 열리면 안 된다");
+  assert.match(await page.innerText(".pin-card"), /답이 맞지 않아요/);
+  await page.close();
+});
+
+test("음성 화면에서 뒤로 가면 읽던 소리를 멈춘다", async () => {
+  const { page, errors } = await openApp(browser);
+  await page.click(".tab.speak");
+  await page.waitForSelector(".voice-back", { timeout: 8000 });
+  await page.evaluate(() => {
+    window.__cancels = 0;
+    const o = window.speechSynthesis.cancel.bind(window.speechSynthesis);
+    window.speechSynthesis.cancel = () => { window.__cancels++; o(); };
+  });
+  await page.click(".voice-back");
+  await page.waitForSelector(".kids-home", { timeout: 8000 });
+  assert.ok(await page.evaluate(() => window.__cancels) >= 1, "나갈 때 음성 출력을 취소해야 한다");
+  assert.deepEqual(errors, []);
+  await page.close();
+});
+
 test("하루 제한: 사용량이 한도에 닿으면 아이에게 안내가 뜬다", async () => {
   // 기록은 비어 있지만 카운터가 한도에 도달한 상태.
   // 기록에서 사용량을 세던 예전 방식이라면 이 상황을 놓친다.

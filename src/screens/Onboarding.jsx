@@ -219,12 +219,7 @@ export default function Onboarding({ onDone }) {
         <div className="ob-pw-cta">
           <button
             className="ob-primary crown"
-            onClick={() =>
-              setGate({
-                a: 3 + Math.floor(Math.random() * 8),
-                b: 4 + Math.floor(Math.random() * 8),
-              })
-            }
+            onClick={() => setGate(true)}
           >
             👑 구독 시작하기
           </button>
@@ -236,8 +231,6 @@ export default function Onboarding({ onDone }) {
 
         {gate && (
           <GateDialog
-            a={gate.a}
-            b={gate.b}
             onPass={() => {
               setGate(null);
               finish(plan);

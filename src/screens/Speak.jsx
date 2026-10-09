@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { robotMascot, robotHead } from "../lib/mascot.js";
 import { useSpeech } from "../lib/useSpeech.js";
+import { streamChat } from "../lib/streamChat.js";
 
 // 음성 목소리 프리셋 (브라우저 TTS의 pitch/rate로 개성 부여)
 export const VOICES = [
@@ -90,10 +91,36 @@ export default function Speak({
   const [streaming, setStreaming] = useState(null);
   const busyRef = useRef(false);
   const recRef = useRef(null);
+  const micRef = useRef(null); // 서버 받아쓰기용 녹음 스트림 (나갈 때 반드시 끈다)
+  const abortRef = useRef(null); // 진행 중인 /api/chat 요청
+  const aliveRef = useRef(true);
   const chatRef = useRef(null);
   const inputRef = useRef(null);
 
   const curVoice = VOICES.find((v) => v.id === voice) || VOICES[0];
+
+  // 화면을 나갈 때(뒤로 버튼 포함) 진행 중인 것을 모두 정리한다:
+  // 읽어 주던 소리, 늦게 도착할 답변, 켜진 마이크. 정리하지 않으면 홈에서 소리가 나거나
+  // 아이 기기의 마이크가 켜진 채로 남는다.
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+      try {
+        abortRef.current && abortRef.current.abort();
+      } catch {}
+      try {
+        window.speechSynthesis && window.speechSynthesis.cancel();
+      } catch {}
+      try {
+        const r = recRef.current;
+        if (r && r.state !== "inactive") r.stop();
+      } catch {}
+      try {
+        micRef.current && micRef.current.getTracks().forEach((t) => t.stop());
+      } catch {}
+    };
+  }, []);
 
   // 텍스트 모드: 새 메시지에 맞춰 스크롤
   useEffect(() => {
@@ -141,11 +168,20 @@ export default function Speak({
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micRef.current = stream;
+      if (!aliveRef.current) {
+        // 권한 창을 기다리는 사이 화면을 나갔다 — 바로 끈다
+        stream.getTracks().forEach((t) => t.stop());
+        micRef.current = null;
+        return;
+      }
       const mr = new MediaRecorder(stream);
       const chunks = [];
       mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
       mr.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
+        micRef.current = null;
+        if (!aliveRef.current) return; // 나간 뒤에는 받아쓰기·대화를 이어 가지 않는다
         setRecording(false);
         setStatus("thinking");
         try {
@@ -201,58 +237,35 @@ export default function Speak({
     const outgoing = [...(history || []), userMsg];
 
     let acc = "";
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          activityId: activity.id,
-          messages: outgoing,
-          profile: persona,
-        }),
+      await streamChat({
+        body: { activityId: activity.id, messages: outgoing, profile: persona },
+        signal: ctrl.signal,
+        onText: (t) => {
+          acc = t;
+          setReply(t);
+          if (mode === "text") setStreaming(t);
+        },
+        onSafety: (category) =>
+          onSafety({
+            t: new Date().toISOString(),
+            activityId: activity.id,
+            activityTitle: activity.title,
+            category,
+            text: trimmed,
+          }),
       });
-      if (!res.ok || !res.body) {
-        // 요청 제한(429) 등은 본문에 아이용 문구가 들어온다. 조용히 삼키지 않는다.
-        let msg = null;
-        try {
-          const j = await res.json();
-          if (j && j.error) msg = j.error;
-        } catch {}
-        throw new Error(msg || "지금은 대답하기 어려워요. 조금 뒤에 다시 해 볼까?");
-      }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const d = line.slice(6);
-          if (d === "[DONE]") continue;
-          const obj = JSON.parse(d);
-          if (obj.safety) {
-            onSafety({
-              t: new Date().toISOString(),
-              activityId: activity.id,
-              activityTitle: activity.title,
-              category: obj.safety,
-              text: trimmed,
-            });
-            continue;
-          }
-          acc += obj.text || "";
-          setReply(acc);
-          if (mode === "text") setStreaming(acc);
-        }
-      }
-    } catch {
-      acc = acc || "앗, 잠깐 연결이 끊겼어. 다시 말해 줄래?";
+    } catch (err) {
+      // 화면을 나가서 우리가 끊은 요청이면 아무것도 하지 않는다 (홈에서 소리가 나지 않게).
+      if (ctrl.signal.aborted) return;
+      console.error(err);
+      // 요청 제한(429)·하루 상한 같은 서버의 아이용 문구가 있으면 그것을 보여 준다.
+      acc = acc || err.friendly || "앗, 잠깐 연결이 끊겼어. 다시 말해 줄래?";
       setReply(acc);
     }
+    if (!aliveRef.current) return;
 
     onBotMessage(activity.id, { role: "assistant", content: acc });
     setStreaming(null);

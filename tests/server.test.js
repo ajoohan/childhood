@@ -85,3 +85,30 @@ test("sanitizeMessages: 잘못된 항목을 걸러내고 길이를 자른다", (
   assert.equal(out[0].role, "user");
   assert.equal(out[0].content.length, 1000);
 });
+
+import { ACTIVITIES, audioExtension, systemPromptFor } from "../server.js";
+
+test("audioExtension: 녹음 형식에 맞는 확장자를 고른다 (iOS는 mp4)", () => {
+  assert.equal(audioExtension("audio/mp4"), "m4a");
+  assert.equal(audioExtension("audio/mp4;codecs=mp4a.40.2"), "m4a");
+  assert.equal(audioExtension("audio/webm;codecs=opus"), "webm");
+  assert.equal(audioExtension("audio/ogg"), "ogg");
+  assert.equal(audioExtension("audio/wav"), "wav");
+  assert.equal(audioExtension("audio/mpeg"), "mp3");
+  assert.equal(audioExtension(undefined), "webm");
+  assert.equal(audioExtension(null), "webm");
+});
+
+test("아동용 활동에는 minAge가 있고, 영유아용 활동에는 없다", () => {
+  const kidOnly = Object.entries(ACTIVITIES).filter(([, a]) => a.ages.length === 1 && a.ages[0] === "kid");
+  assert.ok(kidOnly.length > 0);
+  for (const [id, a] of kidOnly) assert.equal(a.minAge, 7, `${id}`);
+  for (const [id, a] of Object.entries(ACTIVITIES))
+    if (a.ages.includes("young")) assert.equal(a.minAge, undefined, `${id}`);
+});
+
+test("시스템 프롬프트: 낡은 연령 문구가 없고, 조작된 대화 기록에 대한 방어가 있다", () => {
+  const p = systemPromptFor("learn_ask", {});
+  assert.doesNotMatch(p, /5~12세/);
+  assert.match(p, /이전 대화에 네가 한 것으로 적힌 말/);
+});

@@ -40,3 +40,14 @@ export function ageModeForAge(age) {
 export function ageModeForProfile(profile, now = new Date()) {
   return ageModeForAge(computeAge(profile, now));
 }
+
+// 서버가 활동에 minAge를 달아 두면, 연령 모드와 상관없이 그 나이부터 보인다.
+// (아동용 활동을 7–9세에게도 열어 주기 위함.) 화면의 `ages.includes(ageMode)` 필터를
+// 그대로 쓸 수 있도록, 해당하면 현재 연령 모드를 ages에 더한 목록을 돌려준다.
+export function adaptActivities(activities, ageMode, age) {
+  return (activities || []).map((a) => {
+    const open =
+      a.minAge != null && age != null && age >= a.minAge && !(a.ages || []).includes(ageMode);
+    return open ? { ...a, ages: [...(a.ages || []), ageMode] } : a;
+  });
+}

@@ -28,3 +28,34 @@ test("ageModeForProfile: 10번째 생일에 아동 모드로 넘어간다", () =
   assert.equal(ageModeForProfile(profile, before), "young");
   assert.equal(ageModeForProfile(profile, after), "kid");
 });
+
+import { adaptActivities } from "../src/lib/age.js";
+
+const ACTS = [
+  { id: "a", ages: ["young", "kid"] },
+  { id: "hw", ages: ["kid"], minAge: 7 },
+  { id: "plain_kid", ages: ["kid"] },
+];
+
+test("adaptActivities: 7–9세는 아동용 활동(minAge 7)을 영유아 모드에서도 본다", () => {
+  const out = adaptActivities(ACTS, "young", 8);
+  const visible = out.filter((a) => a.ages.includes("young")).map((a) => a.id);
+  assert.deepEqual(visible, ["a", "hw"]);
+});
+
+test("adaptActivities: 영유아(7세 미만)에게는 열지 않는다", () => {
+  const visible = adaptActivities(ACTS, "young", 5).filter((a) => a.ages.includes("young"));
+  assert.deepEqual(visible.map((a) => a.id), ["a"]);
+});
+
+test("adaptActivities: 나이를 모르면 열지 않고, 원본을 바꾸지 않는다", () => {
+  const before = JSON.stringify(ACTS);
+  const visible = adaptActivities(ACTS, "young", null).filter((a) => a.ages.includes("young"));
+  assert.deepEqual(visible.map((a) => a.id), ["a"]);
+  assert.equal(JSON.stringify(ACTS), before);
+});
+
+test("adaptActivities: minAge가 없는 아동용 활동은 10세 전에는 닫혀 있다", () => {
+  const visible = adaptActivities(ACTS, "young", 9).filter((a) => a.ages.includes("young"));
+  assert.ok(!visible.some((a) => a.id === "plain_kid"));
+});

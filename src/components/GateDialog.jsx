@@ -1,7 +1,16 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  lockMessage,
+  lockRemaining,
+  makeChallenge,
+  recordFail,
+  recordSuccess,
+} from "../lib/pinGuard.js";
 
-// 어린이 접근 차단용 보호자 확인 (간단한 덧셈)
-export default function GateDialog({ a, b, onPass, onClose }) {
+// 어린이 접근 차단용 보호자 확인. 틀리면 횟수를 세어 잠시 잠그고, 문제도 바뀐다.
+export default function GateDialog({ onPass, onClose }) {
+  const [q, setQ] = useState(() => makeChallenge());
+  const [locked, setLocked] = useState(() => lockRemaining());
   const [val, setVal] = useState("");
   const [err, setErr] = useState(false);
   const inputRef = useRef(null);
@@ -10,15 +19,24 @@ export default function GateDialog({ a, b, onPass, onClose }) {
     setVal("");
     setErr(false);
     if (inputRef.current) inputRef.current.focus();
-  }, [a, b]);
+  }, [q]);
+
+  useEffect(() => {
+    if (!locked) return;
+    const t = setInterval(() => setLocked(lockRemaining()), 1000);
+    return () => clearInterval(t);
+  }, [locked > 0]);
 
   function submit() {
-    if (Number(val) === a + b) {
+    if (locked) return;
+    if (Number(val) === q.answer) {
+      recordSuccess();
       onPass();
     } else {
+      recordFail();
+      setLocked(lockRemaining());
       setErr(true);
-      setVal("");
-      if (inputRef.current) inputRef.current.focus();
+      setQ(makeChallenge()); // 같은 문제를 반복해서 찍지 못하게 바꾼다
     }
   }
 
@@ -31,26 +49,29 @@ export default function GateDialog({ a, b, onPass, onClose }) {
           <br />
           아래 계산의 답을 적어 주세요.
         </p>
-        <p className="gate-q">
-          {a} + {b} = ?
-        </p>
+        <p className="gate-q">{q.text} = ?</p>
         <input
           ref={inputRef}
           type="number"
           inputMode="numeric"
           autoComplete="off"
           value={val}
+          disabled={locked > 0}
           onChange={(e) => setVal(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") submit();
           }}
         />
-        {err && <p className="gate-error">답이 맞지 않아요. 다시 확인해 주세요.</p>}
+        {locked > 0 ? (
+          <p className="gate-error">{lockMessage(locked)}</p>
+        ) : (
+          err && <p className="gate-error">답이 맞지 않아요. 다시 확인해 주세요.</p>
+        )}
         <div className="gate-actions">
           <button id="gateCancel" onClick={onClose}>
             취소
           </button>
-          <button id="gateOk" onClick={submit}>
+          <button id="gateOk" onClick={submit} disabled={locked > 0}>
             확인
           </button>
         </div>

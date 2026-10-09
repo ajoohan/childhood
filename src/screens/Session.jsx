@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { robotHead } from "../lib/mascot.js";
 import { useSpeech } from "../lib/useSpeech.js";
+import { streamChat } from "../lib/streamChat.js";
 
 function Bubble({ role, children, typing, expr = "happy" }) {
   return (
@@ -89,54 +90,23 @@ export default function Session({
 
     let reply = "";
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          activityId: activity.id,
-          messages: outgoing,
-          profile: persona,
-        }),
+      await streamChat({
+        body: { activityId: activity.id, messages: outgoing, profile: persona },
+        onText: (t) => {
+          reply = t;
+          setStreaming(t);
+        },
+        onSafety: (category) => {
+          setMood("sad"); // 안전 신호 감지 → 걱정하는 표정
+          onSafety({
+            t: new Date().toISOString(),
+            activityId: activity.id,
+            activityTitle: activity.title,
+            category,
+            text,
+          });
+        },
       });
-      if (!res.ok || !res.body) {
-        let msg = null;
-        try {
-          const j = await res.json();
-          if (j && j.error) msg = j.error;
-        } catch {}
-        const e = new Error(msg || `HTTP ${res.status}`);
-        if (msg) e.friendly = msg;
-        throw e;
-      }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
-        buffer = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const data = line.slice(6);
-          if (data === "[DONE]") continue;
-          const obj = JSON.parse(data);
-          if (obj.safety) {
-            setMood("sad"); // 안전 신호 감지 → 걱정하는 표정
-            onSafety({
-              t: new Date().toISOString(),
-              activityId: activity.id,
-              activityTitle: activity.title,
-              category: obj.safety,
-              text,
-            });
-            continue;
-          }
-          reply += obj.text || "";
-          setStreaming(reply);
-        }
-      }
     } catch (err) {
       console.error(err);
       reply = reply || err.friendly || "앗, 잠깐 연결이 끊겼어. 다시 말해 줄래?";

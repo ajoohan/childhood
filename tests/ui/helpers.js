@@ -49,7 +49,11 @@ export function launchBrowser() {
   return chromium.launch(executablePath ? { executablePath } : {});
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+// 앱의 todayKey()와 같은 로컬 날짜 (UTC가 아님)
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 // 온보딩을 건너뛴 아이 한 명이 있는 저장값
 export function seed(over = {}) {
@@ -60,7 +64,8 @@ export function seed(over = {}) {
     kids: {
       k: {
         profile: { onboarded: true, name: "지안", age: 6, birthYear: Y - 6, birthMonth: 1,
-                   avatar: "🦊", interests: ["art", "science", "animals"], plan: "free" },
+                   avatar: "🦊", interests: ["art", "science", "animals"], plan: "free",
+                   ...over.profile },
         histories: {}, safety: [], notices: [],
         rewards: { day: today(), balance: 27, earnedToday: 0, attendance: false,
                    doneToday: [], allClear: false, chestOpened: false, msgsToday: 0, ...over.rewards },

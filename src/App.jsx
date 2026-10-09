@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Splash from "./screens/Splash.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
 import KidsHome from "./screens/KidsHome.jsx";
@@ -29,7 +29,7 @@ import {
   newKidId,
   MAX_STORED_MESSAGES,
 } from "./lib/store.js";
-import { ageModeForProfile, computeAge } from "./lib/age.js";
+import { adaptActivities, ageModeForProfile, computeAge } from "./lib/age.js";
 
 const initial = loadStore();
 const initKid = initial.kids[initial.activeKid];
@@ -153,6 +153,12 @@ export default function App() {
     const mode = ageModeForProfile(profile);
     setSettings((s) => (s.ageMode === mode ? s : { ...s, ageMode: mode }));
   }, [profile.birthYear, profile.birthMonth, profile.age]);
+
+  // 홈·목록에 보여 줄 활동: 아동용 활동 중 minAge(7세)를 넘긴 아이에게는 영유아 모드에서도 연다.
+  const visibleActivities = useMemo(
+    () => adaptActivities(data.activities, settings.ageMode, computeAge(profile)),
+    [data.activities, settings.ageMode, profile.birthYear, profile.birthMonth, profile.age]
+  );
 
   // 아바타 없는 기존(v1 마이그레이션) 프로필에 자동 배정
   useEffect(() => {
@@ -424,7 +430,7 @@ export default function App() {
         {zone === "kids" && view.name === "home" && (
           <KidsHome
             categories={data.categories}
-            activities={data.activities}
+            activities={visibleActivities}
             ageMode={settings.ageMode}
             stars={stars}
             name={profile.name}
@@ -447,7 +453,7 @@ export default function App() {
         {zone === "kids" && view.name === "list" && (
           <ActivityList
             category={view.category}
-            activities={data.activities}
+            activities={visibleActivities}
             ageMode={settings.ageMode}
             onBack={() => setView({ name: "home" })}
             onPick={openActivity}

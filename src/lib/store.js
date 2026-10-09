@@ -179,8 +179,12 @@ export function persist(state) {
   }
 }
 
-export function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+export function todayKey(now = new Date()) {
+  // 기기의 로컬 날짜. toISOString()은 UTC라 한국에서는 오전 9시에 하루가 바뀐다.
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export function userMsgCount(history) {

@@ -1,22 +1,59 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  lockMessage,
+  lockRemaining,
+  makeChallenge,
+  recordFail,
+  recordSuccess,
+} from "../lib/pinGuard.js";
 
 // 부모 접근 잠금 — 4자리 PIN.
 // savedPin 없음 → 설정(입력 후 확인). savedPin 있음 → 입력해서 확인.
-// "PIN을 잊으셨나요?" → 간단 산수(어른 확인) 후 재설정.
+// "PIN을 잊으셨나요?" → 어른 확인 계산 후 재설정.
+// 틀리면 횟수를 세어 잠시 잠근다(lib/pinGuard.js) — 아이가 번호를 하나씩 눌러 보는 것을 막는다.
 export default function PinGate({ savedPin, onUnlock, onSetPin, onClose }) {
   // phase: enter | set | confirm | forgot
   const [phase, setPhase] = useState(savedPin ? "enter" : "set");
   const [pin, setPin] = useState("");
   const [first, setFirst] = useState("");
   const [err, setErr] = useState("");
-  const [forgot] = useState(() => ({
-    a: 3 + Math.floor(Math.random() * 8),
-    b: 4 + Math.floor(Math.random() * 8),
-  }));
+  const [forgot, setForgot] = useState(() => makeChallenge());
   const [forgotVal, setForgotVal] = useState("");
+  const [locked, setLocked] = useState(() => lockRemaining());
+
+  // 잠금이 풀릴 때까지 남은 시간을 갱신한다
+  useEffect(() => {
+    if (!locked) return;
+    const t = setInterval(() => setLocked(lockRemaining()), 1000);
+    return () => clearInterval(t);
+  }, [locked > 0]);
+
+  // 틀렸을 때: 횟수를 기록하고, 한도를 넘었으면 잠근다. 잠겼으면 true.
+  function failed() {
+    recordFail();
+    const left = lockRemaining();
+    setLocked(left);
+    return left > 0;
+  }
+
+  function checkForgot() {
+    if (locked) return;
+    if (Number(forgotVal) === forgot.answer) {
+      recordSuccess();
+      setErr("");
+      setPin("");
+      setFirst("");
+      setForgotVal("");
+      setPhase("set");
+    } else {
+      setForgotVal("");
+      setForgot(makeChallenge()); // 같은 문제를 반복해서 찍지 못하게 바꾼다
+      setErr(failed() ? lockMessage(lockRemaining()) : "답이 맞지 않아요.");
+    }
+  }
 
   function press(d) {
-    if (pin.length >= 4) return;
+    if (locked || pin.length >= 4) return;
     const next = pin + d;
     setErr("");
     setPin(next);
@@ -29,9 +66,15 @@ export default function PinGate({ savedPin, onUnlock, onSetPin, onClose }) {
 
   function complete(value) {
     if (phase === "enter") {
-      if (value === savedPin) onUnlock();
-      else {
-        setErr("PIN이 맞지 않아요.");
+      if (locked) {
+        setPin("");
+        return;
+      }
+      if (value === savedPin) {
+        recordSuccess();
+        onUnlock();
+      } else {
+        setErr(failed() ? lockMessage(lockRemaining()) : "PIN이 맞지 않아요.");
         setPin("");
       }
     } else if (phase === "set") {
@@ -66,9 +109,7 @@ export default function PinGate({ savedPin, onUnlock, onSetPin, onClose }) {
           <div className="pin-lock">🔐</div>
           <h2>{cur.t}</h2>
           <p className="pin-sub">{cur.s}</p>
-          <p className="gate-q">
-            {forgot.a} + {forgot.b} = ?
-          </p>
+          <p className="gate-q">{forgot.text} = ?</p>
           <input
             className="pin-forgot-input"
             type="number"
@@ -76,15 +117,9 @@ export default function PinGate({ savedPin, onUnlock, onSetPin, onClose }) {
             autoFocus
             value={forgotVal}
             onChange={(e) => setForgotVal(e.target.value)}
+            disabled={locked > 0}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                if (Number(forgotVal) === forgot.a + forgot.b) {
-                  setErr("");
-                  setPin("");
-                  setFirst("");
-                  setPhase("set");
-                } else setErr("답이 맞지 않아요.");
-              }
+              if (e.key === "Enter") checkForgot();
             }}
           />
           {err && <p className="gate-error">{err}</p>}
@@ -94,14 +129,8 @@ export default function PinGate({ savedPin, onUnlock, onSetPin, onClose }) {
             </button>
             <button
               id="gateOk"
-              onClick={() => {
-                if (Number(forgotVal) === forgot.a + forgot.b) {
-                  setErr("");
-                  setPin("");
-                  setFirst("");
-                  setPhase("set");
-                } else setErr("답이 맞지 않아요.");
-              }}
+              disabled={locked > 0}
+              onClick={checkForgot}
             >
               확인
             </button>
@@ -123,6 +152,7 @@ export default function PinGate({ savedPin, onUnlock, onSetPin, onClose }) {
             <span key={i} className={`pin-dot ${pin.length > i ? "on" : ""}`} />
           ))}
         </div>
+        {locked > 0 && !err && <p className="pin-error">{lockMessage(locked)}</p>}
         {err && <p className="pin-error">{err}</p>}
 
         <div className="pin-pad">

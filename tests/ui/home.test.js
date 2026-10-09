@@ -80,3 +80,20 @@ test("OG 이미지와 메타 태그가 제공된다", async () => {
     assert.ok(html.includes(tag), `${tag} 누락`);
   }
 });
+
+// 이야기 타일을 눌러 나오는 활동 제목들
+async function storyActivities(profile) {
+  const { page } = await openApp(browser, seed({ profile }));
+  await (await page.$$(".fx-tile"))[0].click();
+  await page.waitForSelector(".act-card", { timeout: 8000 });
+  const titles = await page.$$eval(".act-card", (els) => els.map((e) => e.innerText));
+  await page.close();
+  return titles.join("|");
+}
+
+test("연령: 7~9세는 아동용 활동(이야기 만들기)을 볼 수 있고, 6세 이하는 못 본다", async () => {
+  const Y = new Date().getFullYear();
+  const at = (age) => ({ age, birthYear: Y - age, birthMonth: 1 });
+  assert.match(await storyActivities(at(8)), /이야기 만들기/, "8세에게 열려 있어야 한다");
+  assert.doesNotMatch(await storyActivities(at(5)), /이야기 만들기/, "5세에게는 닫혀 있어야 한다");
+});

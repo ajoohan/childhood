@@ -16,7 +16,7 @@ class MemStorage {
 }
 globalThis.localStorage = new MemStorage();
 
-const { emptyRewards, rollDay, persist, loadStore, MAX_STORED_MESSAGES } =
+const { emptyRewards, rollDay, persist, loadStore, todayKey, MAX_STORED_MESSAGES } =
   await import("../src/lib/store.js");
 
 beforeEach(() => { globalThis.localStorage = new MemStorage(); });
@@ -25,8 +25,24 @@ test("MAX_STORED_MESSAGES: 서버가 읽는 30개보다 여유가 있다", () =>
   assert.ok(MAX_STORED_MESSAGES >= 30);
 });
 
+test("todayKey: 하루는 한국 자정에 바뀐다 (UTC 오전 9시가 아니다)", () => {
+  const prev = process.env.TZ;
+  process.env.TZ = "Asia/Seoul";
+  try {
+    // 한국 시간 2026-10-09 07:30 = UTC 10-08 22:30. UTC 기준이면 아직 "어제"로 보인다.
+    assert.equal(todayKey(new Date("2026-10-08T22:30:00Z")), "2026-10-09");
+    // 한국 시간 2026-10-08 23:59 은 아직 같은 날이다.
+    assert.equal(todayKey(new Date("2026-10-08T14:59:00Z")), "2026-10-08");
+    // 한국 시간 2026-10-09 00:00 에 바뀐다.
+    assert.equal(todayKey(new Date("2026-10-08T15:00:00Z")), "2026-10-09");
+  } finally {
+    if (prev === undefined) delete process.env.TZ;
+    else process.env.TZ = prev;
+  }
+});
+
 test("rollDay: 같은 날이면 오늘 수치를 유지한다", () => {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayKey();
   const r = rollDay({ ...emptyRewards(), day: today, balance: 27, msgsToday: 12, attendance: true });
   assert.equal(r.msgsToday, 12);
   assert.equal(r.attendance, true);
@@ -49,7 +65,7 @@ test("rollDay: 날짜가 바뀌면 하루치만 초기화하고 별 잔액은 �
 });
 
 test("rollDay: msgsToday가 없는 기존 저장값도 0으로 시작한다", () => {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayKey();
   const { msgsToday } = rollDay({ day: today, balance: 5 });
   assert.equal(msgsToday, 0);
 });
