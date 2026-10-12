@@ -44,9 +44,16 @@ const RL_PER_MIN = Number(process.env.RL_PER_MIN || 15); // IP당 분당
 const RL_PER_DAY = Number(process.env.RL_PER_DAY || 200); // IP당 하루
 const RL_GLOBAL_PER_DAY = Number(process.env.RL_GLOBAL_PER_DAY || 3000); // 전체 하루
 
+// 하루 기준은 서비스 대상 지역(한국) 자정이다. 서버는 UTC로 돌기 때문에 toISOString()으로
+// 날짜를 만들면 오전 9시에 일일 상한이 초기화된다. RL_TZ로 바꿀 수 있다.
+const RL_TZ = process.env.RL_TZ || "Asia/Seoul";
+function dayKey(now = new Date(), tz = RL_TZ) {
+  return now.toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
+}
+
 const rlRecent = new Map(); // ip -> number[] (윈도 내 타임스탬프)
 const rlDay = new Map(); // ip -> 하루 누적
-let rlCurrentDay = new Date().toISOString().slice(0, 10);
+let rlCurrentDay = dayKey();
 let rlGlobalDay = 0;
 
 // 오래된 IP 기록 정리 (메모리 누수 방지)
@@ -61,7 +68,7 @@ setInterval(() => {
 
 function rateLimit(req, res, next) {
   const now = Date.now();
-  const day = new Date().toISOString().slice(0, 10);
+  const day = dayKey();
   if (day !== rlCurrentDay) {
     rlCurrentDay = day;
     rlDay.clear();
@@ -570,6 +577,7 @@ export {
   ACTIVITIES,
   activityById,
   audioExtension,
+  dayKey,
   scrubForPrompt,
   sanitizeProfile,
   sanitizeMessages,

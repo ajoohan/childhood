@@ -16,6 +16,23 @@ export const BADGES = [
   { id: "sticker5", emoji: "🪄", name: "스티커 수집가", desc: "스티커 5개를 모았어요" },
 ];
 
+// 미션을 실제로 완료했다는 증거: 오늘 완료한 미션이 있거나, 스티커가 있다.
+// 스티커는 미션을 완료할 때만 지급되므로(출석·별 잔액으로는 생기지 않는다) 날짜가 지나도 남는 증거다.
+function completedAMission(rewards, stickers) {
+  const stickerCount = Object.values(stickers || {}).reduce((n, c) => n + (Number(c) || 0), 0);
+  return (rewards?.doneToday || []).length > 0 || stickerCount > 0;
+}
+
+// 예전 조건(별 잔액이 있으면 "미션 도전")으로 잘못 받은 배지를 거둔다.
+// 근거가 남아 있어 틀렸다고 확인되는 것만 거둔다: 미션을 한 번도 완료한 적 없는데(스티커 0개)
+// 출석 보너스로 받은 "미션 도전". "목소리 친구"는 당시에 음성 표시를 남기지 않아 옳고 그름을
+// 가릴 수 없고, "궁금쟁이"는 기록을 지우면 근거도 사라지므로 그대로 둔다.
+export function reconcileBadges(badges, { rewards, stickers } = {}) {
+  const list = Array.isArray(badges) ? badges : [];
+  if (completedAMission(rewards, stickers)) return list;
+  return list.filter((id) => id !== "mission1");
+}
+
 // 현재 상태로 달성한 배지 id 목록
 export function earnedBadges({ profile, histories, rewards, decor, stickers }) {
   const ids = [];
@@ -31,7 +48,7 @@ export function earnedBadges({ profile, histories, rewards, decor, stickers }) {
   if (totalUser > 0) ids.push("talk");
   if (has("story_listen") || has("story_make")) ids.push("story");
   // 출석 보너스로도 별이 생기므로 별 잔액으로 판단하면 안 된다 — 완료한 미션이 있어야 한다.
-  if ((rewards?.doneToday || []).length > 0) ids.push("mission1");
+  if (completedAMission(rewards, stickers)) ids.push("mission1");
   if (rewards?.allClear) ids.push("allclear");
   if ((rewards?.balance || 0) >= 10) ids.push("star10");
   if ((rewards?.balance || 0) >= 30) ids.push("star30");

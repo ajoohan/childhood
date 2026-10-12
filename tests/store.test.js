@@ -168,3 +168,16 @@ test("loadStore: 정상적인 꾸미기 값은 그대로 보존한다", () => {
   }));
   assert.deepEqual(loadStore().kids.k.decor, decor);
 });
+
+test("loadStore: 예전 조건으로 잘못 받은 '미션 도전' 배지를 불러올 때 거둔다", () => {
+  globalThis.localStorage.setItem("banjjaktalk_v2", JSON.stringify({
+    activeKid: "a",
+    kids: {
+      a: { profile: { onboarded: true }, badges: ["first", "mission1"], rewards: { balance: 1 }, stickers: {} },
+      b: { profile: { onboarded: true }, badges: ["mission1"], rewards: { balance: 5 }, stickers: { cat: 2 } },
+    },
+  }));
+  const s = loadStore();
+  assert.deepEqual(s.kids.a.badges, ["first"], "미션을 한 적 없는 아이는 거둔다");
+  assert.deepEqual(s.kids.b.badges, ["mission1"], "미션을 한 아이는 그대로");
+});

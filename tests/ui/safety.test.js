@@ -194,3 +194,66 @@ test("요청이 실패하면 안내만 보이고, 실패 문구는 대화 기록
   assert.ok(!hist.some((m) => m.role === "assistant"), "실패 문구가 '별이가 한 말'로 저장되면 안 된다");
   await page.close();
 });
+
+// 음성 화면에서 글자 모드로 바꾼다 (헤드리스 브라우저에는 음성 인식이 없어 글로 보낸다)
+async function openTextChat(page) {
+  await page.click(".tab.speak");
+  await page.waitForSelector('[aria-label="글자로 이야기하기"]', { timeout: 8000 });
+  await page.click('[aria-label="글자로 이야기하기"]');
+  await page.waitForSelector(".composer input", { timeout: 8000 });
+}
+
+test("음성 화면: 요청이 실패하면 안내만 보이고 기록에는 남지 않으며, 다시 보낼 수 있다", async () => {
+  const { page } = await openApp(browser);
+  const friendly = "지금 친구들이 너무 많이 놀러 왔어! 조금만 기다렸다가 다시 말해 줘.";
+  await page.route("**/api/chat", (route) =>
+    route.fulfill({ status: 429, contentType: "application/json", body: JSON.stringify({ error: friendly }) })
+  );
+  await openTextChat(page);
+  await page.fill(".composer input", "안녕");
+  await page.press(".composer input", "Enter");
+  await page.waitForFunction((t) => document.body.innerText.includes(t), friendly, { timeout: 8000 });
+
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")));
+  const hist = Object.values(saved.kids.k.histories).flat();
+  assert.ok(hist.some((m) => m.role === "user" && m.content === "안녕"), "보낸 말은 기록에 있다");
+  assert.ok(!hist.some((m) => m.role === "assistant"), "실패 문구가 '별이가 한 말'로 저장되면 안 된다");
+  assert.ok(await page.isEnabled(".composer input"), "실패한 뒤에도 다시 쓸 수 있어야 한다");
+  await page.close();
+});
+
+test("음성 화면: 이전 답이 진행 중일 때 보낸 글은 지워지지 않고 남는다", async () => {
+  const { page } = await openApp(browser);
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  let calls = 0;
+  await page.route("**/api/chat", async (route) => {
+    calls++;
+    await gate; // 첫 요청을 붙잡아 둔다
+    await route.fulfill({
+      status: 200, contentType: "text/event-stream",
+      body: 'data: {"text":"응!"}\n\ndata: [DONE]\n\n',
+    });
+  });
+  await openTextChat(page);
+  await page.fill(".composer input", "첫 번째");
+  await page.press(".composer input", "Enter");
+  await page.waitForFunction(() => true);
+  await page.waitForTimeout(300);
+
+  // 모드를 오가면 입력창은 다시 켜지지만 첫 답은 아직 진행 중이다
+  await page.click(".mic-btn");
+  await page.waitForSelector('[aria-label="글자로 이야기하기"]', { timeout: 8000 });
+  await page.click('[aria-label="글자로 이야기하기"]');
+  await page.waitForSelector(".composer input:not([disabled])", { timeout: 8000 });
+
+  await page.fill(".composer input", "두 번째");
+  await page.press(".composer input", "Enter");
+  await page.waitForTimeout(300);
+  assert.equal(await page.inputValue(".composer input"), "두 번째", "보내지지 않은 글을 지우면 안 된다");
+  assert.equal(calls, 1, "진행 중에는 두 번째 요청이 나가지 않는다");
+
+  release();
+  await page.waitForTimeout(500);
+  await page.close();
+});

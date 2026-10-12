@@ -87,3 +87,22 @@ test("배지: '궁금쟁이'는 아이가 보낸 질문 5개부터 (답변은 �
   const five = { ...base, histories: { learn_ask: [...msgs(5, "user"), ...msgs(5, "assistant")] } };
   assert.ok(earnedBadges(five).includes("curious"));
 });
+
+import { reconcileBadges } from "../src/lib/collectibles.js";
+
+test("배지 회수: 출석 보너스로만 받은 '미션 도전'은 거두고, 미션을 한 증거가 있으면 둔다", () => {
+  const wrong = reconcileBadges(["first", "mission1", "talk"], { rewards: { balance: 1, doneToday: [] }, stickers: {} });
+  assert.deepEqual(wrong, ["first", "talk"], "미션 완료 증거가 없으면 거둔다");
+  const hasSticker = reconcileBadges(["mission1"], { rewards: { doneToday: [] }, stickers: { cat: 1 } });
+  assert.deepEqual(hasSticker, ["mission1"], "스티커가 있으면 미션을 한 것이다");
+  const doneToday = reconcileBadges(["mission1"], { rewards: { doneToday: ["m1"] }, stickers: {} });
+  assert.deepEqual(doneToday, ["mission1"]);
+});
+
+test("배지 회수: 다른 배지는 건드리지 않고, 값이 이상해도 던지지 않는다", () => {
+  const keep = ["voice", "curious", "star10", "allclear"];
+  assert.deepEqual(reconcileBadges(keep, { rewards: {}, stickers: {} }), keep);
+  assert.deepEqual(reconcileBadges(undefined, {}), []);
+  assert.deepEqual(reconcileBadges("문자열", undefined), []);
+  assert.doesNotThrow(() => reconcileBadges(["mission1"], { rewards: null, stickers: "x" }));
+});

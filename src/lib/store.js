@@ -3,6 +3,8 @@
 //   { settings, activeKid, kids: { [id]: { profile, histories, safety,
 //     rewards, parentMissions, decor, badges, stickers } } }
 // settings(PIN·효과음·시간제한·목소리)는 기기 공통, 나머지는 아이별.
+import { reconcileBadges } from "./collectibles.js";
+
 const STORE_KEY = "banjjaktalk_v2";
 const LEGACY_KEY = "banjjaktalk_v1";
 
@@ -68,7 +70,7 @@ function normalizeKid(k) {
     rewards: rollDay(k.rewards || emptyRewards()),
     parentMissions: Array.isArray(k.parentMissions) ? k.parentMissions : [],
     decor: normalizeDecor(k.decor),
-    badges: Array.isArray(k.badges) ? k.badges : [],
+    badges: reconcileBadges(k.badges, { rewards: k.rewards, stickers: k.stickers }),
     stickers: k.stickers && typeof k.stickers === "object" ? k.stickers : {},
   };
 }

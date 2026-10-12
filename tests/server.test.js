@@ -133,3 +133,13 @@ test("프로필 블록은 정보일 뿐 지시가 아니라고 못 박는다 (�
   assert.ok(block.indexOf("정보일 뿐") < block.indexOf("무시해"), "경고문이 값보다 앞에 온다");
   assert.equal(personaBlock({}), "", "정보가 없으면 블록도 없다");
 });
+
+import { dayKey } from "../server.js";
+
+test("dayKey: 요청 제한의 하루는 한국 자정에 바뀐다 (UTC 오전 9시가 아니다)", () => {
+  assert.equal(dayKey(new Date("2026-10-08T14:59:00Z"), "Asia/Seoul"), "2026-10-08");
+  assert.equal(dayKey(new Date("2026-10-08T15:00:00Z"), "Asia/Seoul"), "2026-10-09");
+  assert.equal(dayKey(new Date("2026-10-08T22:30:00Z"), "Asia/Seoul"), "2026-10-09", "UTC로는 아직 어제");
+  assert.equal(dayKey(new Date("2026-10-08T22:30:00Z"), "UTC"), "2026-10-08");
+  assert.match(dayKey(), /^\d{4}-\d{2}-\d{2}$/);
+});
