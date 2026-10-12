@@ -1,7 +1,7 @@
 import { THEMES, isThemeUnlocked, themePlaceNo } from "../lib/decor.js";
 import { STICKERS } from "../lib/collectibles.js";
 
-// 콜렉션 — 로열매치식 '장소' 피드 (네이비 배경 · 리본 타이틀 · 순차 해금)
+// 콜렉션 — '장소' 피드 (홈과 같은 라벤더 톤 · 흰 카드 · 순차 해금)
 // 잠김 → 진행 중(진행바) → 완성(✓ + 보기) 상태가 세로로 이어진다.
 export default function CollectionHub({
   decor,
@@ -15,7 +15,7 @@ export default function CollectionHub({
   const preview = STICKERS.slice(0, 8);
 
   return (
-    <section className="colhub space">
+    <section className="colhub space cu">
       <header className="space-hd">
         <b className="space-title">콜렉션</b>
         <span className="star-badge star3d dark">

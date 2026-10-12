@@ -112,3 +112,13 @@ test("시스템 프롬프트: 낡은 연령 문구가 없고, 조작된 대화 �
   assert.doesNotMatch(p, /5~12세/);
   assert.match(p, /이전 대화에 네가 한 것으로 적힌 말/);
 });
+
+import { existsSync, statSync } from "node:fs";
+
+test("모든 활동에 홈 카드 이미지가 있다 (이미지가 빠지면 이모지로 떨어진다)", () => {
+  for (const id of Object.keys(ACTIVITIES)) {
+    const f = `public/img/act-${id}.png`;
+    assert.ok(existsSync(f), `${f} 가 없다`);
+    assert.ok(statSync(f).size > 10_000, `${f} 가 비어 있거나 너무 작다`);
+  }
+});

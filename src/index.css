@@ -4409,3 +4409,165 @@ input::placeholder { color: #B4AC9E !important; }
   margin-top: 4px; padding: 10px 22px; border: 1.5px solid #D2C4E0; border-radius: 999px;
   background: transparent; color: #8C857B; font-size: 14px; font-weight: 700; cursor: pointer;
 }
+
+/* ============================================================
+   미션 · 콜렉션 — 홈/채팅 시안과 같은 디자인 언어
+   (라벤더 배경 · 흰 카드 + 연보라 테두리 · 보라 #7C59BA 포인트 · 주황 별 알약)
+   시안이 따로 없어 홈의 값을 그대로 재사용했다. 범위: .missions.mx / .colhub.cu
+   ============================================================ */
+
+/* ── 미션 ── */
+.missions.mx { background: transparent !important; padding: 20px 20px 24px; gap: 12px; }
+.missions.mx .mb-hd b { color: #3A2A5C; font-size: 22px; font-weight: 800; }
+.missions.mx .mb-hd small { color: #8B7FA3; }
+.missions.mx .mb-balance {
+  background: #DB6A00 !important; color: #FFF183 !important; border-radius: 26px;
+  padding: 6px 14px; font-size: 14px; font-weight: 700;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+.missions.mx .mb-balance {
+  display: inline-flex !important; flex-direction: row !important; align-items: center;
+  gap: 4px; white-space: nowrap; width: auto; height: auto;
+}
+.missions.mx .mb-balance b { color: inherit; font-weight: 800; display: inline; }
+
+.missions.mx .mb-progress-bar {
+  height: 20px; background: #E9E0F6 !important; border: none !important;
+  box-shadow: none !important; border-radius: 12px;
+}
+.missions.mx .mb-progress-bar > i {
+  background: linear-gradient(90deg, #A585E0, #7C59BA) !important; border-radius: 12px;
+}
+.missions.mx .mb-progress-count { color: #4B3478 !important; font-size: 12px; text-shadow: none !important; }
+.missions.mx .mb-progress > span, .missions.mx .mb-allclear { color: #7C59BA !important; }
+
+.missions.mx .mb-attend {
+  background: #fff !important; border: 1px solid #EDE6F5 !important; border-radius: 16px;
+  padding: 12px 14px; box-shadow: none !important;
+}
+.missions.mx .mb-attend.done { background: #F6F2FB !important; }
+.missions.mx .mb-att-body b { color: #3A2A5C; }
+.missions.mx .mb-att-body small, .missions.mx .mb-attend.done .mb-att-body small { color: #8B7FA3 !important; }
+.missions.mx .mb-att-reward { color: #DB6A00 !important; font-size: 15px !important; }
+
+.missions.mx .mb-item {
+  background: #fff !important; border: 1px solid #EDE6F5 !important; border-radius: 16px;
+  padding: 12px 14px; box-shadow: none !important;
+}
+.missions.mx .mb-item.done { opacity: 1; background: #F6F2FB !important; }
+.missions.mx .mb-emoji {
+  width: 42px; height: 42px; border-radius: 50%; background: #F3ECFB;
+  display: grid; place-items: center; font-size: 22px; flex-shrink: 0;
+}
+.missions.mx .mb-body b { color: #3A2A5C; }
+.missions.mx .mb-item.done .mb-body b { color: #A79BC0; }
+.missions.mx .mb-body small {
+  display: inline-block; margin-top: 3px; padding: 1px 8px; border-radius: 10px;
+  background: #FFF1DD !important; color: #B45F00 !important; font-size: 12px; font-weight: 700;
+}
+.missions.mx .mb-do {
+  background: #7C59BA !important; color: #fff !important; border-radius: 999px;
+  padding: 9px 16px; font-size: 14px; font-weight: 700; box-shadow: none !important;
+}
+.missions.mx .mb-do:active { transform: scale(0.96) !important; box-shadow: none !important; }
+.missions.mx .mb-check { color: #7C59BA; }
+
+.missions.mx .mb-chest {
+  background: linear-gradient(135deg, #FFF3D1, #FFE3A1) !important;
+  border: 1px solid #F4D27A !important; border-radius: 16px; box-shadow: none !important;
+}
+.missions.mx .mb-chest.opened { background: #F6F2FB !important; border-color: #EDE6F5 !important; }
+.missions.mx .mb-chest-body b { color: #5B4310; }
+.missions.mx .mb-chest.opened .mb-chest-body b { color: #3A2A5C; }
+.missions.mx .mb-chest-cta {
+  background: #7C59BA !important; color: #fff !important; border-radius: 999px;
+  padding: 8px 16px; font-size: 14px; box-shadow: none !important;
+}
+.missions.mx .mb-decor {
+  background: linear-gradient(135deg, #8E6BD1, #6A4AAE) !important; border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(106, 74, 174, 0.28) !important; color: #fff;
+}
+.missions.mx .mb-decor-body b, .missions.mx .mb-decor-body small { color: #fff !important; }
+
+/* ── 콜렉션 ── */
+.colhub.space.cu { background: transparent !important; padding: 0 0 30px; }
+.colhub.cu .space-hd {
+  background: rgba(255, 253, 239, 0.9) !important; border-bottom: 1px solid #EDE6F5;
+  backdrop-filter: blur(6px); padding: 16px 20px 12px;
+  justify-content: flex-start;
+}
+.colhub.cu .space-title {
+  font-size: 22px; font-weight: 800; color: #3A2A5C; letter-spacing: 0; text-shadow: none;
+}
+.colhub.cu .space-hd .star-badge {
+  right: 20px; background: #DB6A00 !important; border: none !important;
+  border-radius: 26px; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+.colhub.cu .space-hd .star-badge b { color: #FFF183 !important; font-size: 15px; }
+.colhub.cu .space-feed { padding: 18px 20px 10px; gap: 22px; }
+
+.colhub.cu .place { text-align: left; }
+.colhub.cu .place-chip {
+  display: inline-block; background: #EFE6FA; color: #7C59BA; border: none;
+  border-radius: 999px; padding: 3px 12px; font-size: 12px; font-weight: 700;
+}
+.colhub.cu .place-ribbon {
+  margin: 6px 0 8px; padding: 0 2px; background: none; border: none; box-shadow: none;
+  color: #3A2A5C; font-size: 20px; font-weight: 800; letter-spacing: 0; text-shadow: none;
+  text-align: left;
+}
+.colhub.cu .place-ribbon.gray { background: none; color: #A79BC0; }
+.colhub.cu .place-scene-wrap { margin-top: 0; }
+.colhub.cu .place-scene {
+  height: 168px; border: 1px solid #EDE6F5; border-radius: 20px;
+  box-shadow: 0 4px 14px rgba(124, 89, 186, 0.12);
+}
+.colhub.cu .place.locked .place-scene {
+  border-color: #EDE6F5; filter: grayscale(0.85) opacity(0.6);
+}
+.colhub.cu .place-lock { background: rgba(255, 255, 255, 0.35); }
+.colhub.cu .place-lock-icon { font-size: 44px; filter: drop-shadow(0 3px 5px rgba(60, 40, 100, 0.25)); }
+.colhub.cu .place-progress {
+  left: 14px; right: 14px; bottom: 12px; height: 24px;
+  background: rgba(255, 255, 255, 0.92); border: 1px solid #EDE6F5;
+}
+.colhub.cu .place-progress i { background: linear-gradient(90deg, #A585E0, #7C59BA); }
+.colhub.cu .place-progress b { color: #4B3478; font-size: 12px; text-shadow: none; }
+.colhub.cu .place-done { font-size: 15px; }
+.colhub.cu .place-view {
+  background: #7C59BA !important; border: none !important; border-radius: 999px;
+  font-size: 14px; font-weight: 700; padding: 7px 18px; text-shadow: none !important;
+  box-shadow: 0 3px 8px rgba(60, 40, 100, 0.25) !important;
+}
+.colhub.cu .place-hint { color: #8B7FA3; text-align: left; margin-top: 6px; }
+
+.colhub.cu .space-stickers {
+  background: #fff !important; border: 1px solid #EDE6F5 !important; border-radius: 16px;
+}
+.colhub.cu .space-stickers .colhub-stk-top b { color: #3A2A5C; }
+.colhub.cu .space-stickers .colhub-stk-count { background: #F3ECFB; color: #7C59BA; }
+.colhub.cu .space-stickers .colhub-stk { background: #F3ECFB; }
+.colhub.cu .space-stickers .colhub-stk.empty,
+.colhub.cu .space-stickers .colhub-stk.more { color: #B9AED0; }
+
+/* ── 꾸미기 방 (콜렉션 하위 화면) — 포인트 색을 홈과 같은 보라/주황으로 ── */
+.decor .voice-back { color: #7C59BA !important; font-weight: 700; }
+.decor .decor-balance {
+  display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+  background: #DB6A00 !important; color: #FFF183 !important; border-radius: 26px;
+  padding: 6px 14px; font-size: 14px !important; font-weight: 700;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+.decor .decor-balance b { color: inherit; }
+.decor .decor-tab {
+  background: #fff; border: 1px solid #EDE6F5; color: #3A2A5C; box-shadow: none !important;
+}
+.decor .decor-tab.on {
+  background: #7C59BA !important; border-color: #7C59BA; color: #fff !important;
+}
+.decor .decor-tab.locked { color: #A79BC0; background: #F6F2FB; }
+.decor .decor-finish:not(.short) {
+  background: #7C59BA !important; border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(106, 74, 174, 0.28) !important;
+}
+.decor .decor-hint { color: #8B7FA3; }

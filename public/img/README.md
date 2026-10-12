@@ -35,3 +35,9 @@
 파일명 = avatar-{이모지}.png  또는  avatar-default.png
 예) 현재 아바타가 🦊면 avatar-🦊.png
 (주기 어려우면 avatar-default.png 하나만 줘도 모든 아이에게 적용)
+
+## 임시 이미지 (나중에 시안 이미지로 교체)
+아래 8장은 시안 이미지가 없어서 직접 그려 넣은 **임시 일러스트**입니다(420×420, 클레이 느낌의 벡터 → PNG).
+같은 파일명으로 덮어쓰면 바로 교체됩니다.
+- act-story_listen / act-story_make / act-learn_english / act-learn_ask
+- act-game_word / act-game_fun / act-learn_homework / act-feel_talk

@@ -44,7 +44,7 @@ export default function MissionBoard({
   }
 
   return (
-    <section className="missions">
+    <section className="missions mx">
       {burst && <Confetti count={60} />}
       <header className="mb-hd">
         <span
