@@ -11,6 +11,7 @@ const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 // Parent Zone — 성인 인증 게이트 뒤. 대시보드·시간통제·활동 로그·구독·연령·미션.
 export default function ParentZone({
+  feedbackUrl = null, // 의견 보내기 주소 (서버 환경변수 FEEDBACK_URL). 없으면 링크를 보이지 않는다.
   usedToday = 0,
   activities,
   histories,
@@ -428,6 +429,23 @@ export default function ParentZone({
           </span>
           <span className="gsl-arw">›</span>
         </button>
+
+        {feedbackUrl && (
+          // 새 탭으로 열고 referrer를 보내지 않는다. 외부 양식에 앱 주소·기록이 딸려 가지 않게 한다.
+          <a
+            className="guard-settings-link"
+            href={feedbackUrl}
+            target={feedbackUrl.startsWith("mailto:") ? undefined : "_blank"}
+            rel="noopener noreferrer"
+          >
+            <span className="gsl-ic">💬</span>
+            <span className="gsl-body">
+              <b>의견 보내기</b>
+              <small>불편한 점이나 바라는 점을 알려 주세요</small>
+            </span>
+            <span className="gsl-arw">›</span>
+          </a>
+        )}
       </div>
     </section>
   );

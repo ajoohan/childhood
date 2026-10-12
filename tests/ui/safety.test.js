@@ -257,3 +257,40 @@ test("음성 화면: 이전 답이 진행 중일 때 보낸 글은 지워지지 
   await page.waitForTimeout(500);
   await page.close();
 });
+
+// /api/activities 응답에 의견 주소를 끼워 넣어 부모 화면의 링크를 확인한다
+async function parentScreenWith(feedbackUrl) {
+  const { page } = await openApp(browser, seed({ settings: { pin: "1234" } }), {
+    beforeLoad: async (p) => {
+      await p.route("**/api/activities", async (route) => {
+        const res = await route.fetch();
+        const json = await res.json();
+        json.features = { ...json.features, feedbackUrl };
+        await route.fulfill({ response: res, json });
+      });
+    },
+  });
+  await parentTab(page);
+  await page.waitForSelector(".pin-card", { timeout: 8000 });
+  await pinKeys(page, "1234");
+  await page.waitForSelector(".guard-screen", { timeout: 8000 });
+  return page;
+}
+
+test("의견 보내기: 주소가 설정돼 있으면 부모 화면에 링크가 나온다 (새 탭 · referrer 없음)", async () => {
+  const page = await parentScreenWith("https://forms.gle/abc123");
+  const link = await page.waitForSelector('a[href="https://forms.gle/abc123"]', { timeout: 8000 });
+  assert.match(await link.innerText(), /의견 보내기/);
+  assert.equal(await link.getAttribute("target"), "_blank");
+  assert.match(await link.getAttribute("rel"), /noopener/);
+  assert.match(await link.getAttribute("rel"), /noreferrer/);
+  await page.close();
+});
+
+test("의견 보내기: 주소가 없으면 링크가 보이지 않는다", async () => {
+  const page = await parentScreenWith(null);
+  await page.waitForTimeout(500);
+  assert.equal(await page.$(".guard-settings-link[href]"), null);
+  assert.ok(await page.$("button.guard-settings-link"), "설정 링크는 그대로 있다");
+  await page.close();
+});

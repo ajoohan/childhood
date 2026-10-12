@@ -143,3 +143,14 @@ test("dayKey: 요청 제한의 하루는 한국 자정에 바뀐다 (UTC 오전 
   assert.equal(dayKey(new Date("2026-10-08T22:30:00Z"), "UTC"), "2026-10-08");
   assert.match(dayKey(), /^\d{4}-\d{2}-\d{2}$/);
 });
+
+import { normalizeFeedbackUrl } from "../server.js";
+
+test("normalizeFeedbackUrl: https와 mailto만 받고, 나머지는 버린다", () => {
+  assert.equal(normalizeFeedbackUrl("https://forms.gle/abc123"), "https://forms.gle/abc123");
+  assert.equal(normalizeFeedbackUrl("  https://forms.gle/abc123  "), "https://forms.gle/abc123", "앞뒤 공백 제거");
+  assert.equal(normalizeFeedbackUrl("mailto:hello@example.com"), "mailto:hello@example.com");
+  for (const bad of ["javascript:alert(1)", "http://example.com", "data:text/html,x", "ftp://x.y", "forms.gle/abc", "", "   ", null, undefined, 42, {}, "https://" + "a".repeat(600) + ".com"]) {
+    assert.equal(normalizeFeedbackUrl(bad), null, String(bad).slice(0, 40));
+  }
+});

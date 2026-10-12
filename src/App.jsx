@@ -593,6 +593,7 @@ export default function App() {
 
         {zone === "parent" && parentView === "main" && (
           <ParentZone
+            feedbackUrl={data.features?.feedbackUrl || null}
             activities={data.activities}
             histories={histories}
             usedToday={usedToday}

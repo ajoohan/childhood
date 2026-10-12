@@ -31,3 +31,6 @@ services:
       # (Blueprint에는 넣지 않아 배포 시 입력을 요구하지 않습니다.)
       #   IMAGE_API_KEY = 이미지 생성 API 키 (OpenAI Images 호환) → 그림 만들기 켜짐
       #   STT_API_KEY   = 음성 인식 API 키 (OpenAI Whisper 호환) → 서버 받아쓰기 켜짐
+      #   FEEDBACK_URL  = 의견 받을 주소 (구글 폼 https://... 또는 mailto:...) → 부모 화면에
+      #                   "의견 보내기" 링크가 나타남. 비우면 링크가 보이지 않음.
+      #   RL_TZ         = 요청 제한의 하루 기준 시간대 (기본 Asia/Seoul)

@@ -51,6 +51,23 @@ function dayKey(now = new Date(), tz = RL_TZ) {
   return now.toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
 }
 
+// 의견 보내기 링크(부모 화면). Render 환경변수 FEEDBACK_URL로 정하므로 배포 없이 바꿀 수 있다.
+// https:// 또는 mailto: 만 받는다 — javascript: 같은 값이 링크로 나가지 않게 한다.
+function normalizeFeedbackUrl(raw) {
+  const v = typeof raw === "string" ? raw.trim() : "";
+  if (!v || v.length > 500) return null;
+  try {
+    const u = new URL(v);
+    return u.protocol === "https:" || u.protocol === "mailto:" ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+const FEEDBACK_URL = normalizeFeedbackUrl(process.env.FEEDBACK_URL);
+if (process.env.FEEDBACK_URL && !FEEDBACK_URL) {
+  console.error("FEEDBACK_URL 은 https:// 또는 mailto: 로 시작해야 해서 무시합니다.");
+}
+
 const rlRecent = new Map(); // ip -> number[] (윈도 내 타임스탬프)
 const rlDay = new Map(); // ip -> 하루 누적
 let rlCurrentDay = dayKey();
@@ -371,7 +388,7 @@ app.get("/api/activities", (req, res) => {
       greeting: a.greeting,
     })),
     // 클라이언트가 선택 기능 활성 여부를 알 수 있게 노출
-    features: { stt: !!STT_API_KEY, image: !!IMAGE_API_KEY },
+    features: { stt: !!STT_API_KEY, image: !!IMAGE_API_KEY, feedbackUrl: FEEDBACK_URL },
   });
 });
 
@@ -578,6 +595,7 @@ export {
   activityById,
   audioExtension,
   dayKey,
+  normalizeFeedbackUrl,
   scrubForPrompt,
   sanitizeProfile,
   sanitizeMessages,

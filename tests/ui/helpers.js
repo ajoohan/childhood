@@ -77,7 +77,7 @@ export function seed(over = {}) {
 }
 
 // 스플래시를 지나 홈까지 온 페이지를 돌려준다. 콘솔 오류는 errors에 모인다.
-export async function openApp(browser, state = seed()) {
+export async function openApp(browser, state = seed(), opts = {}) {
   const page = await browser.newPage({ viewport: { width: 402, height: 874 } });
   // 앱 자체 오류만 모은다. 외부 호스트(폰트 CDN 등) 로딩 실패는 망 환경에
   // 좌우되므로 external에 따로 담고 errors에는 넣지 않는다.
@@ -97,6 +97,7 @@ export async function openApp(browser, state = seed()) {
   await page.addInitScript((s) => {
     if (!localStorage.getItem("banjjaktalk_v2")) localStorage.setItem("banjjaktalk_v2", JSON.stringify(s));
   }, state);
+  if (opts.beforeLoad) await opts.beforeLoad(page);
   await page.goto(BASE + "/", { waitUntil: "networkidle" });
   const start = await page.$(".splash-primary");
   if (start) await start.click();

@@ -3400,6 +3400,7 @@ input::placeholder { color: #B4AC9E !important; }
   background: var(--surface); border: 1px solid var(--line); border-radius: 20px;
   padding: 16px 18px; box-shadow: 0 8px 22px rgba(60,45,30,.06); cursor: pointer; text-align: left;
 }
+a.guard-settings-link { text-decoration: none; color: inherit; margin-top: 10px; }
 .gsl-ic { font-size: 26px; }
 .gsl-body { flex: 1; }
 .gsl-body b { display: block; font-size: 16px; color: var(--text); }
