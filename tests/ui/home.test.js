@@ -97,3 +97,21 @@ test("연령: 7~9세는 아동용 활동(이야기 만들기)을 볼 수 있고,
   assert.match(await storyActivities(at(8)), /이야기 만들기/, "8세에게 열려 있어야 한다");
   assert.doesNotMatch(await storyActivities(at(5)), /이야기 만들기/, "5세에게는 닫혀 있어야 한다");
 });
+
+test("프로필 메뉴의 모든 항목이 눌린다 (아래의 배너·타일에 가려지지 않는다)", async () => {
+  const { page } = await openApp(browser);
+  await page.click(".fx-ava");
+  await page.waitForSelector(".hd-menu-item", { timeout: 8000 });
+  // 각 항목의 한가운데를 실제로 누르게 될 요소가 그 항목 자신이어야 한다
+  const covered = await page.evaluate(() =>
+    [...document.querySelectorAll(".hd-menu-item")]
+      .map((el) => {
+        const r = el.getBoundingClientRect();
+        const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        return el.contains(top) ? null : `${el.innerText.trim().split("\n")[0]} → ${top?.className}`;
+      })
+      .filter(Boolean)
+  );
+  assert.deepEqual(covered, [], "가려진 메뉴 항목이 있다");
+  await page.close();
+});

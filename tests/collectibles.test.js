@@ -60,3 +60,30 @@ test("스티커 정의: id가 겹치지 않는다", () => {
   const ids = STICKERS.map((s) => s.id);
   assert.equal(new Set(ids).size, ids.length);
 });
+
+const msgs = (n, role = "user", extra = {}) =>
+  Array.from({ length: n }, (_, i) => ({ role, content: `m${i}`, ...extra }));
+
+test("배지: 출석 보너스로 별만 생겨도 '미션 도전'은 아니다", () => {
+  const withStarsOnly = { ...base, rewards: { balance: 1, doneToday: [] } };
+  assert.ok(!earnedBadges(withStarsOnly).includes("mission1"));
+  const done = { ...base, rewards: { balance: 3, doneToday: ["m1"] } };
+  assert.ok(earnedBadges(done).includes("mission1"));
+});
+
+test("배지: '목소리 친구'는 음성으로 보낸 말이 있어야 한다 (글로 한 질문은 아니다)", () => {
+  const typed = { ...base, histories: { learn_ask: msgs(3, "user") } };
+  assert.ok(!earnedBadges(typed).includes("voice"));
+  const spoken = { ...base, histories: { learn_ask: [{ role: "user", content: "안녕", via: "voice" }] } };
+  assert.ok(earnedBadges(spoken).includes("voice"));
+  // 봇이 한 말에 표시가 있어도 아이가 말한 것이 아니다
+  const botOnly = { ...base, histories: { learn_ask: [{ role: "assistant", content: "응", via: "voice" }] } };
+  assert.ok(!earnedBadges(botOnly).includes("voice"));
+});
+
+test("배지: '궁금쟁이'는 아이가 보낸 질문 5개부터 (답변은 세지 않는다)", () => {
+  const four = { ...base, histories: { learn_ask: [...msgs(4, "user"), ...msgs(4, "assistant")] } };
+  assert.ok(!earnedBadges(four).includes("curious"), "질문 4개 + 답변 4개는 8개지만 아직 아니다");
+  const five = { ...base, histories: { learn_ask: [...msgs(5, "user"), ...msgs(5, "assistant")] } };
+  assert.ok(earnedBadges(five).includes("curious"));
+});

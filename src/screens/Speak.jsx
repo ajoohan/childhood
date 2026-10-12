@@ -86,6 +86,7 @@ export default function Speak({
   const [recording, setRecording] = useState(false);
   const [speakerOn, setSpeakerOn] = useState(true); // 통화 바 스피커(응답 소리) on/off
   const [notice, setNotice] = useState(null); // 시간제한 등 안내
+  const [failNote, setFailNote] = useState(null); // 요청 실패 안내 — 대화 기록에는 남기지 않는다
   // 텍스트 모드 상태
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(null);
@@ -227,12 +228,18 @@ export default function Speak({
     if (limitReached()) return;
     busyRef.current = true;
     setNotice(null);
+    setFailNote(null);
     setLastSaid(trimmed);
     setReply("");
     setStatus("thinking");
     if (mode === "text") setStreaming("");
 
-    const userMsg = { role: "user", content: trimmed, t: new Date().toISOString() };
+    const userMsg = {
+      role: "user",
+      content: trimmed,
+      t: new Date().toISOString(),
+      ...(mode === "voice" ? { via: "voice" } : {}),
+    };
     onUserMessage(activity.id, userMsg);
     const outgoing = [...(history || []), userMsg];
 
@@ -262,10 +269,18 @@ export default function Speak({
       if (ctrl.signal.aborted) return;
       console.error(err);
       // 요청 제한(429)·하루 상한 같은 서버의 아이용 문구가 있으면 그것을 보여 준다.
-      acc = acc || err.friendly || "앗, 잠깐 연결이 끊겼어. 다시 말해 줄래?";
-      setReply(acc);
+      // 실패 문구는 화면에만 보인다 — 기록에 넣으면 다음 요청에서 모델이 "내가 한 말"로 읽는다.
+      if (!acc) setFailNote(err.friendly || "앗, 잠깐 연결이 끊겼어. 다시 말해 줄래?");
     }
     if (!aliveRef.current) return;
+
+    if (!acc) {
+      setStreaming(null);
+      setStatus("idle");
+      busyRef.current = false;
+      if (mode === "text" && inputRef.current) inputRef.current.focus();
+      return;
+    }
 
     onBotMessage(activity.id, { role: "assistant", content: acc });
     setStreaming(null);
@@ -292,6 +307,9 @@ export default function Speak({
   function sendText() {
     const t = input.trim();
     if (!t) return;
+    // 이전 답이 아직 진행 중이거나 활동이 준비되지 않았으면 converse가 조용히 돌아간다.
+    // 그때 입력을 지우면 아이가 쓴 글이 사라지므로, 지우지 않고 남겨 둔다.
+    if (busyRef.current || !activity) return;
     setInput("");
     converse(t);
   }
@@ -395,6 +413,11 @@ export default function Speak({
               {notice}
             </Bubble>
           )}
+          {failNote && (
+            <Bubble role="bot" expr="thinking">
+              {failNote}
+            </Bubble>
+          )}
         </main>
 
         <footer className="composer">
@@ -482,6 +505,7 @@ export default function Speak({
         )}
         {status === "idle" && reply && <p className="voice-reply">{reply}</p>}
         {notice && <p className="voice-reply">{notice}</p>}
+        {failNote && <p className="voice-reply">{failNote}</p>}
       </div>
 
       {/* 통화식 컨트롤 바 — 스피커 · 마이크 · 텍스트 전환 · 종료 */}

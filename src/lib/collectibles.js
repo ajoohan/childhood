@@ -30,14 +30,21 @@ export function earnedBadges({ profile, histories, rewards, decor, stickers }) {
   if (profile && profile.onboarded) ids.push("first");
   if (totalUser > 0) ids.push("talk");
   if (has("story_listen") || has("story_make")) ids.push("story");
-  if ((rewards?.doneToday || []).length > 0 || rewards?.balance > 0) ids.push("mission1");
+  // 출석 보너스로도 별이 생기므로 별 잔액으로 판단하면 안 된다 — 완료한 미션이 있어야 한다.
+  if ((rewards?.doneToday || []).length > 0) ids.push("mission1");
   if (rewards?.allClear) ids.push("allclear");
   if ((rewards?.balance || 0) >= 10) ids.push("star10");
   if ((rewards?.balance || 0) >= 30) ids.push("star30");
   if (decor && Object.values(decor.placed || {}).some((o) => Object.keys(o).length)) ids.push("decor1");
   if ((decor?.completed || []).length > 0) ids.push("theme");
-  if (has("learn_ask")) ids.push("voice"); // 음성은 learn_ask 스코프
-  if (has("learn_ask") >= 5) ids.push("curious");
+  // 음성으로 보낸 말에는 via:"voice"가 붙는다. 홈의 글 입력창으로 한 질문은 해당하지 않는다.
+  const spokeAloud = Object.values(histories || {}).some(
+    (h) => Array.isArray(h) && h.some((m) => m?.role === "user" && m.via === "voice")
+  );
+  if (spokeAloud) ids.push("voice");
+  // 질문 횟수는 아이가 보낸 말만 센다 (답변까지 세면 2~3번만 물어도 달성된다).
+  const asked = list("learn_ask").filter((m) => m?.role === "user").length;
+  if (asked >= 5) ids.push("curious");
   const stickerCount = Object.values(stickers || {}).reduce((n, c) => n + c, 0);
   if (stickerCount >= 5) ids.push("sticker5");
   return ids;

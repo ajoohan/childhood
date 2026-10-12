@@ -39,12 +39,15 @@ test("계속 틀리면 잠금이 점점 길어지고 30분에서 멈춘다", () 
   assert.deepEqual(steps, [300_000, 900_000, 1_800_000, 1_800_000, 1_800_000, 1_800_000]);
 });
 
-test("새로고침해도(저장소를 다시 읽어도) 횟수가 초기화되지 않는다", () => {
+test("새로고침해도 횟수가 초기화되지 않는다 (저장된 값만으로 복원된다)", () => {
   const now = 1_000_000;
   for (let i = 0; i < FREE_TRIES; i++) recordFail(now);
-  const kept = globalThis.localStorage; // 같은 저장소 = 새로고침 후
-  globalThis.localStorage = kept;
-  assert.ok(lockRemaining(now) > 0);
+  // 새로고침: 메모리는 사라지고 저장소의 내용만 남는다 → 내용만 새 저장소에 옮겨 담는다.
+  const saved = globalThis.localStorage.getItem("cw_pin_guard");
+  assert.ok(saved, "저장소에 기록이 남아 있어야 한다");
+  globalThis.localStorage = new MemStorage();
+  globalThis.localStorage.setItem("cw_pin_guard", saved);
+  assert.equal(lockRemaining(now), 60_000);
 });
 
 test("맞히면 횟수가 초기화된다", () => {

@@ -39,7 +39,8 @@ export default function PinGate({ savedPin, onUnlock, onSetPin, onClose }) {
   function checkForgot() {
     if (locked) return;
     if (Number(forgotVal) === forgot.answer) {
-      recordSuccess();
+      // 여기서는 실패 횟수를 지우지 않는다. 지우면 "PIN 틀리기 → 잠금 → 계산 풀기"로
+      // 잠금을 피할 수 있다. 횟수는 실제 PIN으로 열렸을 때만 초기화된다.
       setErr("");
       setPin("");
       setFirst("");
@@ -83,6 +84,7 @@ export default function PinGate({ savedPin, onUnlock, onSetPin, onClose }) {
       setPhase("confirm");
     } else if (phase === "confirm") {
       if (value === first) {
+        recordSuccess(); // 새 PIN을 정한 시점부터 다시 센다
         onSetPin(value);
         onUnlock();
       } else {

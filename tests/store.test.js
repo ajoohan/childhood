@@ -123,3 +123,48 @@ test("회귀 방지: 하루 사용량을 잘린 기록에서 세면 안 된다",
   assert.equal(fromHistory, 20);
   assert.ok(fromHistory < 30, "그래서 사용량은 rewards.msgsToday 카운터로 센다");
 });
+
+test("loadStore: activeKid가 없는 아이를 가리켜도 저장된 아이들을 버리지 않는다", () => {
+  globalThis.localStorage.setItem("banjjaktalk_v2", JSON.stringify({
+    settings: { limitPerDay: 7 }, activeKid: "사라진_아이",
+    kids: {
+      a: { profile: { onboarded: true, name: "하나" }, rewards: { balance: 30 } },
+      b: { profile: { onboarded: true, name: "둘" } },
+    },
+  }));
+  const s = loadStore();
+  assert.deepEqual(Object.keys(s.kids).sort(), ["a", "b"], "아이들이 남아 있어야 한다");
+  assert.ok(s.kids[s.activeKid], "activeKid는 실제 아이를 가리킨다");
+  assert.equal(s.settings.limitPerDay, 7);
+  assert.equal(s.kids.a.rewards.balance, 30, "별도 그대로");
+});
+
+test("loadStore: activeKid가 비어 있어도 마찬가지다", () => {
+  globalThis.localStorage.setItem("banjjaktalk_v2", JSON.stringify({
+    kids: { only: { profile: { onboarded: true, name: "혼자" } } },
+  }));
+  const s = loadStore();
+  assert.equal(s.activeKid, "only");
+  assert.equal(s.kids.only.profile.name, "혼자");
+});
+
+test("loadStore: 꾸미기 저장값이 불완전해도 화면이 읽을 수 있는 형태가 된다", () => {
+  for (const decor of [{ theme: "room" }, { placed: "x" }, [], "문자열", { placed: { room: null }, completed: "x" }]) {
+    globalThis.localStorage.setItem("banjjaktalk_v2", JSON.stringify({
+      activeKid: "k", kids: { k: { profile: { onboarded: true }, decor } },
+    }));
+    const d = loadStore().kids.k.decor;
+    assert.equal(typeof d.theme, "string", JSON.stringify(decor));
+    assert.ok(d.placed && typeof d.placed === "object" && !Array.isArray(d.placed), JSON.stringify(decor));
+    assert.ok(Array.isArray(d.completed), JSON.stringify(decor));
+    assert.doesNotThrow(() => Object.values(d.placed).forEach((o) => Object.keys(o)), JSON.stringify(decor));
+  }
+});
+
+test("loadStore: 정상적인 꾸미기 값은 그대로 보존한다", () => {
+  const decor = { theme: "space", placed: { room: { bed: 1 } }, completed: ["room"] };
+  globalThis.localStorage.setItem("banjjaktalk_v2", JSON.stringify({
+    activeKid: "k", kids: { k: { profile: { onboarded: true }, decor } },
+  }));
+  assert.deepEqual(loadStore().kids.k.decor, decor);
+});

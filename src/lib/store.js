@@ -39,6 +39,24 @@ export function emptyKid() {
   };
 }
 
+// 꾸미기 저장값 형태를 맞춘다. placed가 없으면 콜렉션 화면이 렌더 중에 죽는다.
+function normalizeDecor(raw) {
+  const base = emptyDecor();
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return base;
+  const placed = {};
+  if (raw.placed && typeof raw.placed === "object" && !Array.isArray(raw.placed)) {
+    for (const [theme, slots] of Object.entries(raw.placed)) {
+      if (slots && typeof slots === "object" && !Array.isArray(slots)) placed[theme] = slots;
+    }
+  }
+  return {
+    ...raw,
+    theme: typeof raw.theme === "string" && raw.theme ? raw.theme : base.theme,
+    placed,
+    completed: Array.isArray(raw.completed) ? raw.completed : [],
+  };
+}
+
 function normalizeKid(k) {
   const base = emptyKid();
   if (!k || typeof k !== "object") return base;
@@ -49,7 +67,7 @@ function normalizeKid(k) {
     notices: Array.isArray(k.notices) ? k.notices : [],
     rewards: rollDay(k.rewards || emptyRewards()),
     parentMissions: Array.isArray(k.parentMissions) ? k.parentMissions : [],
-    decor: k.decor || emptyDecor(),
+    decor: normalizeDecor(k.decor),
     badges: Array.isArray(k.badges) ? k.badges : [],
     stickers: k.stickers && typeof k.stickers === "object" ? k.stickers : {},
   };
@@ -59,12 +77,15 @@ export function loadStore() {
   // v2 우선
   try {
     const s = JSON.parse(localStorage.getItem(STORE_KEY));
-    if (s && s.kids && s.activeKid && s.kids[s.activeKid]) {
+    const ids = s && s.kids && typeof s.kids === "object" ? Object.keys(s.kids) : [];
+    if (ids.length) {
       const kids = {};
       for (const [id, k] of Object.entries(s.kids)) kids[id] = normalizeKid(k);
+      // activeKid가 비었거나 없는 아이를 가리켜도 저장된 아이들을 버리지 않는다.
+      // (버리면 새 빈 저장값이 다음 persist에서 기존 데이터를 덮어쓴다.)
       return {
-        settings: s.settings || { limitPerDay: null },
-        activeKid: s.activeKid,
+        settings: s.settings && typeof s.settings === "object" ? s.settings : { limitPerDay: null },
+        activeKid: kids[s.activeKid] ? s.activeKid : ids[0],
         kids,
       };
     }

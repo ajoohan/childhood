@@ -30,23 +30,24 @@ test("미션을 완료하면 별이 늘고, 같은 미션은 하루 한 번만",
   const after1 = await stars(page);
   assert.ok(after1 > 10, `별이 늘어야 한다 (10 -> ${after1})`);
 
-  // 같은 미션 다시 시도 → 더 늘지 않는다
+  // 같은 미션은 다시 완료할 수 없다. 완료한 줄에는 버튼이 없고, 남은 버튼은 정확히 하나 줄었다.
+  // (예전 검사는 두 번째로 누른 것이 '다른' 미션이라 가드를 지워도 통과했다.)
+  assert.equal(after1, 12, "미션 보상 +2만큼만 늘어야 한다");
   await (await page.$$(".tab-bar .tab"))[1].click();
   await page.waitForSelector(".missions", { timeout: 8000 });
-  const again = await page.$$("text=완료하기");
-  if (again.length) {
-    const before = after1;
-    await again[0].click();
-    const modal = await page.$(".mission-modal");
-    if (modal) {
-      const yes = await page.$("text=네, 다 했어요!");
-      if (yes) await yes.click();
-    }
-    await page.waitForTimeout(1200);
-    await (await page.$$(".tab-bar .tab"))[0].click();
-    await page.waitForSelector(".kids-home", { timeout: 8000 });
-    assert.ok((await stars(page)) >= before, "별이 줄지는 않는다");
-  }
+  assert.equal((await page.$$(".mb-item.done")).length, 1, "완료한 미션이 한 줄");
+  assert.equal(await page.$(".mb-item.done .mb-do"), null, "완료한 줄에는 '완료하기'가 없다");
+  assert.equal((await page.$$(".mb-do")).length, done.length - 1, "남은 버튼이 하나 줄었다");
+
+  // 새로고침 뒤에도 그대로여야 한다 (저장되어 같은 미션을 또 받을 수 없다)
+  await page.reload({ waitUntil: "networkidle" });
+  const start = await page.$(".splash-primary");
+  if (start) await start.click();
+  await page.waitForSelector(".kids-home", { timeout: 8000 });
+  assert.equal(await stars(page), after1, "새로고침해도 별이 같다");
+  await (await page.$$(".tab-bar .tab"))[1].click();
+  await page.waitForSelector(".missions", { timeout: 8000 });
+  assert.equal((await page.$$(".mb-item.done")).length, 1, "새로고침 뒤에도 완료 상태");
   assert.deepEqual(errors, []);
   await page.close();
 });

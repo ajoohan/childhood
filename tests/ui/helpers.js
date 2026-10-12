@@ -93,7 +93,10 @@ export async function openApp(browser, state = seed()) {
     if (/Failed to load resource/i.test(t)) return; // 위 requestfailed로 분류됨
     errors.push(t);
   });
-  await page.addInitScript((s) => localStorage.setItem("banjjaktalk_v2", JSON.stringify(s)), state);
+  // 처음 한 번만 심는다. 새로고침 때마다 덮어쓰면 "저장돼서 남는다"는 검사가 늘 통과해 버린다.
+  await page.addInitScript((s) => {
+    if (!localStorage.getItem("banjjaktalk_v2")) localStorage.setItem("banjjaktalk_v2", JSON.stringify(s));
+  }, state);
   await page.goto(BASE + "/", { waitUntil: "networkidle" });
   const start = await page.$(".splash-primary");
   if (start) await start.click();

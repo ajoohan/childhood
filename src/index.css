@@ -4093,6 +4093,10 @@ input::placeholder { color: #B4AC9E !important; }
 
 /* ── 헤더 (프로필 80 / 인사 / 별) ── */
 .fx-hd { display: flex; align-items: flex-start; gap: 11px; padding: 50px 0 0; }
+/* 헤더(아바타 팝업 메뉴 포함)가 아래 콘텐츠 위에 와야 한다. 위의 `.kids-home.fx > *`가 모든 자식을
+   같은 z-index 1로 두기 때문에, 이것이 없으면 메뉴 항목이 프리미엄 배너·타일에 가려져
+   눌러도 그쪽이 눌린다. */
+.kids-home.fx > .fx-hd { z-index: 20; }
 .fx-ava {
   width: 80px; height: 80px; flex-shrink: 0; position: relative; overflow: hidden;
   border-radius: 50%; border: none; padding: 0; cursor: pointer;

@@ -70,6 +70,7 @@ export default function App() {
   const [splash, setSplash] = useState(!splashSeen);
   const [parentView, setParentView] = useState("main"); // main | settings
   const [pinOpen, setPinOpen] = useState(false);
+  const [pinThen, setPinThen] = useState(null); // PIN을 통과한 뒤 할 일 ("addKid") — 없으면 부모 존으로
   const [sparksOpen, setSparksOpen] = useState(false);
   const [guardUnlocked, setGuardUnlocked] = useState(false);
 
@@ -135,6 +136,17 @@ export default function App() {
     setView({ name: "home" });
   }
 
+  // 새 아이 추가는 부모가 PIN을 정해 둔 경우 PIN 뒤에 둔다. 막지 않으면 하루 제한에 걸린 아이가
+  // 새 프로필을 만들어 사용량 0에서 다시 시작할 수 있다. PIN이 없으면 예전처럼 바로 추가된다.
+  function requestAddKid() {
+    if (settings.pin && !guardUnlocked) {
+      setPinThen("addKid");
+      setPinOpen(true);
+      return;
+    }
+    addKid();
+  }
+
   // 홈 아바타 팝업·유저 변경 시트에서 쓰는 아이 목록
   const kidList = Object.entries({ ...kids, [activeKid]: kidSnapshot() })
     .filter(([, k]) => k.profile.onboarded)
@@ -191,6 +203,9 @@ export default function App() {
 
   // 미션 완료 → 별 지급 + 올클리어 보너스 (기획서 3장 밸런싱)
   function completeMission(mission) {
+    // 이미 오늘 끝낸 미션이면 아무것도 지급하지 않는다. 별만 막고 스티커·알림을 막지 않으면
+    // 같은 미션을 다시 눌렀을 때 스티커가 계속 나온다.
+    if (rollDay(rewards).doneToday.includes(mission.id)) return;
     setRewards((r0) => {
       const r = rollDay(r0);
       if (r.doneToday.includes(mission.id)) return r; // 하루 1회
@@ -358,12 +373,21 @@ export default function App() {
       savedPin={settings.pin}
       onSetPin={(pin) => setSettings((s) => ({ ...s, pin }))}
       onUnlock={() => {
-        setGuardUnlocked(true);
         setPinOpen(false);
+        if (pinThen === "addKid") {
+          // 부모 존은 열지 않고 아이 추가만 한다
+          setPinThen(null);
+          addKid();
+          return;
+        }
+        setGuardUnlocked(true);
         setSplash(false);
         setZone("parent");
       }}
-      onClose={() => setPinOpen(false)}
+      onClose={() => {
+        setPinOpen(false);
+        setPinThen(null);
+      }}
     />
   ) : null;
 
@@ -438,7 +462,7 @@ export default function App() {
             interests={profile.interests}
             kidList={kidList}
             onSwitchKid={switchKid}
-            onAddKid={addKid}
+            onAddKid={requestAddKid}
             onPickCategory={(c) => setView({ name: "list", category: c })}
             onPickActivity={openActivity}
             onParent={openParent}

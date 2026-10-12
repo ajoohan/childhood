@@ -143,3 +143,54 @@ test("손상된 저장값으로도 앱이 흰 화면이 되지 않는다", async
   assert.ok(body.length > 0, "흰 화면이면 안 된다");
   await page.close();
 });
+
+// 유저 변경 시트를 열고 "새 아이 추가"를 누른다
+async function tapAddKid(page) {
+  await page.click(".fx-ava");
+  await page.click("text=유저 변경");
+  await page.waitForSelector(".kid-item.add", { timeout: 8000 });
+  await page.click(".kid-item.add");
+}
+
+test("새 아이 추가: PIN이 있으면 PIN 뒤에만 된다 (하루 제한을 새 프로필로 피할 수 없다)", async () => {
+  const { page } = await openApp(browser, seed({ settings: { pin: "1234", limitPerDay: 5 } }));
+  await tapAddKid(page);
+  await page.waitForSelector(".pin-card", { timeout: 8000 });
+  assert.ok(!(await page.$(".ob")), "PIN 전에는 가입 화면이 뜨면 안 된다");
+
+  await pinKeys(page, "9999");
+  await page.waitForTimeout(500);
+  assert.ok(!(await page.$(".ob")), "틀린 PIN으로는 추가되면 안 된다");
+
+  await pinKeys(page, "1234");
+  await page.waitForSelector(".ob", { timeout: 8000 });
+  assert.ok(!(await page.$(".guard-screen")), "아이만 추가하고 부모 존은 열지 않는다");
+  await page.close();
+});
+
+test("새 아이 추가: PIN을 정해 두지 않았다면 바로 추가된다", async () => {
+  const { page } = await openApp(browser);
+  await tapAddKid(page);
+  await page.waitForSelector(".ob", { timeout: 8000 });
+  assert.ok(!(await page.$(".pin-card")));
+  await page.close();
+});
+
+test("요청이 실패하면 안내만 보이고, 실패 문구는 대화 기록에 저장되지 않는다", async () => {
+  const { page } = await openApp(browser);
+  const friendly = "지금 친구들이 너무 많이 놀러 왔어! 조금만 기다렸다가 다시 말해 줘.";
+  await page.route("**/api/chat", (route) =>
+    route.fulfill({ status: 429, contentType: "application/json", body: JSON.stringify({ error: friendly }) })
+  );
+  await (await page.$$(".fx-card"))[0].click();
+  await page.waitForSelector(".chat-screen", { timeout: 8000 });
+  await page.fill(".cx-composer input", "안녕");
+  await page.press(".cx-composer input", "Enter");
+  await page.waitForFunction((t) => document.body.innerText.includes(t), friendly, { timeout: 8000 });
+
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")));
+  const hist = Object.values(saved.kids.k.histories).flat();
+  assert.ok(hist.some((m) => m.role === "user" && m.content === "안녕"), "보낸 말은 기록에 있다");
+  assert.ok(!hist.some((m) => m.role === "assistant"), "실패 문구가 '별이가 한 말'로 저장되면 안 된다");
+  await page.close();
+});

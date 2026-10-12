@@ -48,6 +48,7 @@ export default function Session({
   const [busy, setBusy] = useState(false);
   const [streaming, setStreaming] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [fail, setFail] = useState(null); // 요청 실패 안내 — 대화 기록에는 남기지 않는다
   const [mood, setMood] = useState(null); // 'sad' 등 안전 감지 시
   const chatRef = useRef(null);
   const inputRef = useRef(null);
@@ -57,6 +58,7 @@ export default function Session({
 
   useEffect(() => {
     setNotice(null);
+    setFail(null);
     setStreaming(null);
     setMood(null);
   }, [activity.id]);
@@ -80,6 +82,7 @@ export default function Session({
 
     setInput("");
     setNotice(null);
+    setFail(null);
     setMood(null);
     setBusy(true);
     setStreaming("");
@@ -109,10 +112,12 @@ export default function Session({
       });
     } catch (err) {
       console.error(err);
-      reply = reply || err.friendly || "앗, 잠깐 연결이 끊겼어. 다시 말해 줄래?";
+      // 실패 문구는 화면에만 보인다. 기록에 넣으면 다음 요청에서 모델이 "내가 한 말"로
+      // 읽고, 보관된 대화에도 남는다. 일부라도 받은 답은 그대로 남긴다.
+      if (!reply) setFail(err.friendly || "앗, 잠깐 연결이 끊겼어. 다시 말해 줄래?");
     } finally {
       setStreaming(null);
-      onBotMessage(activity.id, { role: "assistant", content: reply });
+      if (reply) onBotMessage(activity.id, { role: "assistant", content: reply });
       setBusy(false);
       if (inputRef.current) inputRef.current.focus();
     }
@@ -161,6 +166,11 @@ export default function Session({
         {notice && (
           <Bubble role="bot" expr="sleepy">
             {notice}
+          </Bubble>
+        )}
+        {fail && (
+          <Bubble role="bot" expr="thinking">
+            {fail}
           </Bubble>
         )}
       </main>
