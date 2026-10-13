@@ -2,6 +2,7 @@ import { useState } from "react";
 import { allMissions, praiseFor, REWARD } from "../lib/missions.js";
 import { robotMascot, robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
+import { aYa } from "../lib/josa.js";
 
 // 오늘의 미션 보드 — 미션 수행 → AI 대화형 인증(칭찬) → 별 지급 → 꾸미기로 소모
 export default function MissionBoard({
@@ -57,7 +58,7 @@ export default function MissionBoard({
         />
         <div>
           <b>🎯 오늘의 미션</b>
-          <small>{name ? `${name}야, 오늘도 도전!` : "오늘도 도전해 볼까?"}</small>
+          <small>{name ? `${aYa(name)}, 오늘도 도전!` : "오늘도 도전해 볼까?"}</small>
         </div>
         <span className="mb-balance">
           <b>{rewards.balance}</b> ⭐

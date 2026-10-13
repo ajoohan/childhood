@@ -115,3 +115,18 @@ test("프로필 메뉴의 모든 항목이 눌린다 (아래의 배너·타일�
   assert.deepEqual(covered, [], "가려진 메뉴 항목이 있다");
   await page.close();
 });
+
+test("활동 목록: 카드마다 활동 이미지가 실제로 로드된다 (이모지로 떨어지지 않는다)", async () => {
+  const { page } = await openApp(browser);
+  await (await page.$$(".fx-tile"))[0].click();
+  await page.waitForSelector(".act-card", { timeout: 8000 });
+  await page.waitForFunction(
+    () => [...document.querySelectorAll(".act-card .act-img")].length > 0 &&
+          [...document.querySelectorAll(".act-card .act-img")].every((i) => i.complete && i.naturalWidth > 0),
+    null, { timeout: 8000 }
+  );
+  const cards = await page.$$eval(".act-card", (els) => els.length);
+  const imgs = await page.$$eval(".act-card .act-img", (els) => els.length);
+  assert.equal(imgs, cards, "모든 카드에 이미지가 있어야 한다");
+  await page.close();
+});

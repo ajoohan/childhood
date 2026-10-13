@@ -32,7 +32,7 @@ export default function Collection({ activities, histories, name, stars, onPick,
   const title = name ? `${name}의 저널` : "내 저널";
 
   return (
-    <section className="collection journal">
+    <section className="collection journal px">
       <header className="journal-hd">
         {onBack && (
           <button className="voice-back jhd-back" onClick={onBack}>

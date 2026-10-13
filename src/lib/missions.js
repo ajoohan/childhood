@@ -33,7 +33,7 @@ const PRAISE = [
 
 export function praiseFor(name, seed) {
   const msg = PRAISE[Math.abs(seed) % PRAISE.length];
-  return name ? `${name}야, ${msg}` : msg;
+  return name ? `${aYa(name)}, ${msg}` : msg;
 }
 
 // ── 보물상자 (하루 미션 올클리어 보상) ──
@@ -41,6 +41,7 @@ export function praiseFor(name, seed) {
 // 보상은 앱 안에서 이미 얻을 수 있는 것(추가 별 또는 스티커)뿐 — 유료·독점 아이템 없음.
 // 열었을 때 별인지 스티커인지는 랜덤(작은 즐거움)이되, 손해는 없다(항상 무언가 받음).
 import { drawSticker, STICKERS } from "./collectibles.js";
+import { aYa } from "./josa.js";
 
 export const CHEST_BONUS_STARS = [2, 3, 5]; // 별이 나올 때의 보너스 후보
 

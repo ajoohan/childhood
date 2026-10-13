@@ -3,6 +3,7 @@ import { INTERESTS, SPLASH_DECO } from "../lib/data.js";
 import { robotHead } from "../lib/mascot.js";
 import GateDialog from "../components/GateDialog.jsx";
 import { computeAge, ageModeForAge, MODE_LABEL, CHILD_MIN } from "../lib/age.js";
+import { eunNeun } from "../lib/josa.js";
 
 const NOW = new Date();
 const CUR_YEAR = NOW.getFullYear();
@@ -88,7 +89,7 @@ export default function Onboarding({ onDone }) {
   // ── 로딩 화면 ──
   if (step === "loading") {
     return (
-      <section className="ob ob-loading">
+      <section className="ob px ob-loading">
         <span
           className="ob-load-robot"
           dangerouslySetInnerHTML={{ __html: robotHead("excited") }}
@@ -122,7 +123,7 @@ export default function Onboarding({ onDone }) {
       monthly: { price: "₩4,900", per: "매월 청구", tag: "" },
     };
     return (
-      <section className="ob ob-paywall">
+      <section className="ob px ob-paywall">
         <div className="ob-pw-scroll">
           <button
             className="ob-pw-close"
@@ -258,7 +259,7 @@ export default function Onboarding({ onDone }) {
   }
 
   return (
-    <section className="ob ob-step">
+    <section className="ob px ob-step">
       <header className="ob-top">
         <button
           className="ob-back"
@@ -298,7 +299,7 @@ export default function Onboarding({ onDone }) {
 
         {step === "age" && (
           <>
-            <h1>{who}는 언제 태어났어요?</h1>
+            <h1>{eunNeun(who)} 언제 태어났어요?</h1>
             <p className="ob-sub">
               생일에 맞춰 나이와 모드를 자동으로 맞춰 드려요
             </p>
@@ -358,7 +359,7 @@ export default function Onboarding({ onDone }) {
 
         {step === "interests" && (
           <>
-            <h1>{who}는 무엇을 좋아하나요?</h1>
+            <h1>{eunNeun(who)} 무엇을 좋아하나요?</h1>
             <p className="ob-sub">원하는 만큼 골라 주세요</p>
             <div className="ob-chips">
               {INTERESTS.map((it) => (

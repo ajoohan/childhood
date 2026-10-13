@@ -340,7 +340,7 @@ export default function Speak({
   // ── 텍스트 챗 모드 ──
   if (mode === "text") {
     return (
-      <section className="chat-screen session speak-text">
+      <section className="chat-screen session speak-text px">
         <header className="header">
           <button className="back-btn" onClick={onBack} aria-label="뒤로">
             ←
@@ -362,7 +362,7 @@ export default function Speak({
             />
           </div>
           <div className="header-text">
-            <h1>💬 스피크</h1>
+            <h1>💬 말하기</h1>
             <p>별이가 도와줄게 · AI 도우미</p>
           </div>
           <button
@@ -460,7 +460,7 @@ export default function Speak({
 
   // ── 음성 통화 모드 ──
   return (
-    <section className="voice-mode">
+    <section className="voice-mode px">
       <header className="voice-top">
         <button className="voice-back" onClick={onBack}>
           ‹ 뒤로

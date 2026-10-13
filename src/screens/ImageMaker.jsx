@@ -44,7 +44,7 @@ export default function ImageMaker({ enabled, onBack }) {
   }
 
   return (
-    <section className="imgmaker">
+    <section className="imgmaker px">
       <header className="im-top">
         <button className="voice-back" onClick={onBack}>
           ‹ 뒤로

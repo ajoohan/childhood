@@ -6,7 +6,7 @@ export default function StickerBook({ stickers, onBack }) {
   const gotCount = STICKERS.filter((s) => owned[s.id]).length;
 
   return (
-    <section className="book">
+    <section className="book px">
       <header className="book-top">
         <button className="voice-back" onClick={onBack}>
           ‹ 뒤로

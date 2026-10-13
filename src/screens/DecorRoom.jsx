@@ -8,6 +8,7 @@ import {
 } from "../lib/decor.js";
 import { robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
+import { eulReul } from "../lib/josa.js";
 
 // 꾸미기 방 — 빈 칸을 자유롭게 채우고, "완성하기"를 누르면 그때 별이 한 번에
 // 소진된다(별이 날아가며 줄어드는 연출). 소진은 오직 이 콜렉션 완성 순간에만.
@@ -209,7 +210,7 @@ export default function DecorRoom({
               <div className="celebrate-cap">{theme.name} 완성! 📸</div>
             </div>
             <h2>축하해요! 🎉</h2>
-            <p>별 {theme.cost}개로 멋진 {theme.name}을(를) 완성했어요!</p>
+            <p>별 {theme.cost}개로 멋진 {eulReul(theme.name)} 완성했어요!</p>
             <button className="mm-yes wide" onClick={() => setCelebrate(false)}>
               좋아!
             </button>

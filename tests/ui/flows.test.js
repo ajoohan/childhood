@@ -88,3 +88,35 @@ test("콜렉션 탭에서 꾸미기 장소 목록이 보인다", async () => {
   assert.deepEqual(errors, []);
   await page.close();
 });
+
+// 저장값 없이 처음 연 앱: 시작 화면에서 가입 첫 단계로
+async function freshStart() {
+  const page = await browser.newPage({ viewport: { width: 402, height: 874 } });
+  await page.goto(BASE + "/", { waitUntil: "networkidle" });
+  await page.waitForSelector(".splash-primary", { timeout: 10000 });
+  return page;
+}
+
+test("시작·가입 화면: 홈과 같은 보라 포인트를 쓴다 (예전 초록·코랄 버튼이 아니다)", async () => {
+  const page = await freshStart();
+  const bg = (sel) => page.$eval(sel, (el) => getComputedStyle(el).backgroundColor);
+  const PURPLE = "rgb(124, 89, 186)";
+  assert.equal(await bg(".splash-primary"), PURPLE, "시작하기 버튼");
+  await page.click(".splash-primary");
+  await page.waitForSelector(".ob-step", { timeout: 8000 });
+  await page.fill(".ob-field input", "지안");
+  assert.equal(await bg(".ob-primary"), PURPLE, "다음 버튼");
+  await page.close();
+});
+
+test("가입 화면: 이름 뒤 조사가 받침에 맞는다 (지안은 / 서아는)", async () => {
+  for (const [name, expected] of [["지안", "지안은 언제 태어났어요?"], ["서아", "서아는 언제 태어났어요?"]]) {
+    const page = await freshStart();
+    await page.click(".splash-primary");
+    await page.waitForSelector(".ob-step", { timeout: 8000 });
+    await page.fill(".ob-field input", name);
+    await page.click(".ob-primary");
+    await page.waitForFunction((t) => document.querySelector(".ob-step h1")?.innerText.includes(t), expected, { timeout: 8000 });
+    await page.close();
+  }
+});

@@ -6,7 +6,7 @@ export default function BadgeBook({ badges, onBack }) {
   const gotCount = BADGES.filter((b) => owned.has(b.id)).length;
 
   return (
-    <section className="book">
+    <section className="book px">
       <header className="book-top">
         <button className="voice-back" onClick={onBack}>
           ‹ 뒤로

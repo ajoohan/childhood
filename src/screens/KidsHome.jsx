@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { recommendActivities } from "../lib/data.js";
 import Confetti from "../components/Confetti.jsx";
+import { iEge } from "../lib/josa.js";
+import AssetImg from "../components/AssetImg.jsx";
 
 // 시안 "새로운 유익한 놀이" 3카드 (Figma Home 62:78)
 const NEW_IDS = ["learn_hangul", "learn_nature", "learn_science"];
@@ -20,26 +22,6 @@ const TILE = {
 
 // 앱 실행 후 홈 첫 진입에서 환영 컨페티를 1회만
 let welcomedThisSession = false;
-
-// 에셋 이미지 오버레이 — /img/{name}.png 가 있으면 이모지 폴백을 덮어 씌우고,
-// 파일이 없으면(404) 스스로 사라져 이모지가 보인다.
-function AssetImg({ src, className, hideFallback = true }) {
-  return (
-    <img
-      className={className}
-      src={src}
-      alt=""
-      loading="lazy"
-      onError={(e) => e.currentTarget.remove()}
-      onLoad={(e) => {
-        // 바로 앞 형제가 이모지 폴백일 때만 숨긴다 (장식 레이어는 hideFallback=false)
-        if (!hideFallback) return;
-        const prev = e.currentTarget.previousElementSibling;
-        if (prev) prev.style.visibility = "hidden";
-      }}
-    />
-  );
-}
 
 // 이미지 카드 한 장 (라벨이 이미지 위에 얹히고 아래쪽에 어두운 그라데이션).
 // 반드시 컴포넌트 바깥에 둔다: KidsHome 안에서 정의하면 렌더마다 새 타입이 되어
@@ -194,7 +176,7 @@ export default function KidsHome({
       {recommended.length > 0 && (
         <section className="fx-sec">
           <h2 className="fx-sec-hd">
-            <b>{name || "친구"}~</b>이 에게 추천!
+            <b>{iEge(name || "친구")}</b> 추천!
           </h2>
           <span className="fx-mascot">
             <span className="fx-mascot-emoji">🤖</span>
