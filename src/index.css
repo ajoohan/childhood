@@ -4576,3 +4576,137 @@ a.guard-settings-link { text-decoration: none; color: inherit; margin-top: 10px;
   box-shadow: 0 6px 16px rgba(106, 74, 174, 0.28) !important;
 }
 .decor .decor-hint { color: #8B7FA3; }
+
+/* ============================================================
+   부모 존 · 설정 · PIN/보호자 확인 — 홈/채팅 시안과 같은 디자인 언어
+   (라벤더 배경 · 흰 카드 + 연보라 테두리 · 보라 #7C59BA 포인트)
+   기존 코랄 토큰(--accent 등)을 이 화면 안에서만 보라로 바꿔 var(--accent)를 쓰는 곳이
+   모두 따라오게 하고, 하드코딩된 색·입체 그림자만 아래에서 따로 덮는다. 범위: .px
+   ============================================================ */
+.guard-screen.px, .pin-card.px, .modal.px {
+  --accent: #7C59BA; --neon: #7C59BA; --neon2: #8B6FD0;
+  --text: #3A2A5C; --muted: #8B7FA3; --line: #EDE6F5; --surface-2: #F3ECFB;
+}
+.guard-screen.px { background: transparent !important; }
+
+/* 상단 바 */
+.guard-screen.px .top-bar {
+  background: rgba(255, 253, 239, 0.9) !important; border-bottom: 1px solid #EDE6F5;
+  box-shadow: none !important; backdrop-filter: blur(6px);
+}
+.guard-screen.px .logo { color: #3A2A5C; font-weight: 800; }
+.guard-screen.px .back-btn, .guard-screen.px .settings-btn {
+  background: #fff !important; border: 1px solid #EDE6F5; box-shadow: none !important; color: #7C59BA;
+}
+
+/* 카드 */
+.guard-screen.px .guard-card {
+  background: #fff; border: 1px solid #EDE6F5; border-radius: 16px; box-shadow: none !important;
+}
+.guard-screen.px .guard-card h3 { color: #3A2A5C; font-weight: 800; }
+.guard-screen.px .guard-hint, .guard-screen.px .guard-empty { color: #8B7FA3; }
+.guard-screen.px .prof-row > span:first-child, .guard-screen.px .prof-interests-label { color: #3A2A5C; }
+.guard-screen.px input, .guard-screen.px select {
+  background: #fff !important; border: 1px solid #EDE6F5 !important; color: #3A2A5C;
+  border-radius: 12px; box-shadow: none !important;
+}
+.guard-screen.px input:focus, .guard-screen.px select:focus { border-color: #7C59BA !important; outline: none; }
+
+/* 버튼 — 입체 빨간 버튼 대신 보라 알약 */
+.guard-screen.px .guard-btn:not(.danger):not(.ghost) {
+  background: #7C59BA !important; color: #fff !important; border-radius: 999px;
+  box-shadow: none !important; font-weight: 700;
+}
+.guard-screen.px .guard-btn:not(.danger):not(.ghost):disabled {
+  background: #E5DCF2 !important; color: #7C6BA0 !important;
+}
+.guard-screen.px .guard-btn.ghost {
+  background: #F3ECFB !important; color: #7C59BA !important; box-shadow: none !important;
+  border: none !important; border-radius: 999px;
+}
+.guard-screen.px .guard-btn.danger {
+  background: #fff !important; color: #D64560 !important; border: 1px solid #F3C6CF !important;
+  box-shadow: none !important; border-radius: 999px;
+}
+.guard-screen.px .guard-btn:active { transform: scale(0.97) !important; box-shadow: none !important; }
+
+/* 선택 상태: 아바타 · 관심사 칩 · 미션 이모지 · 연령 */
+.guard-screen.px .ava-pick, .guard-screen.px .ma-emoji, .guard-screen.px .prof-chip {
+  background: #F3ECFB !important; border: 1px solid transparent !important; color: #3A2A5C;
+  box-shadow: none !important;
+}
+.guard-screen.px .ava-pick.on, .guard-screen.px .ma-emoji.on {
+  border-color: #7C59BA !important; background: #fff !important; box-shadow: none !important;
+}
+.guard-screen.px .prof-chip.on {
+  background: #7C59BA !important; color: #fff !important; border-color: #7C59BA !important;
+}
+.guard-screen.px .age-opt { background: #F3ECFB !important; box-shadow: none !important; color: #3A2A5C; }
+.guard-screen.px .age-opt.on { background: #7C59BA !important; color: #fff !important; }
+.guard-screen.px .age-opt.on small, .guard-screen.px .age-opt.on b { color: #fff !important; }
+.guard-screen.px .mode-preview {
+  background: #F6F2FB !important; border: 1px solid #EDE6F5; color: #3A2A5C;
+}
+.guard-screen.px .age-opt.on > span:not(.age-now) { color: rgba(255, 255, 255, 0.85) !important; }
+.guard-screen.px .age-opt.on .age-now {
+  background: #fff !important; color: #7C59BA !important; font-weight: 700;
+}
+
+/* 미션 관리 · 알림 목록 */
+.guard-screen.px .mission-row { border-bottom-color: #EDE6F5; }
+.guard-screen.px .mr-title { color: #3A2A5C; }
+.guard-screen.px .mr-reward { color: #DB6A00; }
+.guard-screen.px .mr-del { background: #F3ECFB !important; color: #8B7FA3 !important; }
+.guard-screen.px .push-pending-tag { background: #FFF1DD; color: #B45F00; border: none; }
+.guard-screen.px .notice-item, .guard-screen.px .usage-item { border-color: #EDE6F5; }
+.guard-screen.px .usage-name { color: #3A2A5C; }
+.guard-screen.px .usage-count { color: #7C59BA; font-weight: 700; }
+.guard-screen.px .usage-summary { color: #8B7FA3; }
+.guard-screen.px .alert-card { border-color: #F4D27A; background: #FFFBF0; }
+
+/* 설정: 토글 · 목소리 · PIN */
+.guard-screen.px .toggle { background: #D9CFEA !important; }
+.guard-screen.px .toggle.on { background: #7C59BA !important; }
+.guard-screen.px .voice-opt {
+  background: #fff !important; border: 1px solid #EDE6F5 !important; box-shadow: none !important;
+}
+.guard-screen.px .voice-opt.on { border-color: #7C59BA !important; background: #F6F2FB !important; }
+.guard-screen.px .vo-emoji { background: #F3ECFB !important; }
+.guard-screen.px .vo-radio { border-color: #CFC2E6 !important; }
+.guard-screen.px .vo-radio.on { border-color: #7C59BA !important; }
+.guard-screen.px .vo-radio.on::after { background: #7C59BA !important; }
+.guard-screen.px .set-pin-dot.on { background: #7C59BA; }
+.guard-screen.px .guard-info li { color: #3A2A5C; }
+.guard-screen.px .guard-settings-link {
+  background: #fff !important; border: 1px solid #EDE6F5 !important; border-radius: 16px;
+  box-shadow: none !important;
+}
+.guard-screen.px .gsl-body b { color: #3A2A5C; }
+.guard-screen.px .gsl-body small, .guard-screen.px .gsl-arw { color: #8B7FA3; }
+.guard-screen.px .sub-card .sub-lead { color: #3A2A5C; }
+
+/* PIN 입력 · 보호자 확인 */
+.pin-card.px, .modal.px { background: #fff; border-radius: 24px; border: 1px solid #EDE6F5; }
+.pin-card.px h2, .modal.px h2 { color: #3A2A5C; font-weight: 800; }
+.pin-card.px .pin-sub, .modal.px p { color: #8B7FA3; }
+.pin-card.px .pin-dot { background: #E5DCF2 !important; box-shadow: none !important; }
+.pin-card.px .pin-dot.on { background: #7C59BA !important; }
+.pin-card.px .pin-key {
+  background: #F3ECFB !important; color: #3A2A5C !important; box-shadow: none !important;
+  border: none !important;
+}
+.pin-card.px .pin-key:active { background: #E5DCF2 !important; transform: scale(0.95) !important; }
+.pin-card.px .pin-key.ghost { background: transparent !important; }
+.pin-card.px .pin-link { color: #7C59BA !important; font-weight: 600; }
+.pin-card.px .pin-error, .pin-card.px .gate-error, .modal.px .gate-error { color: #D64560; }
+.pin-card.px .gate-q, .modal.px .gate-q { color: #3A2A5C; }
+.pin-card.px input, .modal.px input {
+  border: 1px solid #EDE6F5 !important; border-radius: 12px; color: #3A2A5C;
+  box-shadow: none !important; background: #fff !important;
+}
+.pin-card.px .gate-actions button, .modal.px .gate-actions button {
+  border-radius: 999px !important; box-shadow: none !important; font-weight: 700;
+}
+.pin-card.px #gateOk, .modal.px #gateOk { background: #7C59BA !important; color: #fff !important; }
+.pin-card.px #gateOk:disabled, .modal.px #gateOk:disabled { background: #CFC2E6 !important; }
+.pin-card.px #gateCancel, .modal.px #gateCancel { background: #F3ECFB !important; color: #7C59BA !important; }

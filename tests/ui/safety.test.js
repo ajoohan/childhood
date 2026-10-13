@@ -294,3 +294,17 @@ test("의견 보내기: 주소가 없으면 링크가 보이지 않는다", asyn
   assert.ok(await page.$("button.guard-settings-link"), "설정 링크는 그대로 있다");
   await page.close();
 });
+
+test("부모 화면: 홈과 같은 보라 포인트를 쓴다 (예전 코랄 버튼이 아니다)", async () => {
+  const page = await parentScreenWith(null);
+  const bg = (sel) => page.$eval(sel, (el) => getComputedStyle(el).backgroundColor);
+  const PURPLE = "rgb(124, 89, 186)";
+  assert.equal(await bg(".guard-btn:not(.ghost):not(.danger):not([disabled])"), PURPLE, "저장 버튼");
+  assert.equal(await bg(".prof-chip.on"), PURPLE, "선택된 관심사");
+
+  await page.click(".settings-btn");
+  await page.waitForSelector(".toggle.on", { timeout: 8000 });
+  assert.equal(await bg(".toggle.on"), PURPLE, "켜진 스위치");
+  assert.equal(await bg(".voice-opt.on .vo-radio, .voice-opt.on"), "rgb(246, 242, 251)", "선택된 목소리 카드");
+  await page.close();
+});

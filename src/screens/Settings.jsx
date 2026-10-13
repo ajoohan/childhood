@@ -68,7 +68,7 @@ export default function Settings({
   }
 
   return (
-    <section className="guard-screen">
+    <section className="guard-screen px">
       <header className="top-bar">
         <button className="back-btn" onClick={onBack} aria-label="뒤로">
           ←

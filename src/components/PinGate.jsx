@@ -107,7 +107,7 @@ export default function PinGate({ savedPin, onUnlock, onSetPin, onClose }) {
   if (phase === "forgot") {
     return (
       <div className="modal-backdrop" onClick={onClose}>
-        <div className="pin-card" onClick={(e) => e.stopPropagation()}>
+        <div className="pin-card px" onClick={(e) => e.stopPropagation()}>
           <div className="pin-lock">🔐</div>
           <h2>{cur.t}</h2>
           <p className="pin-sub">{cur.s}</p>
@@ -144,7 +144,7 @@ export default function PinGate({ savedPin, onUnlock, onSetPin, onClose }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="pin-card" onClick={(e) => e.stopPropagation()}>
+      <div className="pin-card px" onClick={(e) => e.stopPropagation()}>
         <div className="pin-lock">🔐</div>
         <h2>{cur.t}</h2>
         <p className="pin-sub">{cur.s}</p>

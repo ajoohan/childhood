@@ -42,7 +42,7 @@ export default function GateDialog({ onPass, onClose }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <div className="modal px" onClick={(e) => e.stopPropagation()}>
         <h2>보호자 확인</h2>
         <p>
           여기는 어른을 위한 공간이에요.
