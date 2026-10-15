@@ -8,6 +8,14 @@ const app = express();
 // 호스팅(Render 등) 프록시 뒤에서 실제 접속 IP를 인식하기 위함
 app.set("trust proxy", 1);
 
+// 키가 없으면 화면은 뜨지만 채팅만 조용히 실패한다. 시작 로그에 분명히 남긴다.
+if (!process.env.ANTHROPIC_API_KEY && process.env.NODE_ENV !== "test") {
+  console.error(
+    "⚠️  ANTHROPIC_API_KEY 가 설정되지 않았습니다. 채팅이 동작하지 않습니다. " +
+      "Render 대시보드 > Environment 에서 키를 추가하세요."
+  );
+}
+
 // 오디오 업로드(받아쓰기)만 큰 본문 허용, 나머지는 100kb로 남용 방지
 app.use((req, res, next) =>
   req.path === "/api/transcribe"
@@ -373,6 +381,12 @@ function sanitizeMessages(raw) {
   }
   return messages;
 }
+
+// 상태 확인 — 채팅에 필요한 API 키가 설정돼 있는지만 알려 준다(값은 노출하지 않는다).
+// 배포 후 "화면은 뜨는데 채팅만 안 될 때" 원인이 설정인지 가려내는 데 쓴다.
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true, chat: !!process.env.ANTHROPIC_API_KEY });
+});
 
 // Kids Zone 홈/활동 구성 데이터 (카테고리 타일 + 활동 목록)
 app.get("/api/activities", (req, res) => {

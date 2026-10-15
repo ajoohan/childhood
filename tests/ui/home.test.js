@@ -130,3 +130,12 @@ test("활동 목록: 카드마다 활동 이미지가 실제로 로드된다 (�
   assert.equal(imgs, cards, "모든 카드에 이미지가 있어야 한다");
   await page.close();
 });
+
+test("상태 확인: /api/health 는 키가 설정됐는지만 알려 주고 값은 노출하지 않는다", async () => {
+  const r = await fetch(BASE + "/api/health");
+  assert.equal(r.status, 200);
+  const j = await r.json();
+  assert.equal(j.ok, true);
+  assert.equal(typeof j.chat, "boolean");
+  assert.deepEqual(Object.keys(j).sort(), ["chat", "ok"], "다른 정보를 내보내면 안 된다");
+});
