@@ -154,3 +154,17 @@ test("normalizeFeedbackUrl: https와 mailto만 받고, 나머지는 버린다", 
     assert.equal(normalizeFeedbackUrl(bad), null, String(bad).slice(0, 40));
   }
 });
+
+import { upstreamErrorKind } from "../server.js";
+
+test("upstreamErrorKind: 상태 코드를 원인 분류로 바꾼다", () => {
+  assert.equal(upstreamErrorKind(401), "auth");
+  assert.equal(upstreamErrorKind(403), "permission");
+  assert.equal(upstreamErrorKind(404), "model_not_found");
+  assert.equal(upstreamErrorKind(400), "bad_request");
+  assert.equal(upstreamErrorKind(429), "rate_limit");
+  assert.equal(upstreamErrorKind(529), "overloaded");
+  assert.equal(upstreamErrorKind(500), "server");
+  assert.equal(upstreamErrorKind(503), "server");
+  for (const v of [null, undefined, "x", NaN]) assert.equal(upstreamErrorKind(v), "other", String(v));
+});

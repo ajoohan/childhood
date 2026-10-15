@@ -340,6 +340,7 @@ async function classifySafety(text, { failClosed = false, signal } = {}) {
     return JSON.parse(block.text).category;
   } catch (err) {
     console.error("safety classification failed:", err.message);
+    recordUpstreamError("safety", err);
     return failClosed ? "unavailable" : "safe";
   }
 }
@@ -382,10 +383,29 @@ function sanitizeMessages(raw) {
   return messages;
 }
 
-// 상태 확인 — 채팅에 필요한 API 키가 설정돼 있는지만 알려 준다(값은 노출하지 않는다).
-// 배포 후 "화면은 뜨는데 채팅만 안 될 때" 원인이 설정인지 가려내는 데 쓴다.
+// 마지막으로 난 상류(Anthropic) 오류의 종류. 상태 코드와 큰 분류만 담는다 — 메시지 본문은
+// 담지 않는다. 배포 후 "채팅만 안 될 때" 원인이 키·결제·모델·과부하 중 무엇인지 로그를 열지
+// 않고 가려내는 용도다.
+function upstreamErrorKind(status) {
+  if (status === 401) return "auth"; // 키가 잘못됨
+  if (status === 403) return "permission"; // 키의 권한 부족
+  if (status === 404) return "model_not_found"; // 이 계정에서 쓸 수 없는 모델
+  if (status === 400) return "bad_request"; // 요청 형식 또는 결제(크레딧 부족) 문제
+  if (status === 429) return "rate_limit";
+  if (status === 529) return "overloaded";
+  if (typeof status === "number" && status >= 500) return "server";
+  return "other"; // 상태 코드가 없는 오류(네트워크 등)
+}
+let lastUpstreamError = null;
+function recordUpstreamError(where, error) {
+  const status = typeof error?.status === "number" ? error.status : null;
+  lastUpstreamError = { where, status, kind: upstreamErrorKind(status), at: new Date().toISOString() };
+}
+
+// 상태 확인 — 채팅에 필요한 API 키가 설정돼 있는지, 마지막 상류 오류가 무엇이었는지만 알려 준다.
+// 키 값과 오류 메시지는 노출하지 않는다.
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, chat: !!process.env.ANTHROPIC_API_KEY });
+  res.json({ ok: true, chat: !!process.env.ANTHROPIC_API_KEY, lastError: lastUpstreamError });
 });
 
 // Kids Zone 홈/활동 구성 데이터 (카테고리 타일 + 활동 목록)
@@ -570,6 +590,7 @@ app.post("/api/chat", rateLimit, async (req, res) => {
     res.end();
   } catch (error) {
     if (upstream.signal.aborted) return; // 연결이 이미 끊겼다. 쓸 곳이 없다.
+    recordUpstreamError("chat", error);
     let message = `${HELPER_NAME}가 잠깐 딴생각을 했나 봐. 다시 한번 말해 줄래?`;
     if (error instanceof Anthropic.RateLimitError) {
       message = "지금 친구들이 너무 많이 놀러 왔어! 조금만 기다렸다가 다시 말해 줘.";
@@ -609,6 +630,7 @@ export {
   activityById,
   audioExtension,
   dayKey,
+  upstreamErrorKind,
   normalizeFeedbackUrl,
   scrubForPrompt,
   sanitizeProfile,
