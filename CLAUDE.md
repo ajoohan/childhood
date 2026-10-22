@@ -12,9 +12,15 @@
   서비스 이름을 `Childhood`로 바꾼 것이 중복의 원인으로 **추정**된다. **2026-10-22 사용자가 `banjjaktalk` 서비스를
   일시 중지(Suspend)했고 `childhood`를 남겼다.** 중지 뒤에도 `https://banjjaktalk.onrender.com`이 정상 응답하고
   채팅이 되는 것을 확인했으므로, 이 주소는 `childhood` 서비스의 것이다. 중지한 서비스는 삭제하지 않는다.
-- `render.yaml`의 `name`은 아직 `banjjaktalk`로, 남은 서비스의 이름(`childhood`)과 **다르다.** Blueprint가 연결돼
-  있는지 확인되지 않았다. 연결돼 있다면 이름이 다를 때 동기화 때 서비스가 또 생길 수 있다. **바꾸기 전에 사용자에게
-  Blueprint 연결 여부를 확인한다**(대시보드에 Blueprints 항목이 보이는지).
+- **Blueprint가 연결돼 있다**(사용자 스크린샷, 2026-10-22): 이름 "Childhood AI", 상태 Synced, 저장소
+  `ajoohan/childhood`, **추적 브랜치는 `main`이 아니라 개발 브랜치 `claude/ai-chat-kids-service-seznwa`**. 이 브랜치에
+  푸시할 때마다 `render.yaml`이 자동 반영된다. 아직 확인 안 된 것: 이 Blueprint가 **어느 서비스를 관리하는지**
+  (`banjjaktalk`=중지한 쪽인지 `childhood`인지), Auto Sync 설정.
+- `render.yaml`의 `name`은 `banjjaktalk`로, 살아 있는 서비스의 이름(`childhood`)과 **다르다.** 이름을 바꾸면 동기화 때
+  서비스가 또 생길 수 있다(과거 중복의 원인으로 추정). **Blueprint가 관리하는 서비스 목록을 확인하기 전에는 이름을
+  바꾸지 않는다.** `render.yaml`의 환경변수 값(`RL_GLOBAL_PER_DAY` 등)은 Blueprint가 관리하는 서비스에만 적용되므로,
+  `childhood`가 관리 대상이 아니면 대시보드에서 직접 바꿔야 한다.
+- 개발 브랜치를 삭제하면 Blueprint 추적이 끊긴다. 브랜치를 정리하기 전에 Blueprint의 추적 브랜치를 `main`으로 바꾼다.
 - `main`에 푸시하면 자동 배포된다. 무료 플랜이라 15분간 접속이 없으면 꺼지고 첫 응답이 느리다(10~20초 이상).
 - 필수 환경변수 `ANTHROPIC_API_KEY`는 Render 대시보드에서만 입력한다(`sync: false`). **키 값은 대화나 저장소에
   절대 적지 않는다.** 2026-10-15에는 서버의 키가 인증 오류(401)였고, 2026-10-22에 사용자가 새 키로 교체해
@@ -71,7 +77,7 @@
 
 ## 열려 있는 일 (사용자 결정/자료 필요)
 
-1. 중복 서비스 정리(Suspend)와 `render.yaml` 서비스 이름 맞추기(위 "배포" 절의 확인 필요 항목 먼저).
+1. Blueprint "Childhood AI"가 관리하는 서비스 확인 → `render.yaml` 서비스 이름 정리, Auto Sync 설정, 추적 브랜치를 `main`으로 변경.
 2. 홍보 문구: 2026-10-22 사용자 지시로 "AI 안전 검증" 배지(시작 화면·공유 이미지), "4.8 평점"(가입 안전 단계·구독
    안내, 꾸며낸 후기 포함), "주 100분 / 50장"을 삭제했다(`tests/claims.test.js`가 재유입을 막는다). **남은 것:**
    가입 안전 단계의 "대화·음성 기록·그림을 부모가 모두 열람 — 완전한 투명성", 구독 안내의 "음성 대화 기록 · 부모 열람"
