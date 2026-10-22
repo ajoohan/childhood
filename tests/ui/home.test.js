@@ -137,6 +137,7 @@ test("상태 확인: /api/health 는 키가 설정됐는지만 알려 주고 값
   const j = await r.json();
   assert.equal(j.ok, true);
   assert.equal(typeof j.chat, "boolean");
-  assert.deepEqual(Object.keys(j).sort(), ["chat", "lastError", "ok"], "다른 정보를 내보내면 안 된다");
+  assert.deepEqual(Object.keys(j).sort(), ["chat", "lastError", "ok", "startedAt"], "다른 정보를 내보내면 안 된다");
+  assert.ok(!Number.isNaN(Date.parse(j.startedAt)), "시작 시각은 날짜여야 한다");
   assert.ok(j.lastError === null || (typeof j.lastError.kind === "string" && !("message" in j.lastError)), "오류 메시지 본문은 내보내지 않는다");
 });

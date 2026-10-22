@@ -397,6 +397,8 @@ function upstreamErrorKind(status) {
   return "other"; // 상태 코드가 없는 오류(네트워크 등)
 }
 let lastUpstreamError = null;
+// 이 프로세스가 시작된 시각. 환경변수를 바꾼 뒤 서버가 실제로 다시 시작됐는지 확인하는 데 쓴다.
+const STARTED_AT = new Date().toISOString();
 function recordUpstreamError(where, error) {
   const status = typeof error?.status === "number" ? error.status : null;
   lastUpstreamError = { where, status, kind: upstreamErrorKind(status), at: new Date().toISOString() };
@@ -405,7 +407,12 @@ function recordUpstreamError(where, error) {
 // 상태 확인 — 채팅에 필요한 API 키가 설정돼 있는지, 마지막 상류 오류가 무엇이었는지만 알려 준다.
 // 키 값과 오류 메시지는 노출하지 않는다.
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, chat: !!process.env.ANTHROPIC_API_KEY, lastError: lastUpstreamError });
+  res.json({
+    ok: true,
+    chat: !!process.env.ANTHROPIC_API_KEY,
+    startedAt: STARTED_AT,
+    lastError: lastUpstreamError,
+  });
 });
 
 // Kids Zone 홈/활동 구성 데이터 (카테고리 타일 + 활동 목록)
