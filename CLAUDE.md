@@ -16,13 +16,15 @@
   생길 수 있다. **바꾸기 전에 사용자에게 Blueprint 연결 여부와 두 서비스의 이름·주소를 확인한다.**
 - `main`에 푸시하면 자동 배포된다. 무료 플랜이라 15분간 접속이 없으면 꺼지고 첫 응답이 느리다(10~20초 이상).
 - 필수 환경변수 `ANTHROPIC_API_KEY`는 Render 대시보드에서만 입력한다(`sync: false`). **키 값은 대화나 저장소에
-  절대 적지 않는다.** 2026-10-15 확인 결과 서버의 키가 인증 오류(401)였고, 사용자가 교체하기로 했다.
+  절대 적지 않는다.** 2026-10-15에는 서버의 키가 인증 오류(401)였고, 2026-10-22에 사용자가 새 키로 교체해
+  채팅과 안전 분류(위기 신호 `distress`, 개인정보 `personal_info`)가 정상으로 확인됐다. 환경변수를 바꾼 뒤에는
+  서버가 실제로 다시 시작돼야 반영되므로(저장만 하면 옛 값이 계속 돈다) `/api/health`의 `startedAt`으로 확인한다.
 - 선택 환경변수: `FEEDBACK_URL`(부모 화면 의견 링크), `RL_GLOBAL_PER_DAY`(테스트 기간에는 300 정도 권장),
   `RL_TZ`, `STT_API_KEY`, `IMAGE_API_KEY`. 자세한 설명은 `render.yaml` 주석.
 
 ### 배포 확인 방법
 
-- `GET /api/health` → `{ ok, chat, lastError }`. `chat`은 키가 설정됐는지, `lastError`는 마지막 상류 오류의
+- `GET /api/health` → `{ ok, chat, startedAt, lastError }`. `startedAt`은 서버 프로세스 시작 시각. `chat`은 키가 설정됐는지, `lastError`는 마지막 상류 오류의
   분류(`auth`=키 잘못됨, `bad_request`=결제/요청, `model_not_found`, `rate_limit`, `overloaded`)만 보여 준다.
 - 채팅이 "별이가 잠깐 딴생각을 했나 봐…"만 돌려주면 서버의 Anthropic 호출이 실패한 것이다. `/api/health`의
   `lastError`로 원인을 가린다.
@@ -58,7 +60,7 @@
 
 ## 열려 있는 일 (사용자 결정/자료 필요)
 
-1. Render `ANTHROPIC_API_KEY` 교체 후 채팅 재확인, 중복 서비스 정리(Suspend).
+1. 중복 서비스 정리(Suspend)와 `render.yaml` 서비스 이름 맞추기(위 "배포" 절의 확인 필요 항목 먼저).
 2. 홍보 문구: "AI 안전 검증 2026" 배지, "4.8 평점", "주 100분 / 50장", "부모가 그림·음성 기록 확인"은
    근거가 없거나 기능이 없다. 실제 서비스 전에 삭제할지 결정이 필요하다(테스트 기간에도 부모에게 보인다).
 3. `FEEDBACK_URL` 설정, 테스트 기간 안전장치(`RL_GLOBAL_PER_DAY`, Anthropic 월 한도).
