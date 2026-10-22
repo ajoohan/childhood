@@ -25,6 +25,11 @@ function ageNote(age) {
 }
 
 // 최초 실행 1회 — 부모가 진행하는 초기 설정(회원가입) 흐름
+// 구독 안내(페이월) 화면을 보여줄지. 결제가 구현돼 있지 않아 정식 서비스 전까지는 건너뛰고 무료로 시작한다.
+// (눌러도 결제 없이 구독 상태만 저장돼 부모 화면의 "구독: 준비 중"과 모순됐다.)
+// 결제를 붙일 때 true로 되돌리면 화면과 부모 확인 절차가 그대로 살아난다.
+const SHOW_PAYWALL = false;
+
 export default function Onboarding({ onDone }) {
   const [step, setStep] = useState("name"); // name|age|interests|safety|loading|paywall
   const [name, setName] = useState("");
@@ -46,14 +51,14 @@ export default function Onboarding({ onDone }) {
     if (step === "name" && nameRef.current) nameRef.current.focus();
   }, [step]);
 
-  // "경험 준비 중" 로딩 — 체크리스트 순차 표시 후 페이월로
+  // "경험 준비 중" 로딩 — 체크리스트 순차 표시 후 페이월로(꺼져 있으면 무료로 바로 시작)
   useEffect(() => {
     if (step !== "loading") return;
     setLoadStep(0);
     const t1 = setTimeout(() => setLoadStep(1), 800);
     const t2 = setTimeout(() => setLoadStep(2), 1700);
     const t3 = setTimeout(() => setLoadStep(3), 2600);
-    const t4 = setTimeout(() => setStep("paywall"), 3300);
+    const t4 = setTimeout(() => (SHOW_PAYWALL ? setStep("paywall") : finish("free")), 3300);
     return () => [t1, t2, t3, t4].forEach(clearTimeout);
   }, [step]);
 

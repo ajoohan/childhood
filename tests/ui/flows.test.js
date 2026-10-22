@@ -121,7 +121,7 @@ test("가입 화면: 이름 뒤 조사가 받침에 맞는다 (지안은 / 서�
   }
 });
 
-test("홍보 문구: 시작·가입·구독 안내 화면에 안전 인증 배지, 평점, 사용량 약속이 없다", async () => {
+test("홍보 문구: 시작·가입 화면에 근거 없는 문구가 없고, 가입이 끝나면 구독 안내 없이 무료로 홈에 간다", async () => {
   const page = await freshStart();
   const BANNED = /AI 안전 검증|안심 검증|4\.8|평점|어느 부모님|100분|50장|완전한 투명성|무제한 질문|음성 대화 기록|대화 기록·만든 그림/;
   assert.equal(await page.$(".splash-badge"), null, "시작 화면의 배지");
@@ -140,7 +140,13 @@ test("홍보 문구: 시작·가입·구독 안내 화면에 안전 인증 배�
     assert.doesNotMatch(await page.innerText("body"), BANNED, `가입 ${i + 1}단계`);
     await page.click(".ob-primary:not([disabled])");
   }
-  await page.waitForSelector(".ob-paywall", { timeout: 20000 });
-  assert.doesNotMatch(await page.innerText("body"), BANNED, "구독 안내");
+  // 결제가 없어서 구독 안내는 건너뛰고 홈으로 간다. 구독 안내 화면이 뜨면 안 된다.
+  await page.waitForSelector(".kids-home", { timeout: 20000 });
+  assert.equal(await page.$(".ob-paywall"), null, "구독 안내 화면은 건너뛴다");
+  assert.doesNotMatch(await page.innerText("body"), BANNED, "홈");
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")));
+  const profile = Object.values(saved.kids)[0].profile;
+  assert.equal(profile.plan, "free", "결제 없이 구독 상태가 저장되면 안 된다");
+  assert.equal(profile.onboarded, true);
   await page.close();
 });
