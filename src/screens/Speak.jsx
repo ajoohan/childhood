@@ -5,7 +5,7 @@ import { streamChat } from "../lib/streamChat.js";
 
 // 음성 목소리 프리셋 (브라우저 TTS의 pitch/rate로 개성 부여)
 export const VOICES = [
-  { id: "shimmer", name: "반짝이", emoji: "🤖", desc: "밝고 또랑또랑한 목소리", pitch: 1.15, rate: 1.02 },
+  { id: "shimmer", name: "별이", emoji: "🤖", desc: "밝고 또랑또랑한 목소리", pitch: 1.15, rate: 1.02 },
   { id: "echo", name: "부엉이", emoji: "🦉", desc: "차분하고 다정한 목소리", pitch: 0.9, rate: 0.95 },
   { id: "coral", name: "코랄", emoji: "🧭", desc: "명랑하고 활기찬 목소리", pitch: 1.3, rate: 1.06 },
 ];
