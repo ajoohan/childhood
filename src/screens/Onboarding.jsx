@@ -375,7 +375,7 @@ export default function Onboarding({ onDone }) {
               {[
                 {
                   icon: "🛡️",
-                  text: "100% 광고 없이, 안심하고 맡길 수 있는 안전한 놀이 공간",
+                  text: "광고 없이 아이에게 맞는 안전한 놀이 공간",
                 },
                 {
                   icon: "🔒",
