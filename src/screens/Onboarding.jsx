@@ -150,13 +150,13 @@ export default function Onboarding({ onDone }) {
             마음껏 선물하세요
           </h1>
           <p className="ob-pw-sub">
-            안전한 AI 음성 대화와 그림 만들기, 그리고 부모 대시보드 전체 이용.
+            안전한 AI 도우미와 함께하는 학습, 그리고 부모 대시보드 전체 이용.
           </p>
 
           <div className="ob-pw-feats">
             {[
-              "무제한 질문 — 안전하게 무엇이든 탐구",
-              "음성 대화 기록 · 부모 열람",
+              "AI가 활동 범위 안에서만 안전하게 도와줘요",
+              "부모 화면에서 사용 현황과 안전 알림을 확인해요",
             ].map((f, i) => (
               <div key={i} className="ob-pw-feat">
                 <span className="ob-pw-fcheck">✓</span>
@@ -186,8 +186,8 @@ export default function Onboarding({ onDone }) {
             <details>
               <summary>아이 활동을 볼 수 있나요?</summary>
               <p>
-                네. 부모 존 대시보드에서 대화 기록·만든 그림·음성 대화 기록을
-                모두 확인할 수 있어요.
+                네. 부모 화면에서 오늘과 전체 대화 횟수, 활동별 사용 현황,
+                안전 알림을 확인할 수 있어요.
               </p>
             </details>
             <details>
@@ -374,7 +374,7 @@ export default function Onboarding({ onDone }) {
                 },
                 {
                   icon: "🔒",
-                  text: "대화·음성 기록·그림을 부모가 모두 열람 — 완전한 투명성",
+                  text: "부모 화면에서 사용 현황과 안전 알림을 확인해요",
                 },
                 {
                   icon: "🎙️",

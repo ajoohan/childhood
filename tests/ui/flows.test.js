@@ -123,7 +123,7 @@ test("가입 화면: 이름 뒤 조사가 받침에 맞는다 (지안은 / 서�
 
 test("홍보 문구: 시작·가입·구독 안내 화면에 안전 인증 배지, 평점, 사용량 약속이 없다", async () => {
   const page = await freshStart();
-  const BANNED = /AI 안전 검증|안심 검증|4\.8|평점|어느 부모님|100분|50장/;
+  const BANNED = /AI 안전 검증|안심 검증|4\.8|평점|어느 부모님|100분|50장|완전한 투명성|무제한 질문|음성 대화 기록|대화 기록·만든 그림/;
   assert.equal(await page.$(".splash-badge"), null, "시작 화면의 배지");
   assert.doesNotMatch(await page.innerText("body"), BANNED, "시작 화면");
 
