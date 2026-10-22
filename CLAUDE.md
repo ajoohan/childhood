@@ -65,6 +65,10 @@
 - **작업이 끝나면 묻지 않고 `main`에 병합한다.** 병합 전에 `npm test`와 `npm run test:ui`가 모두 통과하고
   `npm audit --omit=dev --audit-level=high`가 깨끗해야 한다. 실패하거나 `main`과 갈라져 강제 푸시가
   필요하면 병합하지 않고 알린다. 빨리감기(fast-forward)로만 병합한다.
+- **병합 뒤에는 GitHub CI 결과도 확인한다.** 로컬 통과와 별개다. `gh api "repos/ajoohan/childhood/actions/runs?branch=main&per_page=3"`
+  로 최근 실행의 결과를 보고, 실패하면 작업(`.../runs/<id>/jobs`)을 보고 원인을 가린다(로그 본문은 이 도구로 못 받는다).
+  2026-10-22에 취약점 검사 작업이 문서만 바꾼 커밋에서 한 번 실패했다가 `.../runs/<id>/rerun-failed-jobs`
+  (POST) 재실행에서 통과했다 — 일시적 오류로 추정. 재실행해도 실패하면 로컬에서 같은 명령을 돌려 원인을 찾는다.
 - 개발 브랜치는 `claude/ai-chat-kids-service-seznwa`.
 - 새 테스트는 **수정을 되돌렸을 때 실제로 실패하는지**(변이 검증) 확인한다. 화면 테스트는 동시에 여러 개
   돌려도 통과해야 한다(불안정 방지).
