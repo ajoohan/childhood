@@ -156,8 +156,6 @@ export default function Onboarding({ onDone }) {
           <div className="ob-pw-feats">
             {[
               "무제한 질문 — 안전하게 무엇이든 탐구",
-              "매주 100분 음성 대화",
-              "매주 50장 상상 그림 만들기",
               "음성 대화 기록 · 부모 열람",
             ].map((f, i) => (
               <div key={i} className="ob-pw-feat">
@@ -181,17 +179,6 @@ export default function Onboarding({ onDone }) {
                 <span className="ob-plan-per">{plans[p].per}</span>
               </button>
             ))}
-          </div>
-
-          <div className="ob-pw-trust">
-            <div className="ob-pw-stars">★★★★★</div>
-            <p className="ob-pw-rating">
-              <b>4.8</b> · 부모 후기 평점
-            </p>
-            <div className="ob-pw-review">
-              "책이 지루하다던 아이가 이제 '5분만 더' 하며 Childhood를 찾아요."
-              <span>— 어느 부모님</span>
-            </div>
           </div>
 
           <div className="ob-pw-faq">
@@ -399,10 +386,6 @@ export default function Onboarding({ onDone }) {
                   <span>{c.text}</span>
                 </div>
               ))}
-            </div>
-            <div className="ob-rating">
-              <span className="ob-rating-num">4.8</span>
-              <span className="ob-rating-sub">부모 후기 평균 평점</span>
             </div>
           </>
         )}

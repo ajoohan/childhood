@@ -222,18 +222,6 @@ export function interestEmojis(interestIds) {
     .filter(Boolean);
 }
 
-// 스플래시용 안전 인증 배지 — 상표 무관 오리지널 (교육 앱스토어 배지 아님)
-export const SAFETY_BADGE = `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI 안전 검증 2026" class="badge-svg">
-  <defs><linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0" stop-color="#3FC7C4"/><stop offset="1" stop-color="#1FA6A3"/></linearGradient></defs>
-  <path d="M60 6 L108 22 V64 Q108 104 60 130 Q12 104 12 64 V22 Z" fill="url(#shield)" stroke="#fff" stroke-width="4"/>
-  <path d="M42 60 l12 12 l24 -26" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="60" y="34" text-anchor="middle" fill="#fff" font-size="13" font-weight="800" font-family="sans-serif">AI 안전</text>
-  <path d="M6 78 H114 L104 96 H16 Z" fill="#F5883C" stroke="#fff" stroke-width="3"/>
-  <text x="60" y="92" text-anchor="middle" fill="#fff" font-size="12" font-weight="800" font-family="sans-serif" letter-spacing="1">안심 검증</text>
-  <text x="60" y="120" text-anchor="middle" fill="#fff" font-size="15" font-weight="800" font-family="sans-serif" letter-spacing="1">2026</text>
-</svg>`;
-
 // 스플래시 장식 — 하트 + 물감 방울
 export const SPLASH_DECO = `<svg viewBox="0 0 120 90" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="deco-svg">
   <path d="M78 30 C78 20 92 20 92 32 C92 20 106 20 106 30 C106 42 92 52 92 52 C92 52 78 42 78 30 Z" fill="#FF5A5A"/>

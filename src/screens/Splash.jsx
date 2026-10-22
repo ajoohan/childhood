@@ -1,14 +1,10 @@
-import { SPLASH_ROBOT, SAFETY_BADGE, SPLASH_DECO } from "../lib/data.js";
+import { SPLASH_ROBOT, SPLASH_DECO } from "../lib/data.js";
 
 // 시작 화면(스플래시) — 참고 톤: 크림/피치 배경 + 파란 로봇 마스코트
 export default function Splash({ onStart, onParent }) {
   return (
     <section className="splash px">
       <div className="splash-hero">
-        <span
-          className="splash-badge"
-          dangerouslySetInnerHTML={{ __html: SAFETY_BADGE }}
-        />
         <span
           className="splash-deco"
           dangerouslySetInnerHTML={{ __html: SPLASH_DECO }}

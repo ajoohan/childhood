@@ -120,3 +120,27 @@ test("가입 화면: 이름 뒤 조사가 받침에 맞는다 (지안은 / 서�
     await page.close();
   }
 });
+
+test("홍보 문구: 시작·가입·구독 안내 화면에 안전 인증 배지, 평점, 사용량 약속이 없다", async () => {
+  const page = await freshStart();
+  const BANNED = /AI 안전 검증|안심 검증|4\.8|평점|어느 부모님|100분|50장/;
+  assert.equal(await page.$(".splash-badge"), null, "시작 화면의 배지");
+  assert.doesNotMatch(await page.innerText("body"), BANNED, "시작 화면");
+
+  await page.click(".splash-primary");
+  for (let i = 0; i < 4; i++) {
+    await page.waitForSelector(".ob-step", { timeout: 8000 });
+    const name = await page.$(".ob-field input:not([type=number])");
+    if (name && !(await name.inputValue())) await name.fill("지안");
+    for (const s of await page.$$("select")) {
+      const o = await s.$$eval("option", (x) => x.map((y) => y.value).filter(Boolean));
+      if (o.length) await s.selectOption(o[Math.min(3, o.length - 1)]);
+    }
+    for (const c of (await page.$$(".ob-chip")).slice(0, 2)) await c.click().catch(() => {});
+    assert.doesNotMatch(await page.innerText("body"), BANNED, `가입 ${i + 1}단계`);
+    await page.click(".ob-primary:not([disabled])");
+  }
+  await page.waitForSelector(".ob-paywall", { timeout: 20000 });
+  assert.doesNotMatch(await page.innerText("body"), BANNED, "구독 안내");
+  await page.close();
+});

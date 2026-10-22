@@ -1210,16 +1210,6 @@ body {
 }
 .splash-robot-svg { width: 100%; height: auto; display: block; }
 
-.splash-badge {
-  position: absolute;
-  top: -2%;
-  left: -2%;
-  z-index: 3;
-  width: 27%;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.2));
-}
-.badge-svg { width: 100%; height: auto; display: block; }
-
 .splash-deco {
   position: absolute;
   top: 2%;
@@ -1469,10 +1459,6 @@ body {
   place-items: center;
   font-size: 22px;
 }
-.ob-rating { margin: 28px 0 8px; text-align: center; }
-.ob-rating-num { display: block; font-size: 46px; font-weight: 900; color: #2b2117; }
-.ob-rating-sub { font-size: 14px; color: #9c8a7b; font-weight: 600; }
-
 .ob-cta {
   padding: 12px 24px calc(20px + env(safe-area-inset-bottom));
   background: linear-gradient(180deg, rgba(248,221,207,0), #F8DDCF 40%);
@@ -1661,23 +1647,6 @@ body {
 .ob-plan-name { font-size: 16px; color: #2b2117; }
 .ob-plan-price { font-size: 22px; font-weight: 900; color: #2b2117; margin-top: 2px; }
 .ob-plan-per { font-size: 12.5px; color: #9c8a7b; font-weight: 600; }
-
-.ob-pw-trust { margin-top: 26px; text-align: center; }
-.ob-pw-stars { color: #FFB400; font-size: 22px; letter-spacing: 2px; }
-.ob-pw-rating { margin-top: 6px; font-size: 14px; color: #7a6b5d; }
-.ob-pw-rating b { color: #2b2117; font-size: 16px; }
-.ob-pw-review {
-  margin-top: 14px;
-  background: #fffdfb;
-  border-radius: 16px;
-  padding: 16px 18px;
-  font-size: 15px;
-  line-height: 1.55;
-  color: #4a3d30;
-  font-weight: 600;
-  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.06);
-}
-.ob-pw-review span { display: block; margin-top: 8px; font-size: 13px; color: #9c8a7b; font-weight: 700; }
 
 .ob-pw-faq { margin-top: 26px; }
 .ob-pw-faq h3 { font-size: 17px; font-weight: 800; color: #2b2117; margin-bottom: 10px; }
@@ -2635,7 +2604,7 @@ body {
 
 /* 카드/시트/모달 → 다크 표면 + 네온 라인 + 글로우 */
 .parent-banner, .guard-card, .act-card, .coll-item, .mb-item, .mb-attend.done,
-.sub-card, .ob-field, .ob-safe-card, .ob-pw-feat, .ob-pw-review, .sparks-way,
+.sub-card, .ob-field, .ob-safe-card, .ob-pw-feat, .sparks-way,
 .voice-opt, .sheet, .pin-card, .mission-modal, .celebrate, .modal, .live-stt,
 .voice-reply, .ob-plan, .ob-pw-faq details, .ask-bar, .age-opt, .sub-card {
   background: var(--surface) !important;
@@ -3235,7 +3204,7 @@ input, .composer input, .ob-field input, .im-bar input { font-size: 18px !import
 
 /* 카드·시트·모달: 흰 표면 + 아주 부드러운 그림자 */
 .parent-banner, .guard-card, .act-card, .coll-item, .mb-item, .sub-card,
-.ob-field, .ob-safe-card, .ob-pw-feat, .ob-pw-review, .sparks-way, .voice-opt,
+.ob-field, .ob-safe-card, .ob-pw-feat, .sparks-way, .voice-opt,
 .sheet, .pin-card, .mission-modal, .celebrate, .modal, .live-stt, .voice-reply,
 .ob-plan, .ob-pw-faq details, .ask-bar, .age-opt, .badge-card, .book-count,
 .hd-menu, .caption, .mb-attend.done {
@@ -4768,9 +4737,6 @@ a.guard-settings-link { text-decoration: none; color: inherit; margin-top: 10px;
   background: #fff !important; border: 1px solid #EDE6F5 !important; border-radius: 16px; box-shadow: none !important; color: #3A2A5C;
 }
 .ob.px .ob-safe-icon { background: #F3ECFB !important; }
-.ob.px .ob-rating-num { color: #7C59BA; }
-.ob.px .ob-rating-sub { color: #8B7FA3; }
-
 /* 버튼 */
 .ob.px .ob-primary {
   background: #7C59BA !important; color: #fff !important; border-radius: 999px;
@@ -4795,9 +4761,8 @@ a.guard-settings-link { text-decoration: none; color: inherit; margin-top: 10px;
 .ob.px .ob-plan-tag { background: #FFF1DD !important; color: #B45F00 !important; }
 .ob.px .ob-plan-name, .ob.px .ob-plan-price { color: #3A2A5C; }
 .ob.px .ob-plan-per { color: #8B7FA3; }
-.ob.px .ob-pw-trust, .ob.px .ob-pw-faq details { background: #fff !important; border: 1px solid #EDE6F5 !important; box-shadow: none !important; }
-.ob.px .ob-pw-stars { color: #DB6A00; }
-.ob.px .ob-pw-note, .ob.px .ob-pw-rating, .ob.px .ob-pw-review { color: #8B7FA3; }
+.ob.px .ob-pw-faq details { background: #fff !important; border: 1px solid #EDE6F5 !important; box-shadow: none !important; }
+.ob.px .ob-pw-note { color: #8B7FA3; }
 .ob.px .ob-pw-cta { background: linear-gradient(180deg, rgba(255,253,239,0), #F9F4FF 40%); }
 .ob.px h1, .ob.px .ob-pw-title { word-break: keep-all; }
 
