@@ -1,9 +1,16 @@
-# Render.com Blueprint — GitHub 저장소를 연결하면 이 파일대로 자동 배포됩니다.
+# Render.com Blueprint ("Childhood AI")
+#
+# ⚠️ 이 파일은 지금 살아 있는 서비스를 관리하지 않는다 (2026-10-22 대시보드에서 확인).
+#    이 Blueprint가 관리하는 서비스는 중지(Suspended)된 `banjjaktalk` 하나뿐이고,
+#    실제로 서비스 중인 `childhood`(주소 banjjaktalk.onrender.com)는 대시보드에서 직접 관리된다.
+#    따라서 아래 환경변수 값과 설정은 `childhood`에 적용되지 않는다. 값을 바꾸려면 Render 대시보드의
+#    childhood 서비스 > Environment 에서 직접 바꾼다.
+#    `name`을 바꾸거나 새 서비스 이름을 쓰면 동기화 때 서비스가 새로 생기니 바꾸지 않는다.
 # https://render.com > New > Blueprint > 이 저장소 선택
 services:
   - type: web
-    # Render는 이름으로 블루프린트를 매칭한다. 대시보드의 실제 서비스명과
-    # 일치해야 Sync 때 서비스가 새로 생기지 않는다.
+    # Render는 이름으로 블루프린트를 매칭한다. 이 이름은 Blueprint가 관리하는 서비스(중지된
+    # banjjaktalk)의 이름이다. 바꾸면 Sync 때 서비스가 새로 생긴다.
     name: banjjaktalk
     runtime: node
     plan: free
