@@ -11,7 +11,7 @@ test("홈: 시안의 주요 요소가 모두 그려진다", async () => {
   const has = async (sel) => (await page.$(sel)) !== null;
 
   assert.ok(await has(".fx-hd"), "헤더");
-  assert.ok(await has(".fx-premium"), "프리미엄 배너");
+  assert.ok(!(await has(".fx-premium")), "결제가 없으니 프리미엄 배너도 없다");
   assert.equal((await page.$$(".fx-tile")).length, 2, "큰 타일 2개");
   assert.ok(await has(".fx-composer"), "하단 입력 바");
   assert.ok((await page.$$(".fx-card")).length > 0, "활동 카드");
@@ -47,7 +47,7 @@ test("활동 카드를 누르면 채팅 화면이 열린다", async () => {
   await page.waitForSelector(".chat-screen", { timeout: 8000 });
   assert.ok(await page.$(".cx-hd"), "채팅 헤더");
   assert.ok(await page.$(".cx-composer"), "채팅 입력 바");
-  assert.match(await page.innerText(".cx-title"), /Kids AI 채팅/);
+  assert.match(await page.innerText(".cx-title"), /별이와 대화/);
   assert.deepEqual(errors, []);
   await page.close();
 });

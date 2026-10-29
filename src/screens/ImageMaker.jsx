@@ -60,7 +60,7 @@ export default function ImageMaker({ enabled, onBack }) {
             <span className="im-ph-emoji">🖼️</span>
             <p>그림 만들기는 준비 중이에요.</p>
             <small className="im-note">
-              부모님이 이미지 만들기 기능을 켜면 사용할 수 있어요.
+              곧 만날 수 있어요. 조금만 기다려 줘!
             </small>
           </div>
         ) : status === "loading" ? (

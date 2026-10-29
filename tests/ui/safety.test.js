@@ -147,7 +147,7 @@ test("손상된 저장값으로도 앱이 흰 화면이 되지 않는다", async
 // 유저 변경 시트를 열고 "새 아이 추가"를 누른다
 async function tapAddKid(page) {
   await page.click(".fx-ava");
-  await page.click("text=유저 변경");
+  await page.click("text=프로필 바꾸기");
   await page.waitForSelector(".kid-item.add", { timeout: 8000 });
   await page.click(".kid-item.add");
 }

@@ -676,7 +676,8 @@ body {
   line-height: 1.6;
   font-size: 1rem;
   white-space: pre-wrap;
-  word-break: break-word;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
@@ -886,7 +887,8 @@ body {
   font-size: 0.86rem;
   color: #4a4335;
   margin-top: 4px;
-  word-break: break-word;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .alert-tip {
@@ -4879,3 +4881,33 @@ a.guard-settings-link { text-decoration: none; color: inherit; margin-top: 10px;
 /* 활동 목록 좌우 여백을 헤더와 맞춘다 */
 .activity-list.px { padding: 16px 20px 0 !important; }
 .activity-list.px .act-grid { padding: 4px 0 24px !important; }
+
+/* ── UI 전수점검 보완 (2026-10-29) ── */
+/* 한국어는 어절 단위로 줄을 바꾼다("이야/기"처럼 낱말 중간에서 끊기지 않게). 긴 영문·주소는 넘치기 전에 끊는다. */
+body { word-break: keep-all; overflow-wrap: break-word; }
+input, textarea { word-break: normal; }
+
+/* 터치 영역 최소 44px — 보이는 크기는 그대로 두고 눌리는 범위만 넓힌다. */
+:where(.fx-cplus, .fx-cmic, .fx-cai, .cx-mic, .cx-send, .back-btn, .fx-star) { position: relative; }
+.fx-cplus::after, .fx-cmic::after, .fx-cai::after, .cx-mic::after, .cx-send::after,
+.back-btn::after, .fx-star::after {
+  content: ""; position: absolute; inset: -9px -6px;
+}
+.fx-star::after { inset: -6px; }
+.back-btn::after { inset: -4px; }
+.mb-do, .voice-pick { min-height: 44px; }
+.voice-back, .pin-link {
+  min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* 하단 탭: 꺼진 탭의 글자도 읽히게 (어두운 바탕 대비 4.5:1 이상) */
+.tab { color: rgba(255, 255, 255, 0.86) !important; }
+.tab .tab-svg { opacity: 0.7; }
+.tab.speak { color: rgba(255, 255, 255, 0.86) !important; }
+.tab.active, .tab.speak.active { color: #FFEEE2 !important; }
+
+/* 좁은 화면(360px 이하)에서 인사말이 별 알약에 가려지지 않게 */
+.fx-hi-1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 380px) {
+  .fx-hi-2 { font-size: 17px; white-space: normal; }
+}

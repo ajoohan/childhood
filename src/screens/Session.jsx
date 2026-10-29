@@ -140,7 +140,7 @@ export default function Session({
         <button className="cx-btn back" onClick={onBack} aria-label="뒤로">
           <img src="/img/btn-back.svg" alt="" />
         </button>
-        <h1 className="cx-title">Kids AI 채팅</h1>
+        <h1 className="cx-title">별이와 대화</h1>
         <span className="cx-btn more" aria-hidden="true">
           <img src="/img/btn-more.svg" alt="" />
         </span>
@@ -190,6 +190,7 @@ export default function Session({
         <input
           ref={inputRef}
           type="text"
+          aria-label="별이에게 보낼 말"
           maxLength={1000}
           placeholder={speech.listening ? "듣고 있어요…" : "뭐든지 물어봐요~!"}
           autoComplete="off"

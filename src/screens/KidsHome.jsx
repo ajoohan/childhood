@@ -5,6 +5,9 @@ import { iEge } from "../lib/josa.js";
 import AssetImg from "../components/AssetImg.jsx";
 
 // 시안 "새로운 유익한 놀이" 3카드 (Figma Home 62:78)
+// 결제가 없어서 숨긴다. 결제를 붙일 때 true로 (가입 화면의 SHOW_PAYWALL과 짝).
+const SHOW_PREMIUM_BANNER = false;
+
 const NEW_IDS = ["learn_hangul", "learn_nature", "learn_science"];
 
 // 시안 하단 리스트 3행 (Figma Home 62:96 / 62:101 / 62:106)
@@ -74,9 +77,9 @@ export default function KidsHome({
   // 프로필(아바타) 팝업 메뉴 — 편집·유저 변경·업적·히스토리
   const MENU = [
     { icon: "✏️", label: "프로필 편집", go: onParent },
-    { icon: "👥", label: "유저 변경", go: () => setSwitcherOpen(true) },
+    { icon: "👥", label: "프로필 바꾸기", go: () => setSwitcherOpen(true) },
     { icon: "🏅", label: "내 배지", go: onBadges },
-    { icon: "🕘", label: "챗 히스토리", go: onCollection },
+    { icon: "🕘", label: "대화 기록", go: onCollection },
     { icon: "🖼️", label: "그림 만들기", go: onImageMaker, pending: !imageEnabled },
   ];
 
@@ -141,7 +144,9 @@ export default function KidsHome({
         </button>
       </header>
 
-      {/* 프리미엄 배너 — 누르면 부모 인증(PIN) 뒤 부모 존 구독. 아이 직접 결제 없음 */}
+      {/* 프리미엄 배너 — 누르면 부모 인증(PIN) 뒤 부모 존 구독. 아이 직접 결제 없음.
+          결제가 구현돼 있지 않아 숨긴다(SHOW_PAYWALL과 같은 이유). 결제를 붙일 때 true로. */}
+      {SHOW_PREMIUM_BANNER && (
       <button className="fx-premium" onClick={onParent}>
         <span className="fx-crown">
           <span className="fx-crown-emoji">👑</span>
@@ -154,6 +159,7 @@ export default function KidsHome({
           </svg>
         </span>
       </button>
+      )}
 
       {/* 큰 타일 2개 */}
       <div className="fx-tiles">
@@ -229,7 +235,9 @@ export default function KidsHome({
               <path d="M12 5v14M5 12h14" />
             </svg>
           </button>
-          <span className="fx-ctext" onClick={() => onPickActivity(ask)}>
+          <span className="fx-ctext" role="button" tabIndex={0}
+            onClick={() => onPickActivity(ask)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onPickActivity(ask); }}>
             뭐든지 물어봐요~!
           </span>
           <button className="fx-cmic" onClick={() => onPickActivity(ask)} aria-label="말하기">
@@ -254,7 +262,7 @@ export default function KidsHome({
             <div className="sparks-hd">
               <span className="sparks-star">👥</span>
               <div>
-                <b>유저 변경</b>
+                <b>프로필 바꾸기</b>
                 <small>누가 이야기할까요?</small>
               </div>
             </div>
