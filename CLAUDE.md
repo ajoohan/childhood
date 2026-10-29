@@ -76,6 +76,13 @@
 - 저장 키 `banjjaktalk_v2`(localStorage)는 **절대 바꾸지 않는다.** 바꾸면 기존 사용자의 데이터가 사라진다.
 - 응답은 한국어, 한 줄 요약 → 근거 → 남은 일 순서로 짧게.
 
+## 테스트 운영 (2026-10-29)
+
+- 부모 테스터에게 보낼 안내·초대 메시지·시나리오·한계 고지는 `docs/tester-guide.md`. 앱은 `manifest.webmanifest`와
+  아이콘(`public/icon-*.png`, `apple-touch-icon.png`)이 있어 "홈 화면에 추가"가 된다(`tests/manifest.test.js`).
+- 의존성 취약점 검사는 새 권고가 나오면 문서만 바꾼 커밋에서도 실패할 수 있다. 병합 전 `npm audit`가 깨지면
+  `npm audit fix`(잠금 파일만)로 고치고 테스트를 다시 돌린다.
+
 ## 화면 스타일
 
 홈·채팅(Figma 시안)과 같은 디자인 언어를 쓴다: 라벤더 배경(`#FFFDEF → #F7EFFF`), 흰 카드 + 연보라 테두리
