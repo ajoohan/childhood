@@ -445,6 +445,8 @@ app.get("/api/health", (req, res) => {
     chat: !!process.env.ANTHROPIC_API_KEY,
     startedAt: STARTED_AT,
     lastError: lastUpstreamError,
+    // 임시 진단(요청자 자신의 헤더만 되돌려 준다): 프록시 단계 수 확인 후 제거한다.
+    ...(req.query.diag === "1" ? { diag: { ip: req.ip, ips: req.ips, xff: req.headers["x-forwarded-for"] || null, cfip: req.headers["cf-connecting-ip"] || null, trueip: req.headers["true-client-ip"] || null } } : {}),
   });
 });
 
