@@ -94,3 +94,31 @@ test("보안 헤더가 붙고 서버 종류는 알리지 않는다", async () =>
   assert.equal(r.headers.get("x-frame-options"), "DENY");
   assert.equal(r.headers.get("x-powered-by"), null);
 });
+
+test("IP별 제한은 접속자마다 따로다 (프록시 내부 주소를 함께 쓰지 않는다)", async () => {
+  const port = await freePort();
+  const url = `http://localhost:${port}`;
+  const p2 = spawn("node", ["server.js"], {
+    env: { PATH: process.env.PATH, PORT: String(port), NODE_ENV: "production", RL_PER_MIN: "3", ANTHROPIC_API_KEY: "test-key-not-real" },
+    stdio: "ignore",
+  });
+  try {
+    for (let i = 0; i < 100; i++) {
+      try { if ((await fetch(url + "/api/health")).ok) break; } catch {}
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    // Render: X-Forwarded-For = "접속자, Cloudflare, Render 내부". 맨 오른쪽만 읽으면 모두 한 사람으로 센다.
+    const hit = (client) =>
+      fetch(url + "/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Forwarded-For": `${client}, 172.71.0.1, 10.0.0.1` },
+        body: JSON.stringify({ messages: "잘못된 본문" }), // 400이지만 요청 제한에는 센다
+      });
+    const a = [];
+    for (let i = 0; i < 4; i++) a.push((await hit("203.0.113.10")).status);
+    assert.deepEqual(a, [400, 400, 400, 429], "한 접속자는 분당 3회(테스트 설정)");
+    assert.equal((await hit("203.0.113.11")).status, 400, "다른 접속자는 막히지 않는다");
+  } finally {
+    p2.kill();
+  }
+});

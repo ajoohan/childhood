@@ -5,8 +5,14 @@ import Anthropic from "@anthropic-ai/sdk";
 const client = new Anthropic();
 const app = express();
 
-// 호스팅(Render 등) 프록시 뒤에서 실제 접속 IP를 인식하기 위함
-app.set("trust proxy", 1);
+// 호스팅(Render 등) 프록시 뒤에서 실제 접속 IP를 인식하기 위함.
+// Render에서 실측한 X-Forwarded-For는 "접속자, Cloudflare, Render 내부" 세 칸이다(2026-11-05, /api/health?diag=1).
+// 예전의 1은 맨 오른쪽 Render 내부 주소(10.x)를 접속자로 읽어, 모든 사용자가 한 칸의 IP별 제한
+// (분당 15회·하루 200회)을 함께 쓰고 있었다. 3이면 접속자 주소를 읽는다. 구조가 바뀌면 TRUST_PROXY_HOPS로 맞춘다.
+const TRUST_PROXY_HOPS = Number.isInteger(Number(process.env.TRUST_PROXY_HOPS)) && process.env.TRUST_PROXY_HOPS !== ""
+  ? Number(process.env.TRUST_PROXY_HOPS)
+  : 3;
+app.set("trust proxy", TRUST_PROXY_HOPS);
 
 // 서버 종류를 알리지 않고, 브라우저가 형식을 추측하거나 다른 사이트 안에 이 화면을 끼워 넣지 못하게 한다.
 app.disable("x-powered-by");
