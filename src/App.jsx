@@ -25,6 +25,7 @@ import {
   loadStore,
   persist,
   rollDay,
+  todayKey,
   emptyKid,
   newKidId,
   MAX_STORED_MESSAGES,
@@ -100,6 +101,19 @@ export default function App() {
     });
   }, [histories, safety, notices, settings, profile, rewards, parentMissions, decor, badges, stickers, activeKid, kids]);
 
+  // 앱을 연 채로(홈 화면 앱을 밤새 두는 등) 날짜가 바뀌면 미션·출석을 새로 연다. 지금까지는 기록을
+  // 쓰는 동작이 있어야만 날짜가 넘어가서, 아침에도 어제의 "완료 ✓"가 그대로 보였다.
+  useEffect(() => {
+    const roll = () => setRewards((r) => (r.day === todayKey() ? r : rollDay(r)));
+    const onVisible = () => document.visibilityState === "visible" && roll();
+    document.addEventListener("visibilitychange", onVisible);
+    const timer = setInterval(roll, 60_000);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(timer);
+    };
+  }, []);
+
   // 아이 슬라이스 일괄 로드 (전환/추가 시)
   function loadKidSlices(k) {
     setProfile(k.profile);
@@ -131,6 +145,20 @@ export default function App() {
     setKids((m) => ({ ...m, [activeKid]: kidSnapshot(), [id]: k }));
     setActiveKid(id);
     loadKidSlices(k);
+    setGuardUnlocked(false);
+    setZone("kids");
+    setView({ name: "home" });
+  }
+
+  // 새 아이 추가를 취소 — 비어 있는 프로필을 지우고 원래 아이로 돌아간다.
+  function cancelAddKid(returnTo) {
+    const empty = activeKid;
+    setKids((m) => {
+      const { [empty]: _drop, ...rest } = m;
+      return rest;
+    });
+    setActiveKid(returnTo);
+    loadKidSlices(kids[returnTo]);
     setGuardUnlocked(false);
     setZone("kids");
     setView({ name: "home" });
@@ -250,7 +278,8 @@ export default function App() {
   // 보물상자 개봉 — 하루 미션 올클리어 시 1회. 랜덤 보상(별 또는 스티커).
   // 결제 없음·하루 1회·미션 완료로만. 반환값을 화면이 받아 연출한다.
   function openChest() {
-    if (!rewards.allClear || rewards.chestOpened) return null;
+    const today = rollDay(rewards); // 어제 열지 않은 상자를 오늘 여는 일을 막는다
+    if (!today.allClear || today.chestOpened) return null;
     const reward = openTreasure(stickers);
     setRewards((r0) => {
       const r = rollDay(r0);
@@ -350,13 +379,22 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // 무료 서버가 잠에서 깨는 동안 첫 요청이 실패할 수 있다. 실패하면 홈이 비어 있는 채로 남던 것을
+    // 몇 번 다시 시도한다(1·2·4·8·15초 간격).
     let alive = true;
-    fetch("/api/activities")
-      .then((r) => r.json())
-      .then((d) => alive && setData(d))
-      .catch(() => {});
+    let timer;
+    const delays = [1000, 2000, 4000, 8000, 15000];
+    const load = (i) =>
+      fetch("/api/activities")
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+        .then((d) => alive && setData(d))
+        .catch(() => {
+          if (alive && i < delays.length) timer = setTimeout(() => load(i + 1), delays[i]);
+        });
+    load(0);
     return () => {
       alive = false;
+      clearTimeout(timer);
     };
   }, []);
 
@@ -441,9 +479,15 @@ export default function App() {
   }
 
   if (!profile.onboarded) {
+    // 이미 등록된 아이가 있으면 "새 아이 추가"를 취소하고 돌아갈 수 있다. 취소할 길이 없으면
+    // 실수로 누른 아이가 빈 프로필에 갇히고, 새로고침해도 그대로였다.
+    const returnTo = Object.keys(kids).find((id) => id !== activeKid && kids[id]?.profile?.onboarded);
     return (
       <div className="app">
-        <Onboarding onDone={completeOnboarding} />
+        <Onboarding
+          onDone={completeOnboarding}
+          onCancel={returnTo ? () => cancelAddKid(returnTo) : undefined}
+        />
       </div>
     );
   }
@@ -625,6 +669,7 @@ export default function App() {
           <Settings
             settings={settings}
             version={APP_VERSION}
+            kidName={profile.name}
             onBack={() => setParentView("main")}
             onSetSound={(v) => setSettings((s) => ({ ...s, sound: v }))}
             onSetNotifyMissions={(v) => setSettings((s) => ({ ...s, notifyMissions: v }))}

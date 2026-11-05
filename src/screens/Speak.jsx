@@ -167,6 +167,7 @@ export default function Speak({
       } catch {}
       return;
     }
+    if (micRef.current) return; // 권한 창을 기다리는 중에 또 눌러도 마이크를 두 번 열지 않는다
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       micRef.current = stream;
@@ -198,6 +199,7 @@ export default function Speak({
             body: JSON.stringify({ audio: b64, mime: blob.type }),
           });
           const j = await res.json().catch(() => ({}));
+          if (!aliveRef.current) return; // 받아쓰는 사이에 화면을 나갔다 — 대화를 이어 가지 않는다
           if (j.text) converse(j.text);
           else {
             setStatus("idle");
@@ -213,6 +215,11 @@ export default function Speak({
       setRecording(true);
       setStatus("idle");
     } catch {
+      // MediaRecorder 생성에 실패해도 이미 열린 마이크는 꺼야 한다.
+      try {
+        micRef.current && micRef.current.getTracks().forEach((t) => t.stop());
+      } catch {}
+      micRef.current = null;
       setLastSaid("마이크를 사용할 수 없어요. 권한을 확인해 주세요.");
     }
   }

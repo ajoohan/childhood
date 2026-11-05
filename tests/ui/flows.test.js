@@ -150,3 +150,46 @@ test("홍보 문구: 시작·가입 화면에 근거 없는 문구가 없고, �
   assert.equal(profile.onboarded, true);
   await page.close();
 });
+
+test("새 아이 추가를 취소하면 원래 아이와 기록으로 돌아가고, 빈 프로필은 남지 않는다", async () => {
+  const { page } = await openApp(browser, seed({ rewards: { balance: 27 } }));
+  await page.click(".fx-ava");
+  await page.click("text=프로필 바꾸기");
+  await page.waitForSelector(".kid-item.add", { timeout: 8000 });
+  await page.click(".kid-item.add");
+  await page.waitForSelector(".ob", { timeout: 8000 });
+
+  // 새로고침해도 빈 프로필에 갇히지 않는다 (취소할 길이 남아 있다)
+  await page.reload({ waitUntil: "networkidle" });
+  const start = await page.$(".splash-primary");
+  if (start) await start.click();
+  await page.waitForSelector(".ob", { timeout: 8000 });
+
+  await page.click(".ob-back");
+  await page.waitForSelector(".kids-home", { timeout: 8000 });
+  assert.equal(await stars(page), 27, "원래 아이의 별");
+  assert.match(await page.innerText(".fx-hi"), /지안/);
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")));
+  assert.equal(Object.keys(saved.kids).length, 1, "빈 프로필이 남지 않았다");
+  await page.close();
+});
+
+test("앱을 연 채로 날짜가 바뀌면 어제의 미션 완료 표시가 새로 열린다", async () => {
+  const { page } = await openApp(browser, seed({ rewards: { balance: 10 } }), {
+    beforeLoad: (p) => p.clock.install({ time: new Date() }),
+  });
+  await (await page.$$(".tab-bar .tab"))[1].click();
+  await page.waitForSelector(".missions", { timeout: 8000 });
+  await (await page.$$("text=완료하기"))[0].click();
+  await page.waitForSelector(".mission-modal", { timeout: 8000 });
+  await page.click("text=네, 다 했어요!");
+  await page.waitForTimeout(300);
+  await page.clock.runFor(1500);
+  assert.equal((await page.$$(".mb-item.done")).length, 1, "오늘 완료한 미션");
+
+  await page.clock.fastForward("25:00:00"); // 하루가 지났다 (화면은 그대로 열려 있다)
+  await page.clock.runFor(61_000);
+  await page.waitForTimeout(200);
+  assert.equal((await page.$$(".mb-item.done")).length, 0, "다음 날에는 완료 표시가 풀린다");
+  await page.close();
+});

@@ -195,6 +195,62 @@ test("요청이 실패하면 안내만 보이고, 실패 문구는 대화 기록
   await page.close();
 });
 
+test("스트림 도중 서버 오류도 안내만 보이고 대화 기록에 저장되지 않는다", async () => {
+  const { page } = await openApp(browser);
+  const friendly = "별이가 잠깐 딴생각을 했나 봐. 다시 한번 말해 줄래?";
+  await page.route("**/api/chat", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "text/event-stream",
+      body: `data: ${JSON.stringify({ error: friendly })}\n\ndata: [DONE]\n\n`,
+    })
+  );
+  await (await page.$$(".fx-card"))[0].click();
+  await page.waitForSelector(".chat-screen", { timeout: 8000 });
+  await page.fill(".cx-composer input", "안녕");
+  await page.press(".cx-composer input", "Enter");
+  await page.waitForFunction((t) => document.body.innerText.includes(t), friendly, { timeout: 8000 });
+
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")));
+  const hist = Object.values(saved.kids.k.histories).flat();
+  assert.ok(!hist.some((m) => m.role === "assistant"), "오류 문구가 '별이가 한 말'로 저장되면 안 된다");
+  await page.close();
+});
+
+test("답변을 기다리다 화면을 나가면 늦게 온 답변과 안전 신호가 저장되지 않는다", async () => {
+  const { page } = await openApp(browser);
+  let release;
+  const gate = new Promise((r) => (release = r));
+  let requested = false;
+  await page.route("**/api/chat", async (route) => {
+    requested = true;
+    await gate;
+    await route
+      .fulfill({
+        status: 200,
+        contentType: "text/event-stream",
+        body: `data: ${JSON.stringify({ safety: "distress" })}\n\ndata: ${JSON.stringify({ text: "늦은 답" })}\n\ndata: [DONE]\n\n`,
+      })
+      .catch(() => {}); // 끊긴 요청이면 이행할 곳이 없다
+  });
+  await (await page.$$(".fx-card"))[0].click();
+  await page.waitForSelector(".chat-screen", { timeout: 8000 });
+  await page.fill(".cx-composer input", "안녕");
+  await page.press(".cx-composer input", "Enter");
+  await page.waitForTimeout(300);
+  assert.ok(requested, "요청이 나갔다");
+  await page.click(".cx-btn.back");
+  await page.waitForSelector(".chat-screen", { state: "detached" });
+  release();
+  await page.waitForTimeout(500);
+
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")));
+  const kid = saved.kids.k;
+  assert.ok(!Object.values(kid.histories).flat().some((m) => m.role === "assistant"), "늦은 답이 저장됐다");
+  assert.equal(kid.safety.length, 0, "늦은 안전 신호가 저장됐다");
+  await page.close();
+});
+
 // 음성 화면에서 글자 모드로 바꾼다 (헤드리스 브라우저에는 음성 인식이 없어 글로 보낸다)
 async function openTextChat(page) {
   await page.click(".tab.speak");

@@ -30,7 +30,7 @@ function ageNote(age) {
 // 결제를 붙일 때 true로 되돌리면 화면과 부모 확인 절차가 그대로 살아난다.
 const SHOW_PAYWALL = false;
 
-export default function Onboarding({ onDone }) {
+export default function Onboarding({ onDone, onCancel }) {
   const [step, setStep] = useState("name"); // name|age|interests|safety|loading|paywall
   const [name, setName] = useState("");
   const [birthYear, setBirthYear] = useState(null);
@@ -83,6 +83,7 @@ export default function Onboarding({ onDone }) {
   function back() {
     const i = STEPS.indexOf(step);
     if (i > 0) setStep(STEPS[i - 1]);
+    else if (onCancel) onCancel(); // 새 아이 추가 중이면 첫 화면의 뒤로가기는 취소
   }
 
   const LOAD_ITEMS = [
@@ -257,7 +258,7 @@ export default function Onboarding({ onDone }) {
           className="ob-back"
           onClick={back}
           aria-label="뒤로"
-          style={{ visibility: step === "name" ? "hidden" : "visible" }}
+          style={{ visibility: step === "name" && !onCancel ? "hidden" : "visible" }}
         >
           ‹
         </button>

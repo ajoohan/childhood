@@ -7,6 +7,7 @@ import { MODE_LABEL } from "../lib/age.js";
 export default function Settings({
   settings,
   version,
+  kidName,
   onBack,
   onSetSound,
   onSetNotifyMissions,
@@ -61,7 +62,7 @@ export default function Settings({
   }
 
   function clearAll() {
-    if (!window.confirm("모든 대화 기록과 알림, 하루 대화 횟수 제한을 지울까요?\n(PIN·목소리·소리 설정은 그대로 남아요.) 되돌릴 수 없어요.")) return;
+    if (!window.confirm(`${kidName || "지금 선택한 아이"}의 대화 기록과 알림, 하루 대화 횟수 제한을 지울까요?\n(다른 아이의 기록, PIN·목소리·소리 설정은 그대로 남아요.) 되돌릴 수 없어요.`)) return;
     onClear();
     setLimitInput("");
     setSavedLimit("");
@@ -84,6 +85,8 @@ export default function Settings({
             <span>버튼·성공 효과음</span>
             <button
               className={`toggle ${settings.sound ? "on" : ""}`}
+              role="switch"
+              aria-checked={!!settings.sound}
               onClick={() => onSetSound(!settings.sound)}
               aria-label="효과음 켜기/끄기"
             >
@@ -104,6 +107,8 @@ export default function Settings({
             <span>커스텀 미션 완료 알림</span>
             <button
               className={`toggle ${settings.notifyMissions ? "on" : ""}`}
+              role="switch"
+              aria-checked={!!settings.notifyMissions}
               onClick={() => onSetNotifyMissions(!settings.notifyMissions)}
               aria-label="미션 완료 알림 켜기/끄기"
             >
@@ -258,8 +263,8 @@ export default function Settings({
           <ul className="guard-info">
             <li>AI는 '도우미 도구'로, 활동 범위 안에서만 상호작용합니다.</li>
             <li>개방형 자유 대화·역할극, 아이 대면 결제, 광고는 없습니다.</li>
-            <li>모든 메시지는 안전 필터를 거치고, 위기 신호 시 1388을 안내합니다.</li>
-            <li>대화·기록은 서버가 아니라 이 기기(브라우저)에만 저장됩니다.</li>
+            <li>메시지는 안전 필터를 거치고, 위기 신호 시 1388을 안내합니다.</li>
+            <li>대화 기록은 서버에 저장하지 않고 이 기기(브라우저)에만 저장돼요. 다만 답변을 만들기 위해 대화 내용이 AI 서비스(Anthropic, 미국)로 전달돼요.</li>
           </ul>
         </div>
 
@@ -267,10 +272,10 @@ export default function Settings({
         <div className="guard-card">
           <h3>🗑️ 기록 관리</h3>
           <p className="guard-hint">
-            모든 대화·알림·설정을 지우고 처음 상태로 되돌려요. 되돌릴 수 없어요.
+            지금 선택한 아이의 대화·알림을 지우고 하루 대화 횟수 제한을 풀어요. 되돌릴 수 없어요.
           </p>
           <button className="guard-btn danger" onClick={clearAll}>
-            모든 기록 지우기
+            이 아이의 기록 지우기
           </button>
         </div>
       </div>

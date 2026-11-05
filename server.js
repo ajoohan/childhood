@@ -651,7 +651,8 @@ app.post("/api/chat", rateLimit, handle(async (req, res) => {
     } else {
       console.error("unexpected error:", error);
     }
-    res.write(`data: ${JSON.stringify({ text: message })}\n\n`);
+    // 답변(text)이 아니라 오류(error)로 보낸다. 화면에만 보이고 대화 기록에는 저장되지 않는다.
+    res.write(`data: ${JSON.stringify({ error: message })}\n\n`);
     res.write("data: [DONE]\n\n");
     res.end();
   }

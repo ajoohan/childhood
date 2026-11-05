@@ -30,6 +30,8 @@ export default class ErrorBoundary extends React.Component {
   // 저장된 데이터가 원인일 때의 마지막 수단. 별·콜렉션도 함께 지워지므로
   // 반복 실패했을 때만 노출한다.
   reset = () => {
+    // 아이가 눌러도 PIN까지 한 번에 지워지지 않게 한 번 더 묻는다.
+    if (!window.confirm("모아둔 별·콜렉션·부모 PIN이 모두 사라져요. 정말 처음부터 다시 시작할까요?")) return;
     try {
       localStorage.removeItem("banjjaktalk_v2");
       sessionStorage.removeItem("cw_boom");

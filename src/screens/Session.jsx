@@ -52,9 +52,21 @@ export default function Session({
   const [mood, setMood] = useState(null); // 'sad' 등 안전 감지 시
   const chatRef = useRef(null);
   const inputRef = useRef(null);
+  const abortRef = useRef(null);
+  const aliveRef = useRef(true);
   const speech = useSpeech({
     onResult: (t) => setInput((prev) => (prev ? prev + " " + t : t)),
   });
+
+  // 화면을 나가면 진행 중인 요청을 끊는다. 끊지 않으면 늦게 온 답변과 안전 신호가 그 사이 바뀐
+  // 다른 아이(형제 프로필)의 기록에 저장되고, 요청도 계속 돌아 비용이 나간다.
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+      abortRef.current && abortRef.current.abort();
+    };
+  }, []);
 
   useEffect(() => {
     setNotice(null);
@@ -92,14 +104,18 @@ export default function Session({
     const outgoing = [...history, userMsg];
 
     let reply = "";
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
       await streamChat({
         body: { activityId: activity.id, messages: outgoing, profile: persona },
+        signal: ctrl.signal,
         onText: (t) => {
           reply = t;
           setStreaming(t);
         },
         onSafety: (category) => {
+          if (!aliveRef.current) return;
           setMood("sad"); // 안전 신호 감지 → 걱정하는 표정
           onSafety({
             t: new Date().toISOString(),
@@ -111,15 +127,18 @@ export default function Session({
         },
       });
     } catch (err) {
+      if (ctrl.signal.aborted) return; // 화면을 나가서 우리가 끊었다. 아무것도 저장하지 않는다.
       console.error(err);
       // 실패 문구는 화면에만 보인다. 기록에 넣으면 다음 요청에서 모델이 "내가 한 말"로
       // 읽고, 보관된 대화에도 남는다. 일부라도 받은 답은 그대로 남긴다.
       if (!reply) setFail(err.friendly || "앗, 잠깐 연결이 끊겼어. 다시 말해 줄래?");
     } finally {
-      setStreaming(null);
-      if (reply) onBotMessage(activity.id, { role: "assistant", content: reply });
-      setBusy(false);
-      if (inputRef.current) inputRef.current.focus();
+      if (aliveRef.current) {
+        setStreaming(null);
+        if (reply) onBotMessage(activity.id, { role: "assistant", content: reply });
+        setBusy(false);
+        if (inputRef.current) inputRef.current.focus();
+      }
     }
   }
 
