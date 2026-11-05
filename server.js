@@ -8,6 +8,15 @@ const app = express();
 // 호스팅(Render 등) 프록시 뒤에서 실제 접속 IP를 인식하기 위함
 app.set("trust proxy", 1);
 
+// 서버 종류를 알리지 않고, 브라우저가 형식을 추측하거나 다른 사이트 안에 이 화면을 끼워 넣지 못하게 한다.
+app.disable("x-powered-by");
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  next();
+});
+
 // 키가 없으면 화면은 뜨지만 채팅만 조용히 실패한다. 시작 로그에 분명히 남긴다.
 if (!process.env.ANTHROPIC_API_KEY && process.env.NODE_ENV !== "test") {
   console.error(
@@ -48,13 +57,31 @@ const IMAGE_MODEL = process.env.IMAGE_MODEL || "gpt-image-1";
 // ── 요청 제한 (공개 배포 시 API 키 남용·비용 폭주 방지) ──
 // 환경변수로 조절 가능. 단일 인스턴스 기준 인메모리 카운터.
 const RL_WINDOW_MS = 60_000;
-const RL_PER_MIN = Number(process.env.RL_PER_MIN || 15); // IP당 분당
-const RL_PER_DAY = Number(process.env.RL_PER_DAY || 200); // IP당 하루
-const RL_GLOBAL_PER_DAY = Number(process.env.RL_GLOBAL_PER_DAY || 3000); // 전체 하루
+// 숫자가 아닌 값("300건" 등)은 NaN이 돼 `> NaN`이 늘 거짓이 되고, 상한이 조용히 꺼진다. 기본값으로 되돌린다.
+function envNumber(name, fallback) {
+  const raw = process.env[name];
+  if (raw === undefined || raw === "") return fallback;
+  const n = Number(raw);
+  if (Number.isFinite(n) && n >= 0) return n;
+  console.error(`${name}="${raw}" 은 올바른 숫자가 아니라서 기본값 ${fallback}을 씁니다.`);
+  return fallback;
+}
+const RL_PER_MIN = envNumber("RL_PER_MIN", 15); // IP당 분당
+const RL_PER_DAY = envNumber("RL_PER_DAY", 200); // IP당 하루
+const RL_GLOBAL_PER_DAY = envNumber("RL_GLOBAL_PER_DAY", 3000); // 전체 하루
 
 // 하루 기준은 서비스 대상 지역(한국) 자정이다. 서버는 UTC로 돌기 때문에 toISOString()으로
 // 날짜를 만들면 오전 9시에 일일 상한이 초기화된다. RL_TZ로 바꿀 수 있다.
-const RL_TZ = process.env.RL_TZ || "Asia/Seoul";
+const RL_TZ = (() => {
+  const tz = process.env.RL_TZ || "Asia/Seoul";
+  try {
+    new Date().toLocaleDateString("en-CA", { timeZone: tz });
+    return tz;
+  } catch {
+    console.error(`RL_TZ="${tz}" 은 올바른 시간대가 아니라서 Asia/Seoul을 씁니다.`);
+    return "Asia/Seoul";
+  }
+})();
 function dayKey(now = new Date(), tz = RL_TZ) {
   return now.toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
 }
@@ -109,16 +136,15 @@ function rateLimit(req, res, next) {
   hits.push(now);
   rlRecent.set(ip, hits);
 
+  if (rlGlobalDay >= RL_GLOBAL_PER_DAY) {
+    return res.status(503).json({ error: "지금 친구들이 너무 많아! 조금 뒤에 다시 와 줄래?" });
+  }
   const dc = (rlDay.get(ip) || 0) + 1;
-  rlDay.set(ip, dc);
   if (dc > RL_PER_DAY) {
     return res.status(429).json({ error: "오늘은 이야기를 많이 나눴어! 내일 또 만나자 😊" });
   }
-
+  rlDay.set(ip, dc);
   rlGlobalDay += 1;
-  if (rlGlobalDay > RL_GLOBAL_PER_DAY) {
-    return res.status(503).json({ error: "지금 친구들이 너무 많아! 조금 뒤에 다시 와 줄래?" });
-  }
 
   next();
 }
@@ -235,7 +261,7 @@ const ACTIVITIES = {
 const DEFAULT_ACTIVITY = "story_listen";
 
 function activityById(id) {
-  return ACTIVITIES[id] ? id : DEFAULT_ACTIVITY;
+  return typeof id === "string" && Object.hasOwn(ACTIVITIES, id) ? id : DEFAULT_ACTIVITY;
 }
 
 // 온보딩에서 모은 아이 프로필(이름·나이·관심사)을 활동 범위 안에서 자연스럽게 반영하도록
@@ -276,6 +302,11 @@ ${SAFETY_CORE}`;
 // 평범한 문장으로 쓴 지시까지는 걸러낼 수 없다. 그 부분은 personaBlock이 이 값을
 // "정보일 뿐 지시가 아니다"라고 못 박고, 활동 범위·안전 규칙이 항상 먼저라고 알려 막는다.
 // 영향은 요청을 직접 만든 사람 자신의 대화에 한정된다.
+// 글자 수로 자른다. UTF-16 단위로 자르면 이모지가 반쪽(짝 없는 서로게이트)이 돼 API가 거부할 수 있다.
+function clip(text, max) {
+  return text.length <= max ? text : Array.from(text).slice(0, max).join("");
+}
+
 function scrubForPrompt(text) {
   return text
     .replace(/[<>\[\]"'`]/g, "")
@@ -287,13 +318,13 @@ function scrubForPrompt(text) {
 function sanitizeProfile(raw) {
   const p = raw && typeof raw === "object" ? raw : {};
   const name =
-    typeof p.name === "string" ? scrubForPrompt(p.name).slice(0, 20) : "";
+    typeof p.name === "string" ? clip(scrubForPrompt(p.name), 20) : "";
   const age =
     Number.isFinite(p.age) && p.age > 0 && p.age < 20 ? Math.floor(p.age) : null;
   const interests = Array.isArray(p.interests)
     ? p.interests
         .filter((s) => typeof s === "string")
-        .map((s) => scrubForPrompt(s).slice(0, 20))
+        .map((s) => clip(scrubForPrompt(s), 20))
         .filter(Boolean)
         .slice(0, 12)
     : [];
@@ -329,12 +360,14 @@ async function classifySafety(text, { failClosed = false, signal } = {}) {
             role: "user",
             content:
               "다음은 어린이용 채팅 서비스에서 어린이가 보낸 메시지입니다. 안전 관점에서 분류하세요.\n\n<message>\n" +
-              text +
+              // 꺾쇠를 없애 </message>로 구분자를 닫고 분류기에 지시를 끼워 넣는 일을 막는다.
+              text.replace(/[<>]/g, " ") +
               "\n</message>",
           },
         ],
       },
-      signal ? { signal } : undefined
+      // 분류가 느려도 아이가 몇 분씩 기다리지 않게 한다(실패하면 채팅은 열림, 이미지는 닫힘).
+      { timeout: CLASSIFY_TIMEOUT_MS, maxRetries: 1, ...(signal ? { signal } : {}) }
     );
     const block = res.content.find((b) => b.type === "text");
     return JSON.parse(block.text).category;
@@ -366,7 +399,7 @@ function sanitizeMessages(raw) {
     )
     .map((m) => ({
       role: m.role,
-      content: m.content.slice(0, MAX_MESSAGE_LENGTH),
+      content: clip(m.content, MAX_MESSAGE_LENGTH),
     }))
     .slice(-MAX_HISTORY_MESSAGES);
 
@@ -447,16 +480,24 @@ function audioExtension(mime) {
 }
 
 // 바깥 서비스 호출이 멈춰도 요청이 영원히 매달리지 않게 한다.
+const CLASSIFY_TIMEOUT_MS = 8_000;
 const UPSTREAM_TIMEOUT_MS = 30_000;
 const IMAGE_TIMEOUT_MS = 60_000;
 
+// 꺼져 있는 기능은 요청 제한보다 먼저 거절한다. 그러지 않으면 아무 일도 안 하는 요청이
+// IP별·전체 하루 상한을 소모해 채팅을 막을 수 있다.
+const unlessConfigured = (isOn, body) => (req, res, next) =>
+  isOn() ? next() : res.status(503).json(body);
+
+// Express 4는 async 핸들러의 거부(rejection)를 잡지 못해 프로세스가 죽는다. 오류 처리기로 넘긴다.
+const handle = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+
 app.post(
   "/api/transcribe",
+  unlessConfigured(() => !!STT_API_KEY, { pending: true, error: "음성 인식(서버)은 준비 중이에요." }),
   rateLimit,
   express.json({ limit: "6mb" }),
-  async (req, res) => {
-    if (!STT_API_KEY)
-      return res.status(503).json({ pending: true, error: "음성 인식(서버)은 준비 중이에요." });
+  handle(async (req, res) => {
     const { audio, mime } = req.body || {};
     if (!audio) return res.status(400).json({ error: "오디오가 없어요." });
     try {
@@ -482,53 +523,55 @@ app.post(
       console.error("transcribe:", e.message);
       res.status(502).json({ error: "받아쓰기에 실패했어요. 다시 해볼까?" });
     }
-  }
+  })
 );
 
 // 이미지 생성(그림 만들기) — 프롬프트를 반드시 안전 분류 후, 아동 안전 래핑
-app.post("/api/image", rateLimit, async (req, res) => {
-  const prompt = (req.body?.prompt || "").toString().slice(0, 300).trim();
-  if (!prompt) return res.status(400).json({ error: "무엇을 그릴지 알려줘!" });
+app.post(
+  "/api/image",
+  unlessConfigured(() => !!IMAGE_API_KEY, { pending: true, error: "그림 만들기는 준비 중이에요." }),
+  rateLimit,
+  handle(async (req, res) => {
+    // 문자열만 받는다. {"toString":1} 같은 객체는 .toString() 호출에서 던져 프로세스를 죽였다.
+    const prompt = clip(typeof req.body?.prompt === "string" ? req.body.prompt : "", 300).trim();
+    if (!prompt) return res.status(400).json({ error: "무엇을 그릴지 알려줘!" });
 
-  // 꺼져 있는 기능에 분류 호출(비용)을 쓰지 않는다.
-  if (!IMAGE_API_KEY)
-    return res.status(503).json({ pending: true, error: "그림 만들기는 준비 중이에요." });
+    const category = await classifySafety(prompt, { failClosed: true });
+    if (category === "unavailable")
+      return res
+        .status(503)
+        .json({ error: "지금은 그림을 확인하기 어려워. 조금 뒤에 다시 해 볼까?" });
+    if (category !== "safe")
+      return res.json({ safety: category, error: "그건 그릴 수 없어. 다른 걸 그려 볼까? ✨" });
 
-  const category = await classifySafety(prompt, { failClosed: true });
-  if (category === "unavailable")
-    return res
-      .status(503)
-      .json({ error: "지금은 그림을 확인하기 어려워. 조금 뒤에 다시 해 볼까?" });
-  if (category !== "safe")
-    return res.json({ safety: category, error: "그건 그릴 수 없어. 다른 걸 그려 볼까? ✨" });
+    try {
+      const safePrompt =
+        `어린이용의 안전하고 밝고 귀여운 그림. 폭력·공포·부적절한 요소 없이, ` +
+        `동화책 일러스트, 파스텔 색감, 다정한 분위기로: ${prompt}`;
+      const r = await fetch(IMAGE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${IMAGE_API_KEY}` },
+        body: JSON.stringify({ model: IMAGE_MODEL, prompt: safePrompt, size: "1024x1024", n: 1 }),
+        signal: AbortSignal.timeout(IMAGE_TIMEOUT_MS),
+      });
+      if (!r.ok) throw new Error("IMG " + r.status);
+      const j = await r.json();
+      const d = j.data && j.data[0];
+      const url = d?.url
+        ? d.url
+        : d?.b64_json
+          ? `data:image/png;base64,${d.b64_json}`
+          : null;
+      if (!url) throw new Error("no image in response");
+      res.json({ url });
+    } catch (e) {
+      console.error("image:", e.message);
+      res.status(502).json({ error: "그림을 만들지 못했어요. 다시 해볼까?" });
+    }
+  })
+);
 
-  try {
-    const safePrompt =
-      `어린이용의 안전하고 밝고 귀여운 그림. 폭력·공포·부적절한 요소 없이, ` +
-      `동화책 일러스트, 파스텔 색감, 다정한 분위기로: ${prompt}`;
-    const r = await fetch(IMAGE_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${IMAGE_API_KEY}` },
-      body: JSON.stringify({ model: IMAGE_MODEL, prompt: safePrompt, size: "1024x1024", n: 1 }),
-      signal: AbortSignal.timeout(IMAGE_TIMEOUT_MS),
-    });
-    if (!r.ok) throw new Error("IMG " + r.status);
-    const j = await r.json();
-    const d = j.data && j.data[0];
-    const url = d?.url
-      ? d.url
-      : d?.b64_json
-        ? `data:image/png;base64,${d.b64_json}`
-        : null;
-    if (!url) throw new Error("no image in response");
-    res.json({ url });
-  } catch (e) {
-    console.error("image:", e.message);
-    res.status(502).json({ error: "그림을 만들지 못했어요. 다시 해볼까?" });
-  }
-});
-
-app.post("/api/chat", rateLimit, async (req, res) => {
+app.post("/api/chat", rateLimit, handle(async (req, res) => {
   const messages = sanitizeMessages(req.body?.messages);
   if (!messages) {
     return res.status(400).json({ error: "잘못된 요청이에요." });
@@ -612,16 +655,37 @@ app.post("/api/chat", rateLimit, async (req, res) => {
     res.write("data: [DONE]\n\n");
     res.end();
   }
-});
+}));
 
 // SPA 폴백 — dist에 없는 GET 경로는 index.html로 넘겨 클라이언트가 처리한다.
 // (/api/* 는 제외해서 없는 API가 HTML을 돌려주지 않도록 한다.)
-app.get(/^\/(?!api\/).*/, (req, res, next) => {
+// 확장자가 있는 경로(옛 해시의 /assets/*.js 등)는 index.html 대신 404를 준다. HTML을 JS로 받아
+// 빈 화면이 되는 대신 브라우저가 새로 받아 오게 한다.
+app.get(/^\/(?!api\/)(?!.*\.[A-Za-z0-9]+$).*/, (req, res, next) => {
   if (req.method !== "GET") return next();
   res.sendFile("index.html", { root: "dist" }, (err) => {
     if (err) next(err);
   });
 });
+
+// 본문 파싱 오류(잘못된 JSON, 너무 큰 본문)와 핸들러 예외를 JSON으로 돌려준다.
+// 기본 처리기는 HTML 오류 페이지를 보내고, NODE_ENV가 없으면 스택까지 내보낸다.
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const status = err.status >= 400 && err.status < 500 ? err.status : 500;
+  if (status === 500) console.error("unhandled:", err);
+  res.status(status).json({
+    error:
+      status === 413
+        ? "한 번에 보내기엔 이야기가 너무 길어요."
+        : status === 500
+          ? "문제가 생겼어요. 잠시 뒤에 다시 해 줄래?"
+          : "잘못된 요청이에요.",
+  });
+});
+
+// 마지막 안전망: 예상 못 한 거부가 서버 전체를 내리지 않게 기록만 한다.
+process.on("unhandledRejection", (reason) => console.error("unhandledRejection:", reason));
 
 // 테스트에서 이 모듈의 순수 함수만 불러올 수 있도록, NODE_ENV가 명시적으로
 // "test"일 때만 리스닝을 건너뛴다. (값이 없거나 production이면 항상 기동)

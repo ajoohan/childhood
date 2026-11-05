@@ -6,11 +6,21 @@
 //
 // - 서버가 오류 본문({error})을 주면 그 문구를 err.friendly 에 담아 던진다.
 // - signal 로 중단하면 AbortError 가 그대로 던져진다(호출한 쪽에서 구분한다).
+// 서버는 최근 30개만 쓰고(MAX_HISTORY_MESSAGES) 본문은 100KB가 한도다. 보관 기록 40개를 그대로 보내면
+// 긴 이야기 활동에서 한도를 넘어 413이 나고, 기록을 지울 때까지 그 활동 대화가 막혔다.
+export const OUTGOING_MESSAGES = 30;
+
+export function outgoingMessages(messages) {
+  return (messages || [])
+    .slice(-OUTGOING_MESSAGES)
+    .map(({ role, content }) => ({ role, content }));
+}
+
 export async function streamChat({ body, signal, onText, onSafety }) {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, messages: outgoingMessages(body.messages) }),
     signal,
   });
 
