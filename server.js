@@ -6,7 +6,7 @@ const client = new Anthropic();
 const app = express();
 
 // 호스팅(Render 등) 프록시 뒤에서 실제 접속 IP를 인식하기 위함.
-// Render에서 실측한 X-Forwarded-For는 "접속자, Cloudflare, Render 내부" 세 칸이다(2026-11-05, /api/health?diag=1).
+// Render에서 실측한 X-Forwarded-For는 "접속자, Cloudflare, Render 내부" 세 칸이다(2026-11-05).
 // 예전의 1은 맨 오른쪽 Render 내부 주소(10.x)를 접속자로 읽어, 모든 사용자가 한 칸의 IP별 제한
 // (분당 15회·하루 200회)을 함께 쓰고 있었다. 3이면 접속자 주소를 읽는다. 구조가 바뀌면 TRUST_PROXY_HOPS로 맞춘다.
 const TRUST_PROXY_HOPS = Number.isInteger(Number(process.env.TRUST_PROXY_HOPS)) && process.env.TRUST_PROXY_HOPS !== ""
@@ -451,8 +451,6 @@ app.get("/api/health", (req, res) => {
     chat: !!process.env.ANTHROPIC_API_KEY,
     startedAt: STARTED_AT,
     lastError: lastUpstreamError,
-    // 임시 진단(요청자 자신의 헤더만 되돌려 준다): 프록시 단계 수 확인 후 제거한다.
-    ...(req.query.diag === "1" ? { diag: { ip: req.ip, ips: req.ips, xff: req.headers["x-forwarded-for"] || null, cfip: req.headers["cf-connecting-ip"] || null, trueip: req.headers["true-client-ip"] || null } } : {}),
   });
 });
 
