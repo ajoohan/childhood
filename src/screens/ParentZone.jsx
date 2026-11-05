@@ -9,7 +9,7 @@ const CUR_YEAR = NOW.getFullYear();
 const BIRTH_YEARS = Array.from({ length: 14 }, (_, i) => CUR_YEAR - i);
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
-// Parent Zone — 성인 인증 게이트 뒤. 대시보드·시간통제·활동 로그·구독·연령·미션.
+// Parent Zone — 성인 인증 게이트 뒤. 대시보드·하루 대화 횟수·활동 로그·구독·연령·미션.
 export default function ParentZone({
   feedbackUrl = null, // 의견 보내기 주소 (서버 환경변수 FEEDBACK_URL). 없으면 링크를 보이지 않는다.
   usedToday = 0,
@@ -413,8 +413,8 @@ export default function ParentZone({
           <h3>💳 구독</h3>
           <p className="sub-lead">광고 없는 부모 구독</p>
           <p className="guard-hint">
-            아이 대면 결제·광고 없이, 안전·시간통제·학습 인사이트를 제공하는 월
-            구독이에요. 결제는 항상 부모가, 이 부모 존에서만 이뤄집니다.
+            지금은 모든 기능이 무료예요. 나중에 유료 구독을 도입하게 되면 결제는
+            항상 부모가, 이 부모 존에서만 이뤄지고 아이 화면에는 결제와 광고가 없어요.
           </p>
           <button className="guard-btn" disabled>
             준비 중 (무료 체험 예정)
@@ -425,7 +425,7 @@ export default function ParentZone({
           <span className="gsl-ic">⚙️</span>
           <span className="gsl-body">
             <b>설정</b>
-            <small>효과음 · AI 목소리 · 시간 통제 · 부모 잠금 · 기록 관리</small>
+            <small>효과음 · AI 목소리 · 하루 대화 횟수 · 부모 잠금 · 기록 관리</small>
           </span>
           <span className="gsl-arw">›</span>
         </button>

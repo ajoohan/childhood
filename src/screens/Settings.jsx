@@ -3,7 +3,7 @@ import { VOICES } from "./Speak.jsx";
 import { MODE_LABEL } from "../lib/age.js";
 
 // 설정 화면 — 부모 존 안(성인 인증 뒤)에서 앱 환경설정을 모아 관리한다.
-// 효과음 · AI 목소리 · 시간 통제 · 부모 잠금(PIN) · 앱 정보 · 기록 관리.
+// 효과음 · AI 목소리 · 하루 대화 횟수 · 부모 잠금(PIN) · 앱 정보 · 기록 관리.
 export default function Settings({
   settings,
   version,
@@ -61,7 +61,7 @@ export default function Settings({
   }
 
   function clearAll() {
-    if (!window.confirm("모든 대화 기록과 알림, 사용 시간 제한을 지울까요?\n(PIN·목소리·소리 설정은 그대로 남아요.) 되돌릴 수 없어요.")) return;
+    if (!window.confirm("모든 대화 기록과 알림, 하루 대화 횟수 제한을 지울까요?\n(PIN·목소리·소리 설정은 그대로 남아요.) 되돌릴 수 없어요.")) return;
     onClear();
     setLimitInput("");
     setSavedLimit("");
@@ -142,9 +142,9 @@ export default function Settings({
           </div>
         </div>
 
-        {/* 시간 통제 */}
+        {/* 하루 대화 횟수 */}
         <div className="guard-card">
-          <h3>⏱️ 시간 통제</h3>
+          <h3>⏱️ 하루 대화 횟수</h3>
           <label className="limit-row">
             <span>하루 대화 횟수 제한</span>
             <input
