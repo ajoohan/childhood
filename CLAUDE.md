@@ -1,6 +1,6 @@
 # Childhood — 작업 메모
 
-만 1~13세 어린이용 한국어 AI 학습 도우미 (React 19 + Vite SPA, Express 서버, Anthropic SDK).
+만 1~13세 어린이용 한국어 AI 학습 도우미 (React 18 + Vite SPA, Express 4 서버, Anthropic SDK).
 제품 이름은 **Childhood**, 도우미 이름은 **별이**.
 
 ## 배포 (Render)
