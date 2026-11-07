@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { robotMascot, robotHead } from "../lib/mascot.js";
 import { useSpeech } from "../lib/useSpeech.js";
 import { streamChat } from "../lib/streamChat.js";
+import Dialog from "../components/Dialog.jsx";
 
 // 음성 목소리 프리셋 (브라우저 TTS의 pitch/rate로 개성 부여)
 export const VOICES = [
@@ -596,8 +597,7 @@ export default function Speak({
       </div>
 
       {pickerOpen && (
-        <div className="sheet-backdrop" onClick={() => setPickerOpen(false)}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+        <Dialog onClose={() => setPickerOpen(false)} label="목소리 고르기" backdropClass="sheet-backdrop" className="sheet">
             <div className="sheet-grip" />
             <div className="sparks-hd">
               <span className="sparks-star">🎙️</span>
@@ -628,8 +628,7 @@ export default function Speak({
             <button className="ob-primary" onClick={() => setPickerOpen(false)}>
               완료
             </button>
-          </div>
-        </div>
+        </Dialog>
       )}
     </section>
   );

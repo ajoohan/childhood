@@ -75,7 +75,13 @@ function normalizeKid(k) {
   };
 }
 
+// 이 탭이 마지막으로 읽거나 쓴 저장값. 다른 탭(홈 화면 앱과 브라우저 탭 등)이 그 사이에 바꿨는지 알아내는 기준.
+let lastRaw;
+
 export function loadStore() {
+  try {
+    lastRaw = localStorage.getItem(STORE_KEY);
+  } catch {}
   // v2 우선
   try {
     const s = JSON.parse(localStorage.getItem(STORE_KEY));
@@ -200,6 +206,25 @@ export function persist(state) {
       return false;
     }
   }
+}
+
+// 저장하되, 다른 탭이 먼저 바꿔 놓았으면 덮어쓰지 않는다(그러면 그 탭의 기록이 통째로 사라진다).
+// 반환: "ok" | "conflict"(다른 탭이 바꿈 — 새로고침이 필요) | "failed"(이 브라우저에서 저장 불가)
+export function persistChecked(state) {
+  let serialized;
+  try {
+    const cur = localStorage.getItem(STORE_KEY);
+    if (lastRaw !== undefined && cur !== lastRaw) return "conflict";
+    serialized = JSON.stringify(state);
+    if (serialized === cur) return "ok"; // 바뀐 것이 없으면 쓰지 않는다
+  } catch {
+    return "failed";
+  }
+  if (!persist(state)) return "failed";
+  try {
+    lastRaw = localStorage.getItem(STORE_KEY);
+  } catch {}
+  return "ok";
 }
 
 export function todayKey(now = new Date()) {

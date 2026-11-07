@@ -8,6 +8,7 @@ import {
 } from "../lib/decor.js";
 import { robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
+import Dialog from "../components/Dialog.jsx";
 import { eulReul } from "../lib/josa.js";
 
 // 꾸미기 방 — 빈 칸을 자유롭게 채우고, "완성하기"를 누르면 그때 별이 한 번에
@@ -160,8 +161,7 @@ export default function DecorRoom({
 
       {/* 오브젝트 3택 선택 */}
       {choosing && (
-        <div className="sheet-backdrop" onClick={() => setChoosing(null)}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+        <Dialog onClose={() => setChoosing(null)} label="꾸미기 고르기" backdropClass="sheet-backdrop" className="sheet">
             <div className="sheet-grip" />
             <div className="sparks-hd">
               <span className="sparks-star">{theme.emoji}</span>
@@ -181,15 +181,14 @@ export default function DecorRoom({
                 </button>
               ))}
             </div>
-          </div>
-        </div>
+        </Dialog>
       )}
 
       {/* 테마 완성 기념 사진 */}
       {celebrate && (
         <div className="modal-backdrop" onClick={() => setCelebrate(false)}>
           <Confetti count={90} />
-          <div className="celebrate" onClick={(e) => e.stopPropagation()}>
+          <div className="celebrate" role="dialog" aria-modal="true" aria-label="꾸미기 완성" onClick={(e) => e.stopPropagation()}>
             <div className="celebrate-frame">
               <div
                 className="celebrate-scene"

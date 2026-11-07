@@ -23,7 +23,7 @@ import { earnedBadges, drawSticker } from "./lib/collectibles.js";
 import { REWARD, isAllClear, openTreasure } from "./lib/missions.js";
 import {
   loadStore,
-  persist,
+  persistChecked,
   rollDay,
   todayKey,
   emptyKid,
@@ -57,6 +57,7 @@ export default function App() {
     // 연령 모드는 아이 생년월에서 자동 계산 (10세부터 아동 모드)
     ageMode: ageModeForProfile(initKid.profile),
     pin: initial.settings.pin || null,
+    pinResetAt: initial.settings.pinResetAt || null, // "PIN을 잊으셨나요?"로 PIN이 다시 정해진 시각(부모 화면에 알린다)
     voice: initial.settings.voice || "shimmer",
     sound: initial.settings.sound !== false,
     notifyMissions: initial.settings.notifyMissions !== false, // 커스텀 미션 완료 부모 알림
@@ -74,6 +75,7 @@ export default function App() {
   const [pinThen, setPinThen] = useState(null); // PIN을 통과한 뒤 할 일 ("addKid") — 없으면 부모 존으로
   const [sparksOpen, setSparksOpen] = useState(false);
   const [guardUnlocked, setGuardUnlocked] = useState(false);
+  const [storageIssue, setStorageIssue] = useState(null); // null | "conflict" | "failed"
 
   const dismissSplash = () => {
     splashSeen = true;
@@ -94,11 +96,16 @@ export default function App() {
   });
 
   useEffect(() => {
-    persist({
-      settings,
-      activeKid,
-      kids: { ...kids, [activeKid]: kidSnapshot() },
-    });
+    setStorageIssue(
+      (() => {
+        const r = persistChecked({
+          settings,
+          activeKid,
+          kids: { ...kids, [activeKid]: kidSnapshot() },
+        });
+        return r === "ok" ? null : r;
+      })()
+    );
   }, [histories, safety, notices, settings, profile, rewards, parentMissions, decor, badges, stickers, activeKid, kids]);
 
   // 앱을 연 채로(홈 화면 앱을 밤새 두는 등) 날짜가 바뀌면 미션·출석을 새로 연다. 지금까지는 기록을
@@ -148,6 +155,18 @@ export default function App() {
     setGuardUnlocked(false);
     setZone("kids");
     setView({ name: "home" });
+  }
+
+  // 프로필 전환도 PIN을 정해 둔 경우엔 PIN 뒤에 둔다. 막지 않으면 하루 제한에 걸린 아이가
+  // 형제 프로필로 바꿔 계속 쓰거나, 형제의 대화 기록을 볼 수 있다.
+  function requestSwitchKid(id) {
+    if (id === activeKid || !kids[id]) return;
+    if (settings.pin && !guardUnlocked) {
+      setPinThen({ switchTo: id });
+      setPinOpen(true);
+      return;
+    }
+    switchKid(id);
   }
 
   // 새 아이 추가를 취소 — 비어 있는 프로필을 지우고 원래 아이로 돌아간다.
@@ -349,13 +368,13 @@ export default function App() {
     return true;
   }
 
-  function completeOnboarding(p) {
+  function completeOnboarding(p, pin) {
     // 아바타 미선택 시 이름 기반으로 하나 배정 (부모존에서 언제든 변경 가능)
     const seed = (p.name || "").split("").reduce((n, c) => n + c.charCodeAt(0), 0);
     const withAvatar = { ...p, avatar: p.avatar || AVATARS[seed % AVATARS.length] };
     // 연령 모드는 생년월 기반으로 useEffect에서 자동 계산된다.
     setProfile(withAvatar);
-    setSettings((s) => ({ ...s, ageMode: ageModeForProfile(withAvatar) }));
+    setSettings((s) => ({ ...s, ageMode: ageModeForProfile(withAvatar), ...(pin ? { pin, pinResetAt: null } : {}) }));
   }
 
   // 탭 반짝임 효과 — 누르는 곳마다 별이 튄다 (아이용 즐거움)
@@ -398,6 +417,19 @@ export default function App() {
     };
   }, []);
 
+  // 앱이 가려지면(다른 앱으로 전환·화면 끔) 부모 존을 다시 잠근다. 부모가 연 채로 폰을 내려놓으면
+  // 아이가 PIN 없이 부모 화면을 쓸 수 있었다.
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState !== "hidden") return;
+      setGuardUnlocked(false);
+      setZone((z) => (z === "parent" ? "kids" : z));
+      setParentView("main");
+    };
+    document.addEventListener("visibilitychange", onHide);
+    return () => document.removeEventListener("visibilitychange", onHide);
+  }, []);
+
   function openParent() {
     if (guardUnlocked) {
       setZone("parent");
@@ -409,9 +441,18 @@ export default function App() {
   const pinGate = pinOpen ? (
     <PinGate
       savedPin={settings.pin}
-      onSetPin={(pin) => setSettings((s) => ({ ...s, pin }))}
+      onSetPin={(pin, meta) =>
+        setSettings((s) => ({ ...s, pin, pinResetAt: meta?.viaForgot ? new Date().toISOString() : null }))
+      }
       onUnlock={() => {
         setPinOpen(false);
+        if (pinThen && pinThen.switchTo) {
+          // 부모 존은 열지 않고 프로필 전환만 한다
+          const id = pinThen.switchTo;
+          setPinThen(null);
+          switchKid(id);
+          return;
+        }
         if (pinThen === "addKid") {
           // 부모 존은 열지 않고 아이 추가만 한다
           setPinThen(null);
@@ -485,6 +526,7 @@ export default function App() {
     return (
       <div className="app">
         <Onboarding
+          needPin={!settings.pin}
           onDone={completeOnboarding}
           onCancel={returnTo ? () => cancelAddKid(returnTo) : undefined}
         />
@@ -494,6 +536,12 @@ export default function App() {
 
   return (
     <div className="app">
+      {storageIssue === "conflict" && (
+        <div className="storage-banner" role="alert">
+          다른 창에서 기록이 바뀌었어요. 새로고침하면 최신 기록으로 이어져요.
+          <button onClick={() => window.location.reload()}>새로고침</button>
+        </div>
+      )}
       <div className="screens">
         {zone === "kids" && view.name === "home" && (
           <KidsHome
@@ -505,7 +553,7 @@ export default function App() {
             avatar={profile.avatar}
             interests={profile.interests}
             kidList={kidList}
-            onSwitchKid={switchKid}
+            onSwitchKid={requestSwitchKid}
             onAddKid={requestAddKid}
             onPickCategory={(c) => setView({ name: "list", category: c })}
             onPickActivity={openActivity}
@@ -645,6 +693,7 @@ export default function App() {
             notices={notices}
             onClearNotices={() => setNotices([])}
             settings={settings}
+            storageIssue={storageIssue}
             profile={profile}
             rewards={rewards}
             parentMissions={parentMissions}
@@ -675,7 +724,7 @@ export default function App() {
             onSetNotifyMissions={(v) => setSettings((s) => ({ ...s, notifyMissions: v }))}
             onSaveLimit={(val) => setSettings((s) => ({ ...s, limitPerDay: val }))}
             onSetVoice={(v) => setSettings((s) => ({ ...s, voice: v }))}
-            onSetPin={(pin) => setSettings((s) => ({ ...s, pin }))}
+            onSetPin={(pin) => setSettings((s) => ({ ...s, pin, pinResetAt: null }))}
             onClear={() => {
               setHistories({});
               setSafety([]);

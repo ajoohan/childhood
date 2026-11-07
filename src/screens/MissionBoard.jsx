@@ -2,6 +2,7 @@ import { useState } from "react";
 import { allMissions, praiseFor, REWARD } from "../lib/missions.js";
 import { robotMascot, robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
+import Dialog from "../components/Dialog.jsx";
 import { aYa } from "../lib/josa.js";
 
 // 오늘의 미션 보드 — 미션 수행 → AI 대화형 인증(칭찬) → 별 지급 → 꾸미기로 소모
@@ -148,8 +149,7 @@ export default function MissionBoard({
 
       {/* AI 인증 확인 모달 */}
       {checking && (
-        <div className="modal-backdrop" onClick={() => setChecking(null)}>
-          <div className="mission-modal" onClick={(e) => e.stopPropagation()}>
+        <Dialog onClose={() => setChecking(null)} label="미션 확인" className="mission-modal">
             <div className="mm-emoji">{checking.emoji}</div>
             <h2>{checking.title}</h2>
             <p>정말 다 했나요? AI 도우미가 확인해 줄게요!</p>
@@ -161,15 +161,14 @@ export default function MissionBoard({
                 네, 다 했어요!
               </button>
             </div>
-          </div>
-        </div>
+        </Dialog>
       )}
 
       {/* 칭찬 + 별 지급 모달 */}
       {praise && (
         <div className="modal-backdrop" onClick={() => setPraise(null)}>
           <Confetti />
-          <div className="mission-modal praise" onClick={(e) => e.stopPropagation()}>
+          <div className="mission-modal praise" role="dialog" aria-modal="true" aria-label="별 받기" onClick={(e) => e.stopPropagation()}>
             <span
               className="mm-robot"
               dangerouslySetInnerHTML={{ __html: robotMascot("excited") }}
@@ -193,7 +192,7 @@ export default function MissionBoard({
       {chestReward && (
         <div className="modal-backdrop" onClick={() => setChestReward(null)}>
           <Confetti count={90} />
-          <div className="mission-modal praise" onClick={(e) => e.stopPropagation()}>
+          <div className="mission-modal praise" role="dialog" aria-modal="true" aria-label="보물상자" onClick={(e) => e.stopPropagation()}>
             <div className="chest-reveal">
               <span className="chest-reveal-box">🎁</span>
               <span className="chest-reveal-prize">

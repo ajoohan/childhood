@@ -3,6 +3,7 @@ import { recommendActivities } from "../lib/data.js";
 import Confetti from "../components/Confetti.jsx";
 import { iEge } from "../lib/josa.js";
 import AssetImg from "../components/AssetImg.jsx";
+import Dialog from "../components/Dialog.jsx";
 
 // 시안 "새로운 유익한 놀이" 3카드 (Figma Home 62:78)
 // 결제가 없어서 숨긴다. 결제를 붙일 때 true로 (가입 화면의 SHOW_PAYWALL과 짝).
@@ -256,8 +257,7 @@ export default function KidsHome({
 
       {/* 유저 변경 시트 — 한 기기에서 형제·자매 프로필 전환 */}
       {switcherOpen && (
-        <div className="sheet-backdrop" onClick={() => setSwitcherOpen(false)}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+        <Dialog onClose={() => setSwitcherOpen(false)} label="프로필 바꾸기" backdropClass="sheet-backdrop" className="sheet">
             <div className="sheet-grip" />
             <div className="sparks-hd">
               <span className="sparks-star">👥</span>
@@ -298,8 +298,7 @@ export default function KidsHome({
                 </span>
               </button>
             </div>
-          </div>
-        </div>
+        </Dialog>
       )}
     </section>
   );

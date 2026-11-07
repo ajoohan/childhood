@@ -1,4 +1,5 @@
 import { robotHead } from "../lib/mascot.js";
+import Dialog from "./Dialog.jsx";
 
 // 별(Sparks) 모으기 시트 — 소비/상점 없이 '격려'만. 활동을 하면 별이 쌓여요.
 const WAYS = [
@@ -11,8 +12,7 @@ export default function SparksSheet({ stars, activities, onGo, onClose }) {
   const byId = (id) => activities.find((a) => a.id === id);
 
   return (
-    <div className="sheet-backdrop" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+    <Dialog onClose={onClose} label="별 모으기" backdropClass="sheet-backdrop" className="sheet">
         <div className="sheet-grip" />
         <div className="sparks-hd">
           <span
@@ -48,7 +48,6 @@ export default function SparksSheet({ stars, activities, onGo, onClose }) {
         <p className="sparks-note">
           ⭐ 별은 <b>모으는 재미</b>예요. 따로 사고파는 곳은 없어요. 😊
         </p>
-      </div>
-    </div>
+    </Dialog>
   );
 }

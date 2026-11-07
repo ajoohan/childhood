@@ -19,6 +19,7 @@ export default function ParentZone({
   notices,
   onClearNotices,
   settings,
+  storageIssue = null,
   profile,
   rewards,
   parentMissions,
@@ -116,6 +117,24 @@ export default function ParentZone({
       </header>
 
       <div className="guard-scroll">
+        {settings.pinResetAt && (
+          <div className="guard-card pin-alert" role="alert">
+            <h3>⚠️ PIN이 다시 정해졌어요</h3>
+            <p className="guard-hint">
+              {fmtTime(settings.pinResetAt)}에 "PIN을 잊으셨나요?"로 PIN이 바뀌었어요. 직접 하신 게 아니라면 아이가
+              바꿨을 수 있어요. 설정 › 부모 잠금에서 PIN을 다시 정하면 이 안내가 사라져요.
+            </p>
+          </div>
+        )}
+        {storageIssue === "failed" && (
+          <div className="guard-card pin-alert" role="alert">
+            <h3>⚠️ 기록을 저장할 수 없어요</h3>
+            <p className="guard-hint">
+              이 브라우저에서는 기록이 저장되지 않아요(시크릿 모드이거나 저장 공간이 부족할 수 있어요). 앱을 닫으면
+              별·대화 기록이 사라져요.
+            </p>
+          </div>
+        )}
         <div className="guard-card">
           <h3>🧒 아이 프로필</h3>
           <p className="guard-hint">

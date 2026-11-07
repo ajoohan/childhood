@@ -1,7 +1,7 @@
 // 별 경제와 온보딩처럼 여러 화면에 걸친 흐름.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { startServer, launchBrowser, openApp, seed, BASE } from "./helpers.js";
+import { startServer, launchBrowser, openApp, seed, BASE, pinKeys } from "./helpers.js";
 
 let server, browser;
 before(async () => { server = await startServer(); browser = await launchBrowser(); });
@@ -140,6 +140,11 @@ test("홍보 문구: 시작·가입 화면에 근거 없는 문구가 없고, �
     assert.doesNotMatch(await page.innerText("body"), BANNED, `가입 ${i + 1}단계`);
     await page.click(".ob-primary:not([disabled])");
   }
+  // 첫 가입이면 안전 안내 다음에 부모 PIN을 정한다 (건너뛸 수 없다)
+  await page.waitForSelector(".pin-inline", { timeout: 8000 });
+  assert.equal(await page.$(".ob-cta"), null, "PIN 단계에는 '다음/건너뛰기' 버튼이 없다");
+  await pinKeys(page, "1234");
+  await pinKeys(page, "1234");
   // 결제가 없어서 구독 안내는 건너뛰고 홈으로 간다. 구독 안내 화면이 뜨면 안 된다.
   await page.waitForSelector(".kids-home", { timeout: 20000 });
   assert.equal(await page.$(".ob-paywall"), null, "구독 안내 화면은 건너뛴다");
@@ -148,6 +153,7 @@ test("홍보 문구: 시작·가입 화면에 근거 없는 문구가 없고, �
   const profile = Object.values(saved.kids)[0].profile;
   assert.equal(profile.plan, "free", "결제 없이 구독 상태가 저장되면 안 된다");
   assert.equal(profile.onboarded, true);
+  assert.equal(saved.settings.pin, "1234", "가입 때 정한 PIN이 저장된다");
   await page.close();
 });
 

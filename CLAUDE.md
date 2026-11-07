@@ -86,6 +86,18 @@
 - 의존성 취약점 검사는 새 권고가 나오면 문서만 바꾼 커밋에서도 실패할 수 있다. 병합 전 `npm audit`가 깨지면
   `npm audit fix`(잠금 파일만)로 고치고 테스트를 다시 돌린다.
 
+## 부모 PIN 정책 (2026-11-07 사용자 결정 "가입 단계 추가, 모두 진행")
+
+- 첫 가입(기기에 PIN 없음)은 안전 안내 다음에 **부모 PIN을 정하는 단계가 필수**다(`Onboarding.jsx`의 `needPin`).
+  PIN이 있으면 형제 추가 가입에서는 건너뛴다.
+- PIN을 정해 두면 **프로필 전환·새 아이 추가·부모 존**이 모두 PIN 뒤에 있다(`App.jsx`의 `requestSwitchKid`/`requestAddKid`).
+- "PIN을 잊으셨나요?" 계산으로 PIN이 바뀌면 `settings.pinResetAt`이 남고 부모 화면에 경고가 뜬다. 설정에서 PIN을 다시 정하면 사라진다.
+- 앱이 가려지면(`visibilitychange`) 열려 있던 부모 존이 다시 잠긴다.
+- 팝업·시트는 `components/Dialog.jsx`(역할·포커스·Esc·Tab 가둠)를 쓴다. 새 팝업도 이것으로 만든다.
+- 저장은 `persistChecked`: 다른 탭이 먼저 바꿨으면 덮어쓰지 않고 새로고침을 안내한다. 같은 내용이면 쓰지 않는다.
+- 안전 분류기는 마지막 메시지만이 아니라 바로 앞 대화(최대 4개)를 함께 본다(`buildClassifierPrompt`).
+- IP별 하루 상한 기본값은 100(`RL_PER_DAY`, 전체 `RL_GLOBAL_PER_DAY`의 일부).
+
 ## 화면 스타일
 
 - 터치 영역은 44px 이상(작은 아이콘은 `::after`로 눌리는 범위만 넓힌다), 한국어 글은 `word-break: keep-all`, 꺼진 탭 글자 대비 4.5:1 이상. `tests/ui/polish.test.js`가 지킨다.

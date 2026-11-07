@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Dialog from "./Dialog.jsx";
 import {
   lockMessage,
   lockRemaining,
@@ -41,8 +42,7 @@ export default function GateDialog({ onPass, onClose }) {
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal px" onClick={(e) => e.stopPropagation()}>
+    <Dialog onClose={onClose} label="보호자 확인" className="modal px">
         <h2>보호자 확인</h2>
         <p>
           여기는 어른을 위한 공간이에요.
@@ -52,6 +52,7 @@ export default function GateDialog({ onPass, onClose }) {
         <p className="gate-q">{q.text} = ?</p>
         <input
           ref={inputRef}
+          aria-label="계산 답"
           type="number"
           inputMode="numeric"
           autoComplete="off"
@@ -75,7 +76,6 @@ export default function GateDialog({ onPass, onClose }) {
             확인
           </button>
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 }

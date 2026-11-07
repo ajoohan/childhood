@@ -4911,3 +4911,26 @@ input, textarea { word-break: normal; }
 @media (max-width: 380px) {
   .fx-hi-2 { font-size: 17px; white-space: normal; }
 }
+
+/* 대화창을 열 때 포커스를 받는 틀에는 테두리를 그리지 않는다(내용 안의 버튼 포커스는 그대로 보인다). */
+[role="dialog"]:focus { outline: none; }
+
+/* 가입 화면 안에 끼운 PIN 입력(팝업이 아니라 화면의 일부) */
+.pin-card.pin-inline { box-shadow: none !important; border: none !important; background: transparent !important; margin: 0 auto; padding: 8px 0 0; max-width: 340px; }
+.pin-card.pin-inline h2 { display: none; }
+.pin-card.pin-inline .pin-lock { display: none; }
+
+/* PIN 재설정·저장 불가 안내 */
+.guard-card.pin-alert { border-color: #F0B27A !important; background: #FFF6EC !important; }
+.guard-card.pin-alert h3 { color: #B35B00; }
+
+/* 다른 창이 기록을 바꿨을 때 위에 뜨는 안내 */
+.storage-banner {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 60; display: flex; gap: 10px; align-items: center;
+  justify-content: center; padding: 10px 14px; background: #FFF6EC; color: #7A3E00;
+  border-bottom: 1px solid #F0B27A; font-size: 14px; font-weight: 600; text-align: center;
+}
+.storage-banner button {
+  border: none; border-radius: 12px; padding: 8px 14px; min-height: 40px; background: #7C59BA; color: #fff;
+  font-weight: 700; font-family: inherit;
+}

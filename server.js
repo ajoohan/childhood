@@ -73,7 +73,7 @@ function envNumber(name, fallback) {
   return fallback;
 }
 const RL_PER_MIN = envNumber("RL_PER_MIN", 15); // IP당 분당
-const RL_PER_DAY = envNumber("RL_PER_DAY", 200); // IP당 하루
+const RL_PER_DAY = envNumber("RL_PER_DAY", 100); // IP당 하루 (전체 하루 상한의 일부 — 한 곳이 전체를 쓰지 못하게)
 const RL_GLOBAL_PER_DAY = envNumber("RL_GLOBAL_PER_DAY", 3000); // 전체 하루
 
 // 하루 기준은 서비스 대상 지역(한국) 자정이다. 서버는 UTC로 돌기 때문에 toISOString()으로
@@ -354,23 +354,37 @@ const SAFETY_SCHEMA = {
 // 아이가 보낸 마지막 메시지를 빠른 모델로 사전 분류한다.
 // 채팅은 분류가 실패해도 메인 모델의 시스템 프롬프트가 안전을 지키므로 대화를 계속한다(열림).
 // 이미지 생성은 이 검사가 유일한 관문이라 failClosed로 호출해, 실패하면 "unavailable"을 돌려준다.
-async function classifySafety(text, { failClosed = false, signal } = {}) {
+// 분류기에 보낼 글. 꺾쇠를 없애 </message>로 구분자를 닫고 지시를 끼워 넣는 일을 막는다.
+// context(바로 앞 대화)를 함께 보낸다. 마지막 한 줄만 보면 위기 신호 뒤의 "응, 그렇게 할래"가 safe로 분류돼
+// 안전 안내가 사라진다.
+const stripAngle = (t) => String(t).replace(/[<>]/g, " ");
+function buildClassifierPrompt(text, context = []) {
+  const lines = context
+    .slice(-4)
+    .map((m) => `${m.role === "assistant" ? "도우미" : "아이"}: ${stripAngle(clip(m.content, 300))}`);
+  const ctx = lines.length
+    ? "\n\n<context>\n앞선 대화입니다. 분류 대상이 아니라 맥락입니다.\n" + lines.join("\n") + "\n</context>"
+    : "";
+  return (
+    "다음은 어린이용 채팅 서비스에서 어린이가 보낸 마지막 메시지입니다. 안전 관점에서 마지막 메시지(<message>)만 분류하세요." +
+    (ctx
+      ? " 마지막 메시지가 앞선 대화에서 나온 위기 신호나 유해한 내용에 동의하거나 이어 가는 말이면 같은 범주로 분류하세요."
+      : "") +
+    ctx +
+    "\n\n<message>\n" +
+    stripAngle(text) +
+    "\n</message>"
+  );
+}
+
+async function classifySafety(text, { failClosed = false, signal, context = [] } = {}) {
   try {
     const res = await client.messages.create(
       {
         model: SAFETY_MODEL,
         max_tokens: 256,
         output_config: { format: { type: "json_schema", schema: SAFETY_SCHEMA } },
-        messages: [
-          {
-            role: "user",
-            content:
-              "다음은 어린이용 채팅 서비스에서 어린이가 보낸 메시지입니다. 안전 관점에서 분류하세요.\n\n<message>\n" +
-              // 꺾쇠를 없애 </message>로 구분자를 닫고 분류기에 지시를 끼워 넣는 일을 막는다.
-              text.replace(/[<>]/g, " ") +
-              "\n</message>",
-          },
-        ],
+        messages: [{ role: "user", content: buildClassifierPrompt(text, context) }],
       },
       // 분류가 느려도 아이가 몇 분씩 기다리지 않게 한다(실패하면 채팅은 열림, 이미지는 닫힘).
       { timeout: CLASSIFY_TIMEOUT_MS, maxRetries: 1, ...(signal ? { signal } : {}) }
@@ -594,7 +608,10 @@ app.post("/api/chat", rateLimit, handle(async (req, res) => {
   });
 
   const lastUserText = messages[messages.length - 1].content;
-  const category = await classifySafety(lastUserText, { signal: upstream.signal });
+  const category = await classifySafety(lastUserText, {
+    signal: upstream.signal,
+    context: messages.slice(0, -1),
+  });
   if (upstream.signal.aborted) return;
   if (category !== "safe") {
     console.log(`[safety] flagged category=${category}`);
@@ -715,4 +732,5 @@ export {
   sanitizeMessages,
   personaBlock,
   systemPromptFor,
+  buildClassifierPrompt,
 };

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { INTERESTS, SPLASH_DECO } from "../lib/data.js";
 import { robotHead } from "../lib/mascot.js";
 import GateDialog from "../components/GateDialog.jsx";
+import PinGate from "../components/PinGate.jsx";
 import { computeAge, ageModeForAge, MODE_LABEL, CHILD_MIN } from "../lib/age.js";
 import { eunNeun } from "../lib/josa.js";
 
@@ -30,8 +31,10 @@ function ageNote(age) {
 // 결제를 붙일 때 true로 되돌리면 화면과 부모 확인 절차가 그대로 살아난다.
 const SHOW_PAYWALL = false;
 
-export default function Onboarding({ onDone, onCancel }) {
-  const [step, setStep] = useState("name"); // name|age|interests|safety|loading|paywall
+// needPin: 이 기기에 부모 PIN이 아직 없으면(첫 가입) 안전 안내 다음에 PIN을 정하게 한다.
+// 예전에는 PIN이 선택이라, 처음 부모 탭을 누른 사람(아이일 수도 있다)이 PIN을 정해 부모 화면을 차지할 수 있었다.
+export default function Onboarding({ onDone, onCancel, needPin = false }) {
+  const [step, setStep] = useState("name"); // name|age|interests|safety|pin|loading|paywall
   const [name, setName] = useState("");
   const [birthYear, setBirthYear] = useState(null);
   const [birthMonth, setBirthMonth] = useState(null);
@@ -44,7 +47,8 @@ export default function Onboarding({ onDone, onCancel }) {
   const nameRef = useRef(null);
 
   const who = name.trim() || "우리 아이";
-  const STEPS = ["name", "age", "interests", "safety"];
+  const pinRef = useRef(null);
+  const STEPS = needPin ? ["name", "age", "interests", "safety", "pin"] : ["name", "age", "interests", "safety"];
   const progress = (STEPS.indexOf(step) + 1) / STEPS.length;
 
   useEffect(() => {
@@ -69,15 +73,18 @@ export default function Onboarding({ onDone, onCancel }) {
   }
 
   function finish(chosenPlan) {
-    onDone({
-      onboarded: true,
-      name: name.trim(),
-      birthYear,
-      birthMonth,
-      age, // 저장 시점의 만 나이(생년월 기준으로 앱에서 다시 계산됨)
-      interests,
-      plan: chosenPlan,
-    });
+    onDone(
+      {
+        onboarded: true,
+        name: name.trim(),
+        birthYear,
+        birthMonth,
+        age, // 저장 시점의 만 나이(생년월 기준으로 앱에서 다시 계산됨)
+        interests,
+        plan: chosenPlan,
+      },
+      pinRef.current
+    );
   }
 
   function back() {
@@ -248,7 +255,7 @@ export default function Onboarding({ onDone, onCancel }) {
     if (step === "name") setStep("age");
     else if (step === "age") setStep("interests");
     else if (step === "interests") setStep("safety");
-    else if (step === "safety") setStep("loading");
+    else if (step === "safety") setStep(needPin ? "pin" : "loading");
   }
 
   return (
@@ -395,13 +402,33 @@ export default function Onboarding({ onDone, onCancel }) {
             </div>
           </>
         )}
+
+        {step === "pin" && (
+          <>
+            <h1>부모님이 비밀번호를 정해 주세요</h1>
+            <p className="ob-sub">
+              아이가 부모 화면을 바꾸지 못하게 지켜 줘요. 잊어도 어른 확인으로 다시 정할 수 있어요.
+            </p>
+            <PinGate
+              inline
+              savedPin={null}
+              onSetPin={(p) => {
+                pinRef.current = p;
+              }}
+              onUnlock={() => setStep("loading")}
+              onClose={() => setStep("safety")}
+            />
+          </>
+        )}
       </div>
 
-      <div className="ob-cta">
-        <button className="ob-primary" onClick={next} disabled={!canNext}>
-          {step === "safety" ? "시작하기" : "다음"}
-        </button>
-      </div>
+      {step !== "pin" && (
+        <div className="ob-cta">
+          <button className="ob-primary" onClick={next} disabled={!canNext}>
+            {step === "safety" && !needPin ? "시작하기" : "다음"}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
