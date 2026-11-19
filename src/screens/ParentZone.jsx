@@ -20,6 +20,7 @@ export default function ParentZone({
   onClearNotices,
   settings,
   storageIssue = null,
+  accountPanel = null,
   profile,
   rewards,
   parentMissions,
@@ -439,6 +440,8 @@ export default function ParentZone({
             준비 중 (무료 체험 예정)
           </button>
         </div>
+
+        {accountPanel}
 
         <button className="guard-settings-link" onClick={onSettings}>
           <span className="gsl-ic">⚙️</span>

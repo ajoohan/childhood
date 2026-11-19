@@ -105,6 +105,27 @@ function normalizeFeedbackUrl(raw) {
   }
 }
 const FEEDBACK_URL = normalizeFeedbackUrl(process.env.FEEDBACK_URL);
+
+// 부모 계정(Supabase). 둘 다 공개 값이다(프로젝트 주소, 공개용 키 sb_publishable_…). 비밀 키(service_role)는 여기에
+// 쓰지 않는다. 둘 중 하나라도 없거나 모양이 틀리면 계정 기능은 꺼진 채로 둔다(화면에 아무것도 나오지 않는다).
+function normalizeAccountsConfig(env = process.env) {
+  const url = typeof env.SUPABASE_URL === "string" ? env.SUPABASE_URL.trim().replace(/\/+$/, "") : "";
+  const key = typeof env.SUPABASE_PUBLISHABLE_KEY === "string" ? env.SUPABASE_PUBLISHABLE_KEY.trim() : "";
+  if (!url || !key) return null;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:" || u.pathname !== "/" || u.search || u.hash) return null;
+  } catch {
+    return null;
+  }
+  // 공개용 키만 받는다. service_role·secret 키가 잘못 들어와도 브라우저로 내보내지 않는다.
+  if (!/^sb_publishable_[A-Za-z0-9_-]{10,}$/.test(key)) return null;
+  return { url, key };
+}
+const ACCOUNTS = normalizeAccountsConfig();
+if ((process.env.SUPABASE_URL || process.env.SUPABASE_PUBLISHABLE_KEY) && !ACCOUNTS) {
+  console.error("SUPABASE_URL(https://…)과 SUPABASE_PUBLISHABLE_KEY(sb_publishable_…)가 모두 올바르지 않아 계정 기능을 끕니다.");
+}
 if (process.env.FEEDBACK_URL && !FEEDBACK_URL) {
   console.error("FEEDBACK_URL 은 https:// 또는 mailto: 로 시작해야 해서 무시합니다.");
 }
@@ -482,7 +503,7 @@ app.get("/api/activities", (req, res) => {
       greeting: a.greeting,
     })),
     // 클라이언트가 선택 기능 활성 여부를 알 수 있게 노출
-    features: { stt: !!STT_API_KEY, image: !!IMAGE_API_KEY, feedbackUrl: FEEDBACK_URL },
+    features: { stt: !!STT_API_KEY, image: !!IMAGE_API_KEY, feedbackUrl: FEEDBACK_URL, accounts: ACCOUNTS },
   });
 });
 
@@ -727,6 +748,7 @@ export {
   dayKey,
   upstreamErrorKind,
   normalizeFeedbackUrl,
+  normalizeAccountsConfig,
   scrubForPrompt,
   sanitizeProfile,
   sanitizeMessages,

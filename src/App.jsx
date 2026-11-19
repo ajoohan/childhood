@@ -31,6 +31,8 @@ import {
   MAX_STORED_MESSAGES,
 } from "./lib/store.js";
 import { adaptActivities, ageModeForProfile, computeAge } from "./lib/age.js";
+import { configureAccounts } from "./lib/account.js";
+import AccountPanel from "./screens/AccountPanel.jsx";
 
 const initial = loadStore();
 const initKid = initial.kids[initial.activeKid];
@@ -406,7 +408,11 @@ export default function App() {
     const load = (i) =>
       fetch("/api/activities")
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-        .then((d) => alive && setData(d))
+        .then((d) => {
+          if (!alive) return;
+          configureAccounts(d?.features?.accounts || null); // 서버에 SUPABASE_* 설정이 없으면 null → 계정 기능 꺼짐
+          setData(d);
+        })
         .catch(() => {
           if (alive && i < delays.length) timer = setTimeout(() => load(i + 1), delays[i]);
         });
@@ -694,6 +700,11 @@ export default function App() {
             onClearNotices={() => setNotices([])}
             settings={settings}
             storageIssue={storageIssue}
+            accountPanel={
+              data.features?.accounts ? (
+                <AccountPanel buildStore={() => ({ settings, activeKid, kids: { ...kids, [activeKid]: kidSnapshot() } })} />
+              ) : null
+            }
             profile={profile}
             rewards={rewards}
             parentMissions={parentMissions}

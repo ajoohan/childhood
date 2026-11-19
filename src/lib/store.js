@@ -59,7 +59,7 @@ function normalizeDecor(raw) {
   };
 }
 
-function normalizeKid(k) {
+export function normalizeKid(k) {
   const base = emptyKid();
   if (!k || typeof k !== "object") return base;
   return {
@@ -225,6 +225,14 @@ export function persistChecked(state) {
     lastRaw = localStorage.getItem(STORE_KEY);
   } catch {}
   return "ok";
+}
+
+// 저장값을 통째로 바꾼다(계정에서 불러오기). 이 탭이 쓴 것으로 기록해, 바로 이어지는 새로고침 전까지
+// persistChecked가 충돌로 오해하지 않게 한다.
+export function replaceStore(state) {
+  const raw = JSON.stringify(state);
+  localStorage.setItem(STORE_KEY, raw);
+  lastRaw = raw;
 }
 
 export function todayKey(now = new Date()) {

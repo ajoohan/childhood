@@ -201,3 +201,27 @@ test("분류기 입력: 맥락은 최근 4개·300자까지만", () => {
   assert.match(p, /말6 /);
   assert.ok(p.length < 2000);
 });
+
+import { normalizeAccountsConfig } from "../server.js";
+
+test("계정 설정: 주소와 공개용 키가 모두 올바를 때만 켠다", () => {
+  const ok = { SUPABASE_URL: "https://abcdefgh.supabase.co/", SUPABASE_PUBLISHABLE_KEY: "sb_publishable_AbCdEf1234567890" };
+  assert.deepEqual(normalizeAccountsConfig(ok), { url: "https://abcdefgh.supabase.co", key: "sb_publishable_AbCdEf1234567890" });
+  assert.equal(normalizeAccountsConfig({}), null);
+  assert.equal(normalizeAccountsConfig({ SUPABASE_URL: ok.SUPABASE_URL }), null, "키가 없으면 끈다");
+  assert.equal(normalizeAccountsConfig({ SUPABASE_PUBLISHABLE_KEY: ok.SUPABASE_PUBLISHABLE_KEY }), null, "주소가 없으면 끈다");
+  assert.equal(normalizeAccountsConfig({ ...ok, SUPABASE_URL: "http://abcdefgh.supabase.co" }), null, "https만");
+  assert.equal(normalizeAccountsConfig({ ...ok, SUPABASE_URL: "https://abcdefgh.supabase.co/rest/v1" }), null, "경로가 붙은 주소는 거부");
+  assert.equal(normalizeAccountsConfig({ ...ok, SUPABASE_URL: "javascript:alert(1)" }), null);
+});
+
+test("계정 설정: 비밀 키(service_role·secret)는 브라우저로 내보내지 않는다", () => {
+  const url = "https://abcdefgh.supabase.co";
+  for (const key of [
+    "sb_secret_AbCdEf1234567890",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.abc", // 옛 JWT 형식의 service_role
+    "sb_publishable_짧음",
+  ]) {
+    assert.equal(normalizeAccountsConfig({ SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key }), null, key);
+  }
+});
