@@ -4937,9 +4937,9 @@ input, textarea { word-break: normal; }
 
 /* 부모 계정 카드 */
 .acct-consents { display: grid; gap: 10px; margin: 12px 0; }
-.acct-consent label { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.5; color: #3A2A5C; }
-.acct-consent input[type="checkbox"] { width: 22px; height: 22px; flex: none; margin-top: 1px; accent-color: #7C59BA; }
-.acct-more { margin: 2px 0 0 32px; font-size: 13px; min-height: 36px; }
+.acct-consent label { display: flex; gap: 10px; align-items: center; min-height: 44px; font-size: 14px; line-height: 1.5; color: #3A2A5C; }
+.acct-consent input[type="checkbox"] { width: 22px; height: 22px; flex: none; accent-color: #7C59BA; }
+.acct-more { margin: 0 0 0 32px; font-size: 13px; min-height: 44px; }
 .acct-doc { margin: 6px 0 0 32px; padding: 10px 12px; border-radius: 12px; background: #F7F2FC; font-size: 13px; line-height: 1.6; color: #4A3D66; }
 .acct-doc ul { margin: 6px 0 6px 16px; padding: 0; }
 .acct-doc small { color: #8B7FA3; }

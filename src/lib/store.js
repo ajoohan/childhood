@@ -211,6 +211,7 @@ export function persist(state) {
 // 저장하되, 다른 탭이 먼저 바꿔 놓았으면 덮어쓰지 않는다(그러면 그 탭의 기록이 통째로 사라진다).
 // 반환: "ok" | "conflict"(다른 탭이 바꿈 — 새로고침이 필요) | "failed"(이 브라우저에서 저장 불가)
 export function persistChecked(state) {
+  if (frozen) return "ok";
   let serialized;
   try {
     const cur = localStorage.getItem(STORE_KEY);
@@ -227,12 +228,15 @@ export function persistChecked(state) {
   return "ok";
 }
 
-// 저장값을 통째로 바꾼다(계정에서 불러오기). 이 탭이 쓴 것으로 기록해, 바로 이어지는 새로고침 전까지
-// persistChecked가 충돌로 오해하지 않게 한다.
+// 저장값을 통째로 바꾼다(계정에서 불러오기). 부른 쪽은 바로 새로고침해야 한다.
+// 그때까지 이 탭의 화면은 바꾸기 전 상태를 들고 있으므로, 이 탭의 저장을 멈춰(frozen) 새로고침 직전에
+// 옛 상태가 방금 불러온 기록을 다시 덮어쓰지 못하게 한다.
+let frozen = false;
 export function replaceStore(state) {
   const raw = JSON.stringify(state);
   localStorage.setItem(STORE_KEY, raw);
   lastRaw = raw;
+  frozen = true;
 }
 
 export function todayKey(now = new Date()) {

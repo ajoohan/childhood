@@ -1,8 +1,11 @@
 // 부모 계정(Supabase) 얇은 래퍼. 계정 기능이 꺼져 있으면(서버에 SUPABASE_* 설정 없음) 이 파일은 불러오지도 않는다.
 // supabase-js는 무거워서 계정 화면을 열 때 처음 불러온다(동적 import).
 //
-// 로그인은 비밀번호 없이 이메일로 받은 6자리 코드(또는 메일 속 링크)로 한다.
-// 코드 입력을 기본으로 쓰는 이유: 메일 앱 안의 브라우저에서 링크를 열면 요청한 브라우저와 달라 로그인이 이어지지 않는 일이 흔하다.
+// 로그인은 비밀번호 없이 이메일로 받은 6자리 코드로만 한다. 메일 속 링크 로그인은 쓰지 않는다:
+//  - 메일 앱 안의 브라우저에서 링크가 열리면 요청한 브라우저와 달라 로그인이 이어지지 않는다.
+//  - 링크로 들어온 로그인은 동의를 기록하는 단계를 거치지 않는다(동의는 코드 확인 직후에 기록한다).
+//  - 링크는 주소에 로그인 정보를 싣고 온다. 아이가 쓰는 화면의 주소창·방문 기록에 남기지 않는다(scrubAuthHash).
+// 그래서 Supabase 메일 템플릿에는 링크를 빼고 코드({{ .Token }})만 넣는다(docs/parent-accounts.md).
 
 // 동의 문서의 버전. 문구를 바꾸면 버전도 올려서, 이전에 동의한 사람에게 다시 받게 한다.
 // "draft": 법률 검토 전의 초안이다. 정식 서비스 전에 전문가 검토를 거친 문구와 버전으로 바꾼다.
@@ -35,7 +38,7 @@ function client() {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
-          detectSessionInUrl: true, // 메일의 링크로 돌아오면 주소에 실린 로그인 정보를 읽는다
+          detectSessionInUrl: false, // 링크 로그인은 쓰지 않는다(위 설명)
           storageKey: "childhood_auth", // 아이 기록(banjjaktalk_v2)과 섞이지 않는 별도 키
         },
       })
@@ -44,16 +47,34 @@ function client() {
   return clientPromise;
 }
 
-// 이 계정 기능이 던지는 오류를 화면용 분류로 바꾼다.
+// 메일의 링크로 들어왔을 때 주소에 실려 온 로그인 정보(#access_token=…)나 오류 표시를 지운다. 쓰지 않는 값이다.
+export function scrubAuthHash(loc = window.location, hist = window.history) {
+  if (!/(^|[#&])(access_token|refresh_token|error_code|error_description)=/.test(loc.hash || "")) return false;
+  hist.replaceState(null, "", loc.pathname + loc.search);
+  return true;
+}
+
+// 이 계정 기능이 던지는 오류를 화면용 분류로 바꾼다. Supabase가 주는 오류 코드를 먼저 보고, 없으면 문구로 가린다.
+const CODE_KINDS = {
+  otp_expired: "bad_code",
+  email_address_invalid: "bad_email",
+  email_address_not_authorized: "not_allowed", // 기본 메일 발송은 프로젝트 구성원 주소로만 보낸다
+  signup_disabled: "not_allowed",
+  email_provider_disabled: "not_allowed",
+  otp_disabled: "not_allowed",
+  user_banned: "not_allowed",
+};
 export function errorKind(e) {
-  const msg = String(e?.message || e || "").toLowerCase();
-  const status = e?.status;
   if (e?.name === "ConflictError") return "conflict";
-  if (status === 429 || msg.includes("rate limit") || msg.includes("too many") || msg.includes("security purposes"))
+  const msg = String(e?.message || e || "").toLowerCase();
+  const code = String(e?.code || "");
+  if (msg === "snapshot too large") return "too_large";
+  if (e?.status === 429 || code.startsWith("over_") || msg.includes("rate limit") || msg.includes("too many") || msg.includes("security purposes"))
     return "rate_limit";
-  if (msg.includes("expired") || msg.includes("invalid") || (status === 403 && msg.includes("otp"))) return "bad_code";
+  if (CODE_KINDS[code]) return CODE_KINDS[code];
   if (msg.includes("failed to fetch") || msg.includes("network") || msg.includes("load failed")) return "network";
-  if (msg.includes("signups not allowed") || msg.includes("not allowed")) return "not_allowed";
+  if (msg.includes("token") && (msg.includes("expired") || msg.includes("invalid"))) return "bad_code";
+  if (msg.includes("not allowed") || msg.includes("not authorized")) return "not_allowed";
   return "unknown";
 }
 
@@ -74,7 +95,7 @@ export async function sendLoginCode(email) {
   const c = await client();
   const { error } = await c.auth.signInWithOtp({
     email,
-    options: { shouldCreateUser: true, emailRedirectTo: window.location.origin + "/" },
+    options: { shouldCreateUser: true },
   });
   if (error) throw error;
 }

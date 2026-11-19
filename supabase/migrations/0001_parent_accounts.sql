@@ -3,6 +3,8 @@
 --  - account_state : 이 기기에서 올린 기록의 스냅샷 1건(아이 프로필·별·콜렉션 등). 대화 내용·안전 알림 발췌·PIN은 넣지 않는다.
 --  - save_account_state / delete_my_account : 낙관적 잠금 저장, 내 계정과 모든 데이터 삭제
 -- 모든 표는 행 단위 보안(RLS)으로 로그인한 부모 본인 행만 읽고 쓴다.
+-- 권한(grant)도 여기서 직접 준다: 새 Supabase 프로젝트는 public 스키마의 표·함수에 자동으로 권한을 주지 않으므로
+-- (주지 않으면 42501 permission denied), 필요한 최소 권한만 로그인한 사용자(authenticated)에게 준다. anon에는 주지 않는다.
 
 create table public.consents (
   id bigint generated always as identity primary key,
@@ -18,12 +20,34 @@ create policy consents_select_own on public.consents
   for select to authenticated using ((select auth.uid()) = parent_id);
 create policy consents_insert_own on public.consents
   for insert to authenticated with check ((select auth.uid()) = parent_id);
--- 수정·삭제 정책은 두지 않는다: 동의 기록은 고칠 수 없다. 계정을 삭제하면 함께 지워진다.
+-- 수정·삭제는 정책도 권한도 두지 않는다: 동의 기록은 고칠 수 없다. 계정을 삭제하면 함께 지워진다.
+revoke all on table public.consents from public, anon, authenticated;
+grant select, insert on table public.consents to authenticated;
+
+-- 한 부모가 남길 수 있는 동의 기록 수의 상한. 문서 3종 × 버전 몇 개면 충분하다.
+-- 상한이 없으면 로그인한 누구나 요청을 반복해 데이터베이스를 채울 수 있다.
+create or replace function public.consents_cap()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  if (select count(*) from public.consents c where c.parent_id = new.parent_id) >= 60 then
+    raise exception 'too many consent records' using errcode = '54000';
+  end if;
+  return new;
+end;
+$$;
+revoke all on function public.consents_cap() from public, anon, authenticated;
+create trigger consents_cap before insert on public.consents
+  for each row execute function public.consents_cap();
 
 create table public.account_state (
   parent_id uuid primary key default auth.uid() references auth.users (id) on delete cascade,
   rev integer not null default 1 check (rev >= 1),
-  data jsonb not null check (jsonb_typeof(data) = 'object' and pg_column_size(data) < 500000),
+  -- 크기는 글로 바꾼 길이(바이트)로 잰다. 앱은 이보다 작은 300,000바이트에서 먼저 막는다(src/lib/snapshot.js).
+  data jsonb not null check (jsonb_typeof(data) = 'object' and octet_length(data::text) <= 500000),
   updated_at timestamptz not null default now()
 );
 alter table public.account_state enable row level security;
@@ -37,6 +61,8 @@ create policy account_state_update_own on public.account_state
   using ((select auth.uid()) = parent_id) with check ((select auth.uid()) = parent_id);
 create policy account_state_delete_own on public.account_state
   for delete to authenticated using ((select auth.uid()) = parent_id);
+revoke all on table public.account_state from public, anon, authenticated;
+grant select, insert, update, delete on table public.account_state to authenticated;
 
 -- 저장: 내가 마지막으로 본 rev(처음이면 0)와 서버 rev가 같을 때만 쓴다. 다르면 다른 기기가 먼저 저장한 것이다.
 create or replace function public.save_account_state(expected_rev integer, new_data jsonb)
@@ -59,7 +85,12 @@ begin
     if expected_rev <> 0 then
       raise exception 'conflict' using errcode = '40001';
     end if;
-    insert into public.account_state (parent_id, rev, data) values (uid, 1, new_data);
+    begin
+      insert into public.account_state (parent_id, rev, data) values (uid, 1, new_data);
+    exception when unique_violation then
+      -- 두 기기가 동시에 처음 저장했다: 늦은 쪽은 충돌로 알린다
+      raise exception 'conflict' using errcode = '40001';
+    end;
     return 1;
   end if;
 

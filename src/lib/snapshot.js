@@ -6,7 +6,10 @@
 import { normalizeKid } from "./store.js";
 
 export const SNAPSHOT_VERSION = 1;
-export const MAX_SNAPSHOT_BYTES = 400_000; // 서버 제한(500KB)보다 작게
+// UTF-8 바이트 기준(한글은 글자당 3바이트). 서버 제한(500,000바이트)보다 넉넉히 작게 둔다:
+// 서버는 저장한 값을 글로 바꿔 재는데, 그때 쉼표·콜론 뒤에 공백이 붙어 조금 더 길어진다.
+export const MAX_SNAPSHOT_BYTES = 300_000;
+const byteLength = (text) => new TextEncoder().encode(text).length;
 const MAX_KIDS = 12;
 const KID_ID = /^[A-Za-z0-9_-]{1,32}$/;
 
@@ -29,7 +32,7 @@ export function buildSnapshot(store) {
     settings: pick(store.settings, SETTING_FIELDS),
     kids,
   };
-  if (JSON.stringify(snap).length > MAX_SNAPSHOT_BYTES) throw new Error("snapshot too large");
+  if (byteLength(JSON.stringify(snap)) > MAX_SNAPSHOT_BYTES) throw new Error("snapshot too large");
   return snap;
 }
 

@@ -23,26 +23,40 @@ trap cleanup EXIT
 "${RUN[@]}" "$PGBIN/pg_ctl" -D "$DIR/data" -o "-p $PORT -k $DIR -c listen_addresses=''" -l "$DIR/log" -w start >/dev/null
 PSQL=(psql -h "$DIR" -p "$PORT" -U postgres -v ON_ERROR_STOP=1 -q -t -A)
 
-"${PSQL[@]}" -d postgres -c "create database app" >/dev/null
-"${PSQL[@]}" -d app <<'SQL'
-create extension if not exists pgcrypto;
+"${PSQL[@]}" -d postgres <<'SQL'
 create role anon nologin;
 create role authenticated nologin;
+SQL
+
+MIGRATIONS="${MIGRATIONS_DIR:-$ROOT/supabase/migrations}"
+
+# 두 가지 프로젝트 기본값에서 모두 확인한다.
+#  legacy: 예전 Supabase — public의 새 표·함수에 anon/authenticated 권한이 자동으로 붙는다(마이그레이션이 anon 것을 걷어내야 한다).
+#  optin : 새 Supabase — 자동 권한이 없다(마이그레이션이 필요한 권한을 직접 줘야 한다).
+for MODE in legacy optin; do
+  DB="app_$MODE"
+  "${PSQL[@]}" -d postgres -c "create database $DB" >/dev/null
+  "${PSQL[@]}" -d "$DB" <<'SQL'
+create extension if not exists pgcrypto;
 create schema auth;
 create table auth.users (id uuid primary key default gen_random_uuid(), email text);
 create function auth.uid() returns uuid language sql stable
   as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 grant usage on schema auth to anon, authenticated;
 grant usage on schema public to anon, authenticated;
--- Supabase의 기본 권한: public 스키마의 새 표·함수는 anon/authenticated가 쓸 수 있다.
+SQL
+  if [ "$MODE" = legacy ]; then
+    "${PSQL[@]}" -d "$DB" <<'SQL'
 alter default privileges in schema public grant all on tables to anon, authenticated;
 alter default privileges in schema public grant all on sequences to anon, authenticated;
 alter default privileges in schema public grant execute on functions to anon, authenticated;
 SQL
-
-MIGRATIONS="${MIGRATIONS_DIR:-$ROOT/supabase/migrations}"
-for f in "$MIGRATIONS"/*.sql; do
-  echo "migration: $(basename "$f")"
-  "${PSQL[@]}" -d app -f "$f"
+  else
+    "${PSQL[@]}" -d "$DB" -c "alter default privileges revoke execute on functions from public" >/dev/null
+  fi
+  for f in "$MIGRATIONS"/*.sql; do
+    echo "[$MODE] migration: $(basename "$f")"
+    "${PSQL[@]}" -d "$DB" -f "$f"
+  done
+  "${PSQL[@]}" -d "$DB" -f "$ROOT/tests/db/rls.sql"
 done
-"${PSQL[@]}" -d app -f "$ROOT/tests/db/rls.sql"

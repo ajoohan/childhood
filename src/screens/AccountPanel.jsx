@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  CONSENT_VERSION,
   ConflictError,
   deleteMyAccount,
   errorKind,
@@ -22,9 +23,37 @@ import { fmtTime, replaceStore } from "../lib/store.js";
 
 const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+// 코드를 요청한 뒤의 "코드 입력 단계"를 이 탭에 기억해 둔다. 코드를 보려고 메일 앱으로 가면 앱이 가려져
+// 부모 화면이 다시 잠기고(이 카드도 사라진다) 돌아왔을 때 처음부터 다시 해야 했다 — 새 코드를 받으러 또 메일로 가면
+// 같은 일이 되풀이돼, 휴대폰 한 대로는 로그인을 끝낼 수 없었다. 동의는 코드를 요청할 때 이미 했으므로 버전과 함께 기억한다.
+const PENDING_KEY = "childhood_acct_pending";
+const PENDING_MS = 15 * 60 * 1000;
+const RESEND_SECONDS = 60;
+function readPending() {
+  try {
+    const p = JSON.parse(sessionStorage.getItem(PENDING_KEY));
+    const age = Date.now() - p.at;
+    if (typeof p.email === "string" && EMAIL_OK.test(p.email) && p.version === CONSENT_VERSION && age >= 0 && age < PENDING_MS)
+      return p;
+  } catch {}
+  return null;
+}
+function writePending(email) {
+  try {
+    sessionStorage.setItem(PENDING_KEY, JSON.stringify({ email, version: CONSENT_VERSION, at: Date.now() }));
+  } catch {}
+}
+function clearPending() {
+  try {
+    sessionStorage.removeItem(PENDING_KEY);
+  } catch {}
+}
+
 const MESSAGES = {
   rate_limit: "메일을 너무 자주 요청했어요. 잠시 뒤에 다시 해 주세요.",
   bad_code: "코드가 맞지 않거나 만료됐어요. 다시 확인하거나 새 코드를 받아 주세요.",
+  bad_email: "이메일 주소를 다시 확인해 주세요.",
+  too_large: "기록이 너무 커서 계정에 저장할 수 없어요.",
   network: "연결이 불안정해요. 인터넷을 확인하고 다시 해 주세요.",
   not_allowed: "지금은 이 이메일로 가입할 수 없어요.",
   conflict: "다른 기기에서 더 최근에 저장했어요. 계정에서 불러오거나, 이 기기의 기록으로 덮어쓸 수 있어요.",
@@ -44,6 +73,7 @@ export default function AccountPanel({ buildStore }) {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
   const [conflict, setConflict] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false); // 로그인은 돼 있는데 계정의 기록을 확인하지 못함
   const [cooldown, setCooldown] = useState(0);
   const alive = useRef(true);
 
@@ -54,14 +84,26 @@ export default function AccountPanel({ buildStore }) {
       try {
         const s = await getSession();
         if (!alive.current) return;
-        if (s) await enter(s, false);
-        else setPhase("out");
+        if (s) {
+          clearPending();
+          await enter(s, false);
+        } else {
+          const pending = readPending();
+          if (pending) {
+            // 코드를 받으러 메일 앱에 다녀온 경우: 코드 입력 단계에서 이어 간다
+            setEmail(pending.email);
+            setCooldown(Math.max(0, RESEND_SECONDS - Math.floor((Date.now() - pending.at) / 1000)));
+            setPhase("code");
+          } else setPhase("out");
+        }
         unsub = await onAuthChange((next) => {
           if (!alive.current) return;
           if (!next) {
             setSession(null);
             setRemote(undefined);
-            setPhase("out");
+            setConflict(false);
+            setLoadFailed(false);
+            setPhase((p) => (p === "code" ? p : "out")); // 코드 입력 중이면 그대로 둔다
           }
         });
       } catch (e) {
@@ -88,6 +130,7 @@ export default function AccountPanel({ buildStore }) {
   //  이전 로그인 유지(fresh 아님): 지금 버전의 동의가 기록돼 있는지 확인한다. 문구가 바뀌어 없으면 다시 받는다.
   async function enter(s, fresh) {
     setSession(s);
+    setLoadFailed(false);
     try {
       if (fresh) await recordConsents();
       else if (!(await hasConsented())) {
@@ -95,7 +138,7 @@ export default function AccountPanel({ buildStore }) {
         if (!alive.current) return false;
         setSession(null);
         setPhase("out");
-        setMsg("약관이 바뀌었어요. 다시 동의하고 로그인해 주세요.");
+        setMsg("이 계정에 지금 약관에 동의한 기록이 없어요. 동의하고 다시 로그인해 주세요.");
         return false;
       }
       const r = await loadAccountState();
@@ -110,12 +153,22 @@ export default function AccountPanel({ buildStore }) {
         setSession(null);
         setPhase("out");
       } else {
+        // 로그인은 유지하되 "다시 확인"을 보여 준다(연결이 잠깐 끊긴 것일 수 있다)
+        setRemote(undefined);
+        setLoadFailed(true);
         setPhase("in");
       }
       setErr(say(e));
       return false;
     }
   }
+
+  const retryLoad = async () => {
+    setBusy(true);
+    setErr("");
+    await enter(session, false);
+    if (alive.current) setBusy(false);
+  };
 
   const allAgreed = CONSENTS.every((c) => agreed[c.id]);
   const emailOk = EMAIL_OK.test(email.trim());
@@ -139,17 +192,28 @@ export default function AccountPanel({ buildStore }) {
   const requestCode = () =>
     wrap(async () => {
       await sendLoginCode(email.trim());
+      writePending(email.trim());
+      if (!alive.current) return;
       setPhase("code");
       setCode("");
-      setCooldown(60);
-      setMsg("메일로 6자리 코드를 보냈어요. 메일의 링크를 열어도 로그인돼요.");
+      setCooldown(RESEND_SECONDS);
+      setMsg("메일로 6자리 코드를 보냈어요.");
     });
 
   const submitCode = () =>
     wrap(async () => {
       const s = await verifyLoginCode(email.trim(), code.trim());
+      clearPending(); // 코드는 한 번만 쓸 수 있다. 여기서부터는 성공이든 실패든 코드 단계로 돌아갈 일이 없다
       if ((await enter(s, true)) && alive.current) setMsg("로그인했어요.");
     });
+
+  const changeEmail = () => {
+    clearPending();
+    setCode("");
+    setErr("");
+    setMsg("");
+    setPhase("out");
+  };
 
   // 이 기기의 기록을 계정에 저장한다. force: 다른 기기의 더 최근 기록을 덮어쓴다.
   const save = (force = false) =>
@@ -160,37 +224,66 @@ export default function AccountPanel({ buildStore }) {
         rev = latest ? latest.rev : 0;
       }
       const snap = buildSnapshot(buildStore());
-      const nextRev = await saveAccountState(rev, snap);
+      let nextRev;
+      try {
+        nextRev = await saveAccountState(rev, snap);
+      } catch (e) {
+        if (e instanceof ConflictError) {
+          // 화면의 "계정에 저장된 기록"을 지금 계정에 있는 것으로 바꿔 둔다. 그래야 부모가 무엇을 불러오거나
+          // 덮어쓰는지 알 수 있다. (충돌 동안 보통 저장 버튼은 막혀, 실수로 한 번 더 눌러 덮어쓰는 일은 없다.)
+          const latest = await loadAccountState().catch(() => undefined);
+          if (latest !== undefined && alive.current) setRemote(latest);
+        }
+        throw e;
+      }
       setRemote({ rev: nextRev, data: snap, updatedAt: new Date().toISOString() });
       setConflict(false);
       setMsg("계정에 저장했어요.");
     });
 
-  const restore = () => {
-    if (!remote) return;
-    if (!isSnapshot(remote.data)) {
-      setErr("저장된 기록을 읽을 수 없어요.");
-      return;
-    }
-    const ok = window.confirm(
-      "이 기기의 아이 프로필·별·콜렉션이 계정에 저장된 기록으로 바뀌어요.\n(이 기기의 대화 기록과 부모 PIN은 그대로 남아요.) 불러올까요?"
-    );
-    if (!ok) return;
-    setErr("");
-    try {
-      replaceStore(applySnapshot(buildStore(), remote.data));
-    } catch {
-      setErr("저장된 기록을 불러오지 못했어요.");
-      return;
-    }
-    window.location.reload();
-  };
+  // 계정의 기록을 이 기기로 불러온다. 화면에 떠 있던 값이 아니라 지금 계정에 있는 값을 새로 받아서 쓴다
+  // (로그인한 뒤 다른 기기가 저장했을 수 있다).
+  const restore = () =>
+    wrap(async () => {
+      const latest = await loadAccountState();
+      if (!alive.current) return;
+      setRemote(latest);
+      if (!latest) {
+        setConflict(false);
+        setErr("계정에 저장된 기록이 없어요.");
+        return;
+      }
+      if (!isSnapshot(latest.data)) {
+        setErr("저장된 기록을 읽을 수 없어요.");
+        return;
+      }
+      const local = buildStore();
+      // 이 기기에만 있는 아이는 불러오면 사라진다(대화 기록까지). 누구인지 알려 준다.
+      const gone = Object.entries(local.kids || {})
+        .filter(([id, k]) => k?.profile?.onboarded && !latest.data.kids[id])
+        .map(([, k]) => String(k.profile.name || "이름 없는 아이"));
+      const ok = window.confirm(
+        `이 기기의 아이 프로필·별·콜렉션이 계정에 저장된 기록(${fmtTime(latest.updatedAt)})으로 바뀌어요.\n` +
+          (gone.length ? `계정에 없는 아이(${gone.join(", ")})는 대화 기록까지 이 기기에서 사라져요.\n` : "") +
+          "(계정에도 있는 아이의 대화 기록과 부모 PIN은 그대로 남아요.) 불러올까요?"
+      );
+      if (!ok) return;
+      try {
+        replaceStore(applySnapshot(local, latest.data));
+      } catch {
+        setErr("저장된 기록을 불러오지 못했어요.");
+        return;
+      }
+      window.location.reload();
+    });
 
   const logout = () =>
     wrap(async () => {
       await signOut();
       setSession(null);
       setRemote(undefined);
+      setConflict(false);
+      setLoadFailed(false);
       setPhase("out");
       setMsg("로그아웃했어요. 이 기기의 기록은 그대로예요.");
     });
@@ -204,6 +297,8 @@ export default function AccountPanel({ buildStore }) {
       await deleteMyAccount();
       setSession(null);
       setRemote(undefined);
+      setConflict(false);
+      setLoadFailed(false);
       setPhase("out");
       setAgreed({});
       setMsg("계정과 저장된 기록을 모두 지웠어요.");
@@ -254,7 +349,11 @@ export default function AccountPanel({ buildStore }) {
                   />
                   <span>{c.label}</span>
                 </label>
-                <button className="pin-link acct-more" onClick={() => setOpen(open === c.id ? null : c.id)}>
+                <button
+                  className="pin-link acct-more"
+                  aria-expanded={open === c.id}
+                  onClick={() => setOpen(open === c.id ? null : c.id)}
+                >
                   {open === c.id ? "접기" : "내용 보기"}
                 </button>
                 {open === c.id && (
@@ -280,7 +379,8 @@ export default function AccountPanel({ buildStore }) {
       {phase === "code" && (
         <>
           <p className="guard-hint">
-            <b>{email.trim()}</b>(으)로 보낸 6자리 코드를 입력해 주세요.
+            <b>{email.trim()}</b>(으)로 보낸 6자리 코드를 입력해 주세요. 메일을 보러 다른 앱에 다녀오면 부모 화면이
+            다시 잠겨요. PIN을 입력하고 돌아오면 여기서 이어서 할 수 있어요.
           </p>
           <label className="prof-row">
             <span>코드</span>
@@ -303,7 +403,7 @@ export default function AccountPanel({ buildStore }) {
             <button className="guard-btn ghost" disabled={busy || cooldown > 0} onClick={requestCode}>
               {cooldown > 0 ? `다시 받기 (${cooldown}초)` : "코드 다시 받기"}
             </button>
-            <button className="guard-btn ghost" disabled={busy} onClick={() => setPhase("out")}>
+            <button className="guard-btn ghost" disabled={busy} onClick={changeEmail}>
               이메일 바꾸기
             </button>
           </div>
@@ -320,7 +420,9 @@ export default function AccountPanel({ buildStore }) {
             <span>계정에 저장된 기록</span>
             <b>
               {remote === undefined
-                ? "확인 중…"
+                ? loadFailed
+                  ? "확인하지 못했어요"
+                  : "확인 중…"
                 : remote
                   ? `${fmtTime(remote.updatedAt)} · 아이 ${kidCount}명`
                   : "아직 없어요"}
@@ -329,8 +431,15 @@ export default function AccountPanel({ buildStore }) {
           {dirty && remote !== undefined && (
             <p className="guard-hint acct-dirty">이 기기에 계정에 저장하지 않은 변경이 있어요.</p>
           )}
+          {loadFailed && (
+            <div className="set-pin-actions">
+              <button className="guard-btn" disabled={busy} onClick={retryLoad}>
+                다시 확인
+              </button>
+            </div>
+          )}
           <div className="set-pin-actions">
-            <button className="guard-btn" disabled={busy || remote === undefined} onClick={() => save(false)}>
+            <button className="guard-btn" disabled={busy || remote === undefined || conflict} onClick={() => save(false)}>
               이 기기 기록을 계정에 저장
             </button>
             <button className="guard-btn ghost" disabled={busy || !remote} onClick={restore}>

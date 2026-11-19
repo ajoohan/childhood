@@ -54,6 +54,15 @@ test("스냅샷: 너무 크면 던진다", () => {
   assert.throws(() => buildSnapshot(s), /too large/);
 });
 
+test("스냅샷: 크기는 글자 수가 아니라 바이트로 잰다 (한글은 글자당 3바이트)", () => {
+  const s = store();
+  const chars = Math.floor(MAX_SNAPSHOT_BYTES / 2); // 글자 수로는 한도의 절반, 바이트로는 1.5배
+  s.kids.k_a.parentMissions = [{ id: "m", title: "가".repeat(chars) }];
+  assert.throws(() => buildSnapshot(s), /too large/);
+  s.kids.k_a.parentMissions = [{ id: "m", title: "a".repeat(chars) }]; // 같은 글자 수의 영문은 한도 안
+  assert.doesNotThrow(() => buildSnapshot(s));
+});
+
 test("불러오기: 아이 목록은 스냅샷으로 바뀌고, 같은 아이의 대화 기록과 기기의 PIN은 남는다", () => {
   const remote = buildSnapshot(store());
   remote.kids.k_a.rewards.balance = 99;

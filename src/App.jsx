@@ -31,8 +31,13 @@ import {
   MAX_STORED_MESSAGES,
 } from "./lib/store.js";
 import { adaptActivities, ageModeForProfile, computeAge } from "./lib/age.js";
-import { configureAccounts } from "./lib/account.js";
+import { configureAccounts, scrubAuthHash } from "./lib/account.js";
 import AccountPanel from "./screens/AccountPanel.jsx";
+
+// 메일의 링크로 들어온 경우 주소에 실린 로그인 정보를 쓰지 않고 지운다(로그인은 6자리 코드로만 한다).
+try {
+  scrubAuthHash();
+} catch {}
 
 const initial = loadStore();
 const initKid = initial.kids[initial.activeKid];

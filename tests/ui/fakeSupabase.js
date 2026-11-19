@@ -21,6 +21,7 @@ export function newFakeDb(over = {}) {
     deleted: false,
     saves: [], // 저장 요청 기록 { expected_rev, new_data }
     authHeaders: [],
+    failState: 0, // 이 횟수만큼 account_state 읽기를 실패시킨다(연결 끊김 흉내)
     ...over,
   };
 }
@@ -83,6 +84,10 @@ export async function installFakeSupabase(page, db, { accounts = true } = {}) {
       }
     }
     if (path === "/rest/v1/account_state" && req.method() === "GET") {
+      if (db.failState > 0) {
+        db.failState -= 1;
+        return send(500, { code: "XX000", message: "temporarily unavailable", details: null, hint: null });
+      }
       const single = (req.headers()["accept"] || "").includes("vnd.pgrst.object");
       if (single) {
         if (!db.state) return send(406, { code: "PGRST116", details: "The result contains 0 rows", hint: null, message: "JSON object requested, multiple (or no) rows returned" });

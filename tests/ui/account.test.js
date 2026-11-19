@@ -1,7 +1,7 @@
 // 부모 계정 화면: 로그인 코드, 동의 기록, 저장·불러오기·충돌·삭제. 가짜 Supabase를 쓴다(fakeSupabase.js).
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { startServer, launchBrowser, openApp, seed, pinKeys } from "./helpers.js";
+import { startServer, launchBrowser, openApp, seed, pinKeys, BASE } from "./helpers.js";
 import { installFakeSupabase, newFakeDb, GOOD_CODE } from "./fakeSupabase.js";
 
 let server, browser;
@@ -217,5 +217,162 @@ test("계정 삭제: 확인을 거쳐 서버의 모든 기록을 지우고, 이 
   await page.waitForSelector(".acct-card input[type=email]", { timeout: 8000 });
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")));
   assert.equal(saved.kids.k.profile.name, "지안", "기기 기록은 남는다");
+  await page.close();
+});
+
+// 앱이 가려졌다가(다른 앱으로 전환) 다시 보이는 상황. 부모 화면은 다시 잠긴다.
+async function hideAndShow(page) {
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.waitForSelector(".guard-screen", { state: "detached", timeout: 4000 });
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+}
+
+test("로그인: 코드를 보러 메일 앱에 다녀와도(부모 화면이 다시 잠겨도) 코드 입력에서 이어 간다", async () => {
+  const { page, db } = await openParent();
+  await page.waitForSelector(".acct-card input[type=email]", { timeout: 15000 });
+  await page.fill(".acct-card input[type=email]", EMAIL);
+  for (const box of await page.$$(".acct-consent input[type=checkbox]")) await box.check();
+  await page.click("text=로그인 코드 받기");
+  await page.waitForSelector(".acct-card input[inputmode=numeric]", { timeout: 8000 });
+
+  await hideAndShow(page);
+  await page.click(".tab >> text=부모");
+  await pinKeys(page, "1234");
+  await page.waitForSelector(".guard-screen", { timeout: 8000 });
+
+  // 이메일·동의를 다시 하지 않고 바로 코드 입력 단계다. 메일도 다시 보내지 않았다.
+  await page.waitForSelector(".acct-card input[inputmode=numeric]", { timeout: 15000 });
+  assert.match(await page.innerText(".acct-card"), new RegExp(EMAIL.replace(".", "\\.")));
+  assert.equal(db.codesSent, 1, "돌아왔다고 코드를 다시 보내지 않는다");
+  assert.equal(await page.locator(".acct-card >> text=/다시 받기|코드 다시 받기/").isDisabled(), true, "방금 보냈으니 다시 받기는 잠시 막혀 있다");
+
+  await page.fill(".acct-card input[inputmode=numeric]", GOOD_CODE);
+  await page.click(".acct-card >> text=확인");
+  await page.waitForSelector(".acct-card .set-info-row >> text=계정에 저장된 기록", { timeout: 8000 });
+  assert.equal(db.consents.length, 3, "이어서 로그인해도 동의 3건이 기록된다");
+
+  // 로그인이 끝나면 기억해 둔 코드 단계는 지운다: 로그아웃하면 처음(이메일 입력)으로 간다
+  await page.click(".acct-card >> text=로그아웃");
+  await page.waitForSelector(".acct-card input[type=email]", { timeout: 8000 });
+  assert.equal(await page.evaluate(() => sessionStorage.getItem("childhood_acct_pending")), null);
+  await page.close();
+});
+
+test("로그인: '이메일 바꾸기'를 누르면 기억해 둔 코드 단계를 버린다", async () => {
+  const { page } = await openParent();
+  await page.waitForSelector(".acct-card input[type=email]", { timeout: 15000 });
+  await page.fill(".acct-card input[type=email]", EMAIL);
+  for (const box of await page.$$(".acct-consent input[type=checkbox]")) await box.check();
+  await page.click("text=로그인 코드 받기");
+  await page.waitForSelector(".acct-card input[inputmode=numeric]", { timeout: 8000 });
+  await page.click(".acct-card >> text=이메일 바꾸기");
+  await page.waitForSelector(".acct-card input[type=email]", { timeout: 8000 });
+
+  await hideAndShow(page);
+  await page.click(".tab >> text=부모");
+  await pinKeys(page, "1234");
+  await page.waitForSelector(".acct-card input[type=email]", { timeout: 15000 });
+  assert.equal(await page.$(".acct-card input[inputmode=numeric]"), null);
+  await page.close();
+});
+
+test("저장 충돌 뒤 불러오기: 화면에 떠 있던 옛 기록이 아니라 지금 계정에 있는 기록을 불러온다", async () => {
+  const kidNamed = (name) => ({ v: 1, activeKid: "k", settings: {}, kids: { k: { profile: { onboarded: true, name, age: 6 } } } });
+  const db = newFakeDb({ state: { rev: 1, data: kidNamed("서아"), updated_at: "2026-11-18T10:00:00Z" } });
+  const { page } = await openParent({ db });
+  await login(page);
+  await page.waitForSelector("text=아이 1명", { timeout: 8000 });
+
+  // 로그인한 사이에 다른 기기가 "도윤"으로 저장했다
+  db.state = { rev: 2, data: kidNamed("도윤"), updated_at: "2026-11-19T10:00:00Z" };
+  await page.click("text=이 기기 기록을 계정에 저장");
+  await page.waitForSelector(".acct-card .gate-error", { timeout: 8000 });
+  assert.equal(
+    await page.locator(".acct-card >> text=이 기기 기록을 계정에 저장").isDisabled(), true,
+    "충돌 중에는 보통 저장이 막힌다(한 번 더 눌러 덮어쓰지 않게)"
+  );
+
+  let asked = "";
+  page.once("dialog", (d) => { asked = d.message(); d.accept(); });
+  await page.click("text=계정에서 불러오기");
+  await page.waitForLoadState("networkidle");
+  const start = await page.waitForSelector(".splash-primary, .kids-home", { timeout: 15000 });
+  if (await start.evaluate((el) => el.classList.contains("splash-primary"))) await start.click();
+  await page.waitForSelector(".kids-home", { timeout: 15000 });
+  assert.match(await page.innerText(".fx-hi"), /도윤/, "최신 기록(도윤)이 아니라 옛 기록을 불러왔다");
+  assert.ok(!/사라져요/.test(asked), "같은 아이(id)만 있으면 사라진다는 경고는 없다");
+  assert.equal(db.state.rev, 2, "불러오기는 계정의 기록을 바꾸지 않는다");
+  await page.close();
+});
+
+test("불러오기: 이 기기에만 있는 아이가 사라진다는 것을 이름과 함께 미리 알린다", async () => {
+  // 계정에는 다른 id의 아이(서아)만 있다. 이 기기의 지안(id k)은 불러오면 사라진다.
+  const remoteData = { v: 1, activeKid: "k2", settings: {}, kids: { k2: { profile: { onboarded: true, name: "서아", age: 6 } } } };
+  const db = newFakeDb({ state: { rev: 1, data: remoteData, updated_at: "2026-11-18T10:00:00Z" } });
+  const { page } = await openParent({ db });
+  await login(page);
+  await page.waitForSelector("text=아이 1명", { timeout: 8000 });
+
+  let asked = "";
+  page.once("dialog", (d) => { asked = d.message(); d.dismiss(); });
+  await page.click("text=계정에서 불러오기");
+  await page.waitForFunction(() => !document.querySelector(".acct-card .guard-btn.ghost[disabled]"), null, { timeout: 8000 });
+  assert.match(asked, /지안/, "사라지는 아이의 이름을 알린다");
+  assert.match(asked, /사라져요/);
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")));
+  assert.equal(saved.kids.k.profile.name, "지안", "취소했으니 그대로");
+  await page.close();
+});
+
+test("로그인된 채로 열었는데 계정 기록을 못 읽으면 '다시 확인'으로 이어 갈 수 있다", async () => {
+  const { page, db } = await openParent();
+  await login(page);
+  await page.waitForSelector("text=아직 없어요", { timeout: 8000 });
+
+  await page.reload({ waitUntil: "networkidle" });
+  const start = await page.$(".splash-primary");
+  if (start) await start.click();
+  db.failState = 1; // 다음 한 번은 연결이 끊긴 것처럼
+  await page.click(".tab >> text=부모");
+  await pinKeys(page, "1234");
+  await page.waitForSelector(".acct-card >> text=확인하지 못했어요", { timeout: 15000 });
+  assert.equal(await page.locator(".acct-card >> text=이 기기 기록을 계정에 저장").isDisabled(), true);
+
+  await page.click(".acct-card >> text=다시 확인");
+  await page.waitForSelector(".acct-card >> text=아직 없어요", { timeout: 8000 });
+  assert.equal(await page.$(".acct-card >> text=다시 확인"), null);
+  assert.equal(await page.locator(".acct-card >> text=이 기기 기록을 계정에 저장").isDisabled(), false);
+  await page.close();
+});
+
+test("메일의 링크로 들어와도 주소에 실린 로그인 정보는 지워지고 로그인되지 않는다 (코드로만 로그인)", async () => {
+  const { page, db } = await openParent();
+  await page.goto(BASE + "/#access_token=aaa.bbb.ccc&refresh_token=rrr&expires_in=3600&token_type=bearer&type=magiclink");
+  await page.reload({ waitUntil: "networkidle" });
+  assert.equal(await page.evaluate(() => location.hash), "", "주소에 로그인 정보가 남았다");
+  const start = await page.$(".splash-primary");
+  if (start) await start.click();
+  await page.click(".tab >> text=부모");
+  await pinKeys(page, "1234");
+  await page.waitForSelector(".acct-card input[type=email]", { timeout: 15000 }); // 로그인 전 화면
+  assert.equal(db.consents.length, 0);
+  await page.close();
+});
+
+test("터치 영역: 동의 체크와 '내용 보기'는 세로 44px 이상 눌린다", async () => {
+  const { page } = await openParent();
+  await page.waitForSelector(".acct-card input[type=email]", { timeout: 15000 });
+  const tall = (sel) => page.$eval(sel, (el) => el.getBoundingClientRect().height);
+  assert.ok((await tall(".acct-consent label")) >= 44, "동의 줄");
+  assert.ok((await tall(".acct-more")) >= 44, "내용 보기");
+  assert.equal(await page.getAttribute(".acct-more", "aria-expanded"), "false");
+  await page.click(".acct-more >> nth=0");
+  assert.equal(await page.getAttribute(".acct-more >> nth=0", "aria-expanded"), "true");
   await page.close();
 });
