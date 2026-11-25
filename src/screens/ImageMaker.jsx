@@ -4,7 +4,8 @@ import { robotHead } from "../lib/mascot.js";
 const IDEAS =["우주를 나는 공룡", "무지개 위의 고양이", "바닷속 마법 성", "웃는 로봇 친구"];
 
 // 그림 만들기 — 프롬프트 → 서버 안전 분류 → 이미지 생성(키 설정 시). 미설정 시 "준비 중".
-export default function ImageMaker({ enabled, onSafety, onBack }) {
+// limitPerDay: 오늘 대화 횟수를 다 썼으면 그 횟수(그림 만들기도 하루 대화 횟수에 1번으로 센다), 아니면 null.
+export default function ImageMaker({ enabled, limitPerDay = null, onCountMessage, onSafety, onBack }) {
   const [prompt, setPrompt] = useState("");
   const [status, setStatus] = useState("idle"); // idle|loading|done|pending|blocked|error
   const [image, setImage] = useState(null);
@@ -14,6 +15,13 @@ export default function ImageMaker({ enabled, onSafety, onBack }) {
     if (!enabled) return; // 키 미설정 → 준비 중
     const text = prompt.trim();
     if (!text || status === "loading") return;
+    if (limitPerDay) {
+      setStatus("limit");
+      setImage(null);
+      setMsg(`오늘은 이야기를 ${limitPerDay}번이나 나눴대! 그림은 내일 또 그려 보자 😊`);
+      return;
+    }
+    onCountMessage?.();
     setStatus("loading");
     setImage(null);
     setMsg("");

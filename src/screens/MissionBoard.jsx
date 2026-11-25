@@ -1,15 +1,26 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { allMissions, praiseFor, REWARD } from "../lib/missions.js";
+import { streamChat } from "../lib/streamChat.js";
+import { useSpeech } from "../lib/useSpeech.js";
 import { robotMascot, robotHead } from "../lib/mascot.js";
 import Confetti from "../components/Confetti.jsx";
 import Dialog from "../components/Dialog.jsx";
 import { aYa } from "../lib/josa.js";
 
-// 오늘의 미션 보드 — 미션 수행 → AI 대화형 인증(칭찬) → 별 지급 → 꾸미기로 소모
+// 미션 확인에서 별이가 하는 질문
+export const checkQuestion = (m) => `"${m.title}" 미션, 어떻게 했는지 별이에게 알려 줄래?`;
+
+// 오늘의 미션 보드 — 미션 수행 → AI 대화형 인증(별이가 묻고, 아이가 답하면 칭찬하며 확인) → 별 지급 → 꾸미기로 소모
+// AI 확인은 하루 대화 횟수에 1번으로 센다. 횟수를 다 썼거나 연결이 안 되면 별은 그대로 주고 기본 칭찬을 보여 준다
+// (아이가 실제로 한 일의 별을 잃지 않게).
 export default function MissionBoard({
   name,
   rewards,
   parentMissions,
+  persona,
+  limitReached = false,
+  onCountMessage,
+  onSafety,
   onComplete,
   onClaimAttendance,
   onOpenChest,
@@ -18,6 +29,19 @@ export default function MissionBoard({
   const missions = allMissions(parentMissions);
   const doneCount = missions.filter((m) => rewards.doneToday.includes(m.id)).length;
   const [checking, setChecking] = useState(null); // 인증 대기 미션
+  const [step, setStep] = useState("confirm"); // confirm | ask | reply
+  const [answer, setAnswer] = useState("");
+  const [reply, setReply] = useState("");
+  const abortRef = useRef(null);
+  const aliveRef = useRef(true);
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+      abortRef.current?.abort();
+    };
+  }, []);
+  const speech = useSpeech({ onResult: (t) => setAnswer((a) => (a ? a + " " : "") + t.trim()) });
   const [praise, setPraise] = useState(null); // {text, reward}
   const [burst, setBurst] = useState(false); // 출석 등 짧은 컨페티
   const [chestReward, setChestReward] = useState(null); // 보물상자 개봉 결과
@@ -38,11 +62,69 @@ export default function MissionBoard({
     setTimeout(() => setBurst(false), 2200);
   }
 
-  function confirmDone(m) {
+  function openCheck(m) {
+    setChecking(m);
+    setStep("confirm");
+    setAnswer("");
+    setReply("");
+  }
+
+  function closeCheck() {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    if (speech.listening) speech.toggle();
+    setChecking(null);
+  }
+
+  // 별 지급 + 칭찬. text가 없으면(AI 확인을 못 했으면) 기본 칭찬.
+  function confirmDone(m, text) {
     onComplete(m);
     const seed = m.id.split("").reduce((n, c) => n + c.charCodeAt(0), doneCount);
     setChecking(null);
-    setPraise({ text: praiseFor(name, seed), reward: m.reward || REWARD.mission });
+    setPraise({ text: text || praiseFor(name, seed), reward: m.reward || REWARD.mission });
+  }
+
+  function saidDone(m) {
+    if (limitReached) return confirmDone(m); // 오늘 대화 횟수를 다 썼다 — 별은 준다
+    setStep("ask");
+  }
+
+  async function sendAnswer(m) {
+    const text = answer.trim();
+    if (!text || step !== "ask") return;
+    if (speech.listening) speech.toggle();
+    setStep("reply");
+    setReply("");
+    onCountMessage?.();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    let got = "";
+    try {
+      got = await streamChat({
+        body: {
+          activityId: "mission_check",
+          mission: { title: m.title },
+          messages: [{ role: "user", content: text }],
+          profile: persona,
+        },
+        signal: ctrl.signal,
+        onText: (t) => aliveRef.current && setReply(t),
+        onSafety: (category) =>
+          onSafety?.({
+            t: new Date().toISOString(),
+            activityId: "mission_check",
+            activityTitle: `미션 확인 · ${m.title}`,
+            category,
+            text,
+          }),
+      });
+    } catch {
+      if (ctrl.signal.aborted) return; // 창을 닫았거나 화면을 나갔다 — 별을 주지 않는다
+      got = ""; // 연결이 안 됐다 — 기본 칭찬으로 별은 준다
+    }
+    if (!aliveRef.current || abortRef.current !== ctrl) return;
+    abortRef.current = null;
+    confirmDone(m, got.trim());
   }
 
   return (
@@ -109,7 +191,7 @@ export default function MissionBoard({
               {done ? (
                 <span className="mb-check">완료 ✓</span>
               ) : (
-                <button className="mb-do" onClick={() => setChecking(m)}>
+                <button className="mb-do" onClick={() => openCheck(m)}>
                   완료하기
                 </button>
               )}
@@ -149,18 +231,73 @@ export default function MissionBoard({
 
       {/* AI 인증 확인 모달 */}
       {checking && (
-        <Dialog onClose={() => setChecking(null)} label="미션 확인" className="mission-modal">
-            <div className="mm-emoji">{checking.emoji}</div>
-            <h2>{checking.title}</h2>
-            <p>정말 다 했나요? AI 도우미가 확인해 줄게요!</p>
-            <div className="mm-actions">
-              <button className="mm-later" onClick={() => setChecking(null)}>
-                아직이요
-              </button>
-              <button className="mm-yes" onClick={() => confirmDone(checking)}>
-                네, 다 했어요!
-              </button>
+        <Dialog onClose={closeCheck} label="미션 확인" className="mission-modal">
+          <div className="mm-emoji">{checking.emoji}</div>
+          <h2>{checking.title}</h2>
+          {step === "confirm" && (
+            <>
+              <p>정말 다 했나요? AI 도우미가 확인해 줄게요!</p>
+              <div className="mm-actions">
+                <button className="mm-later" onClick={closeCheck}>
+                  아직이요
+                </button>
+                <button className="mm-yes" onClick={() => saidDone(checking)}>
+                  네, 다 했어요!
+                </button>
+              </div>
+            </>
+          )}
+          {step !== "confirm" && (
+            <div className="mm-chat">
+              <div className="mm-bubble bot">
+                <span className="mm-ava" dangerouslySetInnerHTML={{ __html: robotHead("happy") }} />
+                <span>{checkQuestion(checking)}</span>
+              </div>
+              {step === "ask" ? (
+                <>
+                  <div className="mm-answer">
+                    <input
+                      type="text"
+                      aria-label="별이에게 대답하기"
+                      maxLength={300}
+                      placeholder={speech.listening ? "듣고 있어요…" : "어떻게 했는지 말해 줘!"}
+                      value={speech.listening && speech.interim ? speech.interim : answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.nativeEvent.isComposing) sendAnswer(checking);
+                      }}
+                      autoFocus
+                    />
+                    {speech.supported && (
+                      <button
+                        className={`mm-mic ${speech.listening ? "on" : ""}`}
+                        onClick={speech.toggle}
+                        aria-label={speech.listening ? "그만 듣기" : "말로 대답하기"}
+                      >
+                        🎤
+                      </button>
+                    )}
+                  </div>
+                  <div className="mm-actions">
+                    <button className="mm-later" onClick={closeCheck}>
+                      나중에
+                    </button>
+                    <button className="mm-yes" disabled={!answer.trim()} onClick={() => sendAnswer(checking)}>
+                      알려 주기
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mm-bubble user">{answer.trim()}</div>
+                  <div className="mm-bubble bot" aria-live="polite">
+                    <span className="mm-ava" dangerouslySetInnerHTML={{ __html: robotHead(reply ? "talking" : "thinking") }} />
+                    <span>{reply || "별이가 확인하고 있어요…"}</span>
+                  </div>
+                </>
+              )}
             </div>
+          )}
         </Dialog>
       )}
 

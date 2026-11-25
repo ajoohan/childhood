@@ -534,10 +534,17 @@ export default function App() {
       [id]: [...(h[id] || []), msg].slice(-MAX_STORED_MESSAGES),
     }));
   const addSafety = (ev) => setSafety((s) => [ev, ...s].slice(0, 100));
+  // 대화 기록에 남지 않는 AI 사용(미션 확인, 그림 만들기)도 하루 대화 횟수에 1번으로 센다.
+  const countMessage = () =>
+    setRewards((r0) => {
+      const r = rollDay(r0);
+      return { ...r, msgsToday: (r.msgsToday || 0) + 1 };
+    });
 
   const openActivity = (a) => setView({ name: "session", activity: a });
   const stars = rewards.balance; // 별 잔액 (미션으로 획득, 꾸미기로 소모)
   const usedToday = rollDay(rewards).msgsToday || 0; // 오늘 보낸 메시지 수
+  const limitReached = !!settings.limitPerDay && usedToday >= settings.limitPerDay;
   const history =
     view.name === "session" && view.activity
       ? histories[view.activity.id] || []
@@ -697,6 +704,10 @@ export default function App() {
             name={profile.name}
             rewards={rewards}
             parentMissions={parentMissions}
+            persona={persona}
+            limitReached={limitReached}
+            onCountMessage={countMessage}
+            onSafety={addSafety}
             onComplete={completeMission}
             onClaimAttendance={claimAttendance}
             onOpenChest={openChest}
@@ -707,6 +718,8 @@ export default function App() {
         {zone === "kids" && view.name === "image" && (
           <ImageMaker
             enabled={!!data.features?.image}
+            limitPerDay={limitReached ? settings.limitPerDay : null}
+            onCountMessage={countMessage}
             onSafety={addSafety}
             onBack={() => setView({ name: "home" })}
           />

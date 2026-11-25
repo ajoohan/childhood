@@ -114,3 +114,13 @@ export const pinKeys = async (page, pin) => {
     await page.waitForTimeout(120);
   }
 };
+
+// 미션 확인 창에서 "네, 다 했어요!" → 별이의 질문에 대답 → 칭찬(별 지급) 창까지.
+// /api/chat을 가짜로 두지 않으면 서버에 키가 없어 AI 답 대신 기본 칭찬으로 별을 받는다.
+export async function finishMission(page, answer = "다 했어!") {
+  await page.click("text=네, 다 했어요!");
+  await page.waitForSelector(".mm-answer input", { timeout: 8000 });
+  await page.fill(".mm-answer input", answer);
+  await page.click("text=알려 주기");
+  await page.waitForSelector(".mission-modal.praise", { timeout: 15000 });
+}

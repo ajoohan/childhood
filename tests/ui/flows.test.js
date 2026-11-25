@@ -1,7 +1,7 @@
 // 별 경제와 온보딩처럼 여러 화면에 걸친 흐름.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { startServer, launchBrowser, openApp, seed, BASE, pinKeys } from "./helpers.js";
+import { startServer, launchBrowser, openApp, seed, BASE, pinKeys, finishMission } from "./helpers.js";
 
 let server, browser;
 before(async () => { server = await startServer(); browser = await launchBrowser(); });
@@ -21,7 +21,7 @@ test("미션을 완료하면 별이 늘고, 같은 미션은 하루 한 번만",
   await done[0].click();
   // 바로 지급되지 않고 "정말 다 했나요?" 확인을 거친다
   await page.waitForSelector(".mission-modal", { timeout: 8000 });
-  await page.click("text=네, 다 했어요!");
+  await finishMission(page);
   await page.waitForTimeout(1500);
 
   // 홈으로 돌아가 별이 늘었는지 확인
@@ -188,7 +188,7 @@ test("앱을 연 채로 날짜가 바뀌면 어제의 미션 완료 표시가 �
   await page.waitForSelector(".missions", { timeout: 8000 });
   await (await page.$$("text=완료하기"))[0].click();
   await page.waitForSelector(".mission-modal", { timeout: 8000 });
-  await page.click("text=네, 다 했어요!");
+  await finishMission(page);
   await page.waitForTimeout(300);
   await page.clock.runFor(1500);
   assert.equal((await page.$$(".mb-item.done")).length, 1, "오늘 완료한 미션");

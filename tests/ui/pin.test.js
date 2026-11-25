@@ -1,7 +1,7 @@
 // 부모 PIN 대책: 가입 때 정하기, 프로필 전환 잠금, 재설정 알림, 가려지면 다시 잠금, 대화창 접근성, 다른 탭 보호.
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { startServer, launchBrowser, openApp, seed, BASE, pinKeys } from "./helpers.js";
+import { startServer, launchBrowser, openApp, seed, BASE, pinKeys, finishMission } from "./helpers.js";
 
 let server, browser;
 before(async () => { server = await startServer(); browser = await launchBrowser(); });
@@ -226,7 +226,7 @@ test("다른 탭이 바꿨다는 알림을 못 받은 창(멈춰 있던 창)도 
     await p.waitForSelector(".missions", { timeout: 8000 });
     await (await p.$$("text=완료하기"))[idx].click();
     await p.waitForSelector(".mission-modal", { timeout: 8000 });
-    await p.click("text=네, 다 했어요!");
+    await finishMission(p);
     await p.waitForTimeout(800);
   };
   await complete(b, 0); // 탭 B가 먼저 미션 하나를 완료 (+2별)
