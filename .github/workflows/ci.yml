@@ -50,6 +50,16 @@ jobs:
       - run: npm run build
       - run: npm run test:ui
 
+  db:
+    name: DB 권한·행 보안
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      # 부모 계정 마이그레이션(supabase/migrations)을 임시 Postgres에 적용해 RLS·권한·함수를 확인한다.
+      # 러너 이미지에 Postgres 서버가 있으면 그것을 쓰고, 없으면 설치한다.
+      - run: ls /usr/lib/postgresql/*/bin/initdb || (sudo apt-get update && sudo apt-get install -y postgresql)
+      - run: bash tests/db/run-local.sh
+
   audit:
     name: 의존성 취약점
     runs-on: ubuntu-latest
