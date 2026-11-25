@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Splash from "./screens/Splash.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
 import KidsHome from "./screens/KidsHome.jsx";
@@ -24,6 +24,8 @@ import { REWARD, isAllClear, openTreasure } from "./lib/missions.js";
 import {
   loadStore,
   persistChecked,
+  changedElsewhere,
+  STORE_KEY_NAME,
   rollDay,
   todayKey,
   emptyKid,
@@ -82,12 +84,39 @@ export default function App() {
   const [pinThen, setPinThen] = useState(null); // PIN을 통과한 뒤 할 일 ("addKid") — 없으면 부모 존으로
   const [sparksOpen, setSparksOpen] = useState(false);
   const [guardUnlocked, setGuardUnlocked] = useState(false);
-  const [storageIssue, setStorageIssue] = useState(null); // null | "conflict" | "failed"
+  // 이번 부모 존 잠금 해제가 "PIN을 잊으셨나요?"(계산 문제)로 연 것인가. 그렇게 연 사람은 설정에서 PIN을 다시
+  // 정하거나 잠금을 풀어도 재설정 경고(pinResetAt)를 지울 수 없다 — 경고는 바로 그 사람을 부모에게 알리려는 것이다.
+  const [forgotSession, setForgotSession] = useState(false);
+  const viaForgotRef = useRef(false);
+  const [storageIssue, setStorageIssue] = useState(null); // null | "conflict" | "failed" | "lean"
 
   const dismissSplash = () => {
     splashSeen = true;
     setSplash(false);
   };
+
+  // 다른 창이 기록을 바꾸면 이 창은 옛 상태(하루 대화 횟수 0, 옛 PIN·제한)로 계속 쓸 수 있었다. 저장만 막고
+  // 채팅은 열려 있어 두 번째 창으로 하루 제한을 넘길 수 있었다. 바뀐 것을 알면 바로 새로 읽는다(새로고침).
+  // 모바일의 뒤에 있는 창은 멈춰 있어 알림(storage)을 못 받으므로, 다시 보일 때도 확인한다.
+  useEffect(() => {
+    const reloadIfStale = () => {
+      if (changedElsewhere()) window.location.reload();
+    };
+    const onStorage = (e) => {
+      if (e.key === STORE_KEY_NAME || e.key === null) reloadIfStale();
+    };
+    const onVisible = () => document.visibilityState === "visible" && reloadIfStale();
+    window.addEventListener("storage", onStorage);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!guardUnlocked) setForgotSession(false);
+  }, [guardUnlocked]);
 
   // 현재 화면의 활성 아이 슬라이스를 한 덩어리로
   const kidSnapshot = () => ({
@@ -155,7 +184,9 @@ export default function App() {
   // 새 아이 추가 — 빈 프로필로 시작하면 온보딩 흐름이 자동으로 뜬다.
   function addKid() {
     const id = newKidId();
-    const k = emptyKid();
+    // 취소하면 추가를 시작한 아이로 돌아간다(새로고침해도 남도록 빈 프로필에 적어 둔다).
+    const k = { ...emptyKid() };
+    k.profile = { ...k.profile, returnTo: activeKid };
     setKids((m) => ({ ...m, [activeKid]: kidSnapshot(), [id]: k }));
     setActiveKid(id);
     loadKidSlices(k);
@@ -380,7 +411,8 @@ export default function App() {
     const seed = (p.name || "").split("").reduce((n, c) => n + c.charCodeAt(0), 0);
     const withAvatar = { ...p, avatar: p.avatar || AVATARS[seed % AVATARS.length] };
     // 연령 모드는 생년월 기반으로 useEffect에서 자동 계산된다.
-    setProfile(withAvatar);
+    const { returnTo: _done, ...clean } = withAvatar;
+    setProfile(clean);
     setSettings((s) => ({ ...s, ageMode: ageModeForProfile(withAvatar), ...(pin ? { pin, pinResetAt: null } : {}) }));
   }
 
@@ -452,11 +484,14 @@ export default function App() {
   const pinGate = pinOpen ? (
     <PinGate
       savedPin={settings.pin}
-      onSetPin={(pin, meta) =>
-        setSettings((s) => ({ ...s, pin, pinResetAt: meta?.viaForgot ? new Date().toISOString() : null }))
-      }
+      onSetPin={(pin, meta) => {
+        viaForgotRef.current = !!meta?.viaForgot;
+        setSettings((s) => ({ ...s, pin, pinResetAt: meta?.viaForgot ? new Date().toISOString() : null }));
+      }}
       onUnlock={() => {
         setPinOpen(false);
+        setForgotSession(viaForgotRef.current);
+        viaForgotRef.current = false;
         if (pinThen && pinThen.switchTo) {
           // 부모 존은 열지 않고 프로필 전환만 한다
           const id = pinThen.switchTo;
@@ -533,7 +568,11 @@ export default function App() {
   if (!profile.onboarded) {
     // 이미 등록된 아이가 있으면 "새 아이 추가"를 취소하고 돌아갈 수 있다. 취소할 길이 없으면
     // 실수로 누른 아이가 빈 프로필에 갇히고, 새로고침해도 그대로였다.
-    const returnTo = Object.keys(kids).find((id) => id !== activeKid && kids[id]?.profile?.onboarded);
+    const back = profile.returnTo;
+    const returnTo =
+      back && back !== activeKid && kids[back]?.profile?.onboarded
+        ? back
+        : Object.keys(kids).find((id) => id !== activeKid && kids[id]?.profile?.onboarded);
     return (
       <div className="app">
         <Onboarding
@@ -668,6 +707,7 @@ export default function App() {
         {zone === "kids" && view.name === "image" && (
           <ImageMaker
             enabled={!!data.features?.image}
+            onSafety={addSafety}
             onBack={() => setView({ name: "home" })}
           />
         )}
@@ -740,12 +780,15 @@ export default function App() {
             onSetNotifyMissions={(v) => setSettings((s) => ({ ...s, notifyMissions: v }))}
             onSaveLimit={(val) => setSettings((s) => ({ ...s, limitPerDay: val }))}
             onSetVoice={(v) => setSettings((s) => ({ ...s, voice: v }))}
-            onSetPin={(pin) => setSettings((s) => ({ ...s, pin, pinResetAt: null }))}
+            onSetPin={(pin) =>
+              setSettings((s) => ({ ...s, pin, pinResetAt: forgotSession ? s.pinResetAt : null }))
+            }
             onClear={() => {
+              // 이 아이의 것만 지운다. 하루 대화 횟수 제한은 기기 전체(모든 아이) 설정이라 건드리지 않는다
+              // (예전에는 한 아이의 기록을 지우면 모든 아이의 제한이 풀렸다).
               setHistories({});
               setSafety([]);
               setNotices([]); // 확인 문구가 약속한 '알림'도 실제로 지운다
-              setSettings((s) => ({ ...s, limitPerDay: null }));
             }}
           />
         )}

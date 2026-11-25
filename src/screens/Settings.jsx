@@ -62,10 +62,8 @@ export default function Settings({
   }
 
   function clearAll() {
-    if (!window.confirm(`${kidName || "지금 선택한 아이"}의 대화 기록과 알림, 하루 대화 횟수 제한을 지울까요?\n(다른 아이의 기록, PIN·목소리·소리 설정은 그대로 남아요.) 되돌릴 수 없어요.`)) return;
+    if (!window.confirm(`${kidName || "지금 선택한 아이"}의 대화 기록과 알림을 지울까요?\n(다른 아이의 기록, 하루 대화 횟수 제한, PIN·목소리·소리 설정은 그대로 남아요.) 되돌릴 수 없어요.`)) return;
     onClear();
-    setLimitInput("");
-    setSavedLimit("");
   }
 
   return (
@@ -272,7 +270,7 @@ export default function Settings({
         <div className="guard-card">
           <h3>🗑️ 기록 관리</h3>
           <p className="guard-hint">
-            지금 선택한 아이의 대화·알림을 지우고 하루 대화 횟수 제한을 풀어요. 되돌릴 수 없어요.
+            지금 선택한 아이의 대화·알림을 지워요. 되돌릴 수 없어요.
           </p>
           <button className="guard-btn danger" onClick={clearAll}>
             이 아이의 기록 지우기

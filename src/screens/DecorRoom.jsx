@@ -24,7 +24,8 @@ export default function DecorRoom({
   const theme = themeById(decor.theme);
   const placed = decor.placed[theme.id] || {};
   const [choosing, setChoosing] = useState(null); // 배치할 슬롯
-  const [celebrate, setCelebrate] = useState(false);
+  // 방금 완성한 테마 { theme, placed }. 연출(1.1초) 사이에 다른 테마 탭을 눌러도 축하 화면은 완성한 것을 보여 준다.
+  const [celebrate, setCelebrate] = useState(null);
   const [spending, setSpending] = useState(false); // 별 날아가는 소진 연출 중
 
   const filled = isThemeFilled(theme, placed);
@@ -42,10 +43,11 @@ export default function DecorRoom({
     if (alreadyDone || !filled || !affordable || spending) return;
     const ok = onComplete(theme);
     if (!ok) return;
+    const done = { theme, placed };
     setSpending(true);
     setTimeout(() => {
       setSpending(false);
-      setCelebrate(true);
+      setCelebrate(done);
     }, 1100);
   }
 
@@ -186,14 +188,14 @@ export default function DecorRoom({
 
       {/* 테마 완성 기념 사진 */}
       {celebrate && (
-        <div className="modal-backdrop" onClick={() => setCelebrate(false)}>
+        <div className="modal-backdrop" onClick={() => setCelebrate(null)}>
           <Confetti count={90} />
           <div className="celebrate" role="dialog" aria-modal="true" aria-label="꾸미기 완성" onClick={(e) => e.stopPropagation()}>
             <div className="celebrate-frame">
               <div
                 className="celebrate-scene"
                 style={{
-                  background: `linear-gradient(160deg, ${theme.bg[0]}, ${theme.bg[1]})`,
+                  background: `linear-gradient(160deg, ${celebrate.theme.bg[0]}, ${celebrate.theme.bg[1]})`,
                 }}
               >
                 <span
@@ -201,16 +203,16 @@ export default function DecorRoom({
                   dangerouslySetInnerHTML={{ __html: robotHead("excited") }}
                 />
                 <div className="celebrate-objs">
-                  {theme.slots.map((s) => (
-                    <span key={s.id}>{s.options[placed[s.id]]}</span>
+                  {celebrate.theme.slots.map((s) => (
+                    <span key={s.id}>{s.options[celebrate.placed[s.id]]}</span>
                   ))}
                 </div>
               </div>
-              <div className="celebrate-cap">{theme.name} 완성! 📸</div>
+              <div className="celebrate-cap">{celebrate.theme.name} 완성! 📸</div>
             </div>
             <h2>축하해요! 🎉</h2>
-            <p>별 {theme.cost}개로 멋진 {eulReul(theme.name)} 완성했어요!</p>
-            <button className="mm-yes wide" onClick={() => setCelebrate(false)}>
+            <p>별 {celebrate.theme.cost}개로 멋진 {eulReul(celebrate.theme.name)} 완성했어요!</p>
+            <button className="mm-yes wide" onClick={() => setCelebrate(null)}>
               좋아!
             </button>
           </div>

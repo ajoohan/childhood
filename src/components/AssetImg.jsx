@@ -8,7 +8,10 @@ export default function AssetImg({ src, className, hideFallback = true }) {
       src={src}
       alt=""
       loading="lazy"
-      onError={(e) => e.currentTarget.remove()}
+      // 지우지 않고 숨긴다(React가 관리하는 노드를 지우면 다시 그릴 때 removeChild 오류가 난다).
+      onError={(e) => {
+        e.currentTarget.style.display = "none";
+      }}
       onLoad={(e) => {
         if (!hideFallback) return;
         const prev = e.currentTarget.previousElementSibling;

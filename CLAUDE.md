@@ -91,12 +91,19 @@
 - 첫 가입(기기에 PIN 없음)은 안전 안내 다음에 **부모 PIN을 정하는 단계가 필수**다(`Onboarding.jsx`의 `needPin`).
   PIN이 있으면 형제 추가 가입에서는 건너뛴다.
 - PIN을 정해 두면 **프로필 전환·새 아이 추가·부모 존**이 모두 PIN 뒤에 있다(`App.jsx`의 `requestSwitchKid`/`requestAddKid`).
-- "PIN을 잊으셨나요?" 계산으로 PIN이 바뀌면 `settings.pinResetAt`이 남고 부모 화면에 경고가 뜬다. 설정에서 PIN을 다시 정하면 사라진다.
+- "PIN을 잊으셨나요?" 계산으로 PIN이 바뀌면 `settings.pinResetAt`이 남고 부모 화면에 경고가 뜬다. 설정에서 PIN을 다시 정하면 사라지지만,
+  **계산 문제로 연 그 자리(`forgotSession`)에서는 지울 수 없다**(PIN으로 다시 열어야 한다).
 - 앱이 가려지면(`visibilitychange`) 열려 있던 부모 존이 다시 잠긴다.
 - 팝업·시트는 `components/Dialog.jsx`(역할·포커스·Esc·Tab 가둠)를 쓴다. 새 팝업도 이것으로 만든다.
 - 저장은 `persistChecked`: 다른 탭이 먼저 바꿨으면 덮어쓰지 않고 새로고침을 안내한다. 같은 내용이면 쓰지 않는다.
+  다른 창이 저장하면(`storage` 이벤트, 또는 다시 보일 때 `changedElsewhere()`) **바로 새로 읽는다** — 옛 상태의 창으로
+  하루 제한을 넘길 수 있었다. 공간이 부족해 대화 기록을 빼고 저장하면 `"lean"`으로 부모 화면에 경고한다.
+- 하루 대화 횟수 제한은 기기 전체(모든 아이) 설정이다. "이 아이의 기록 지우기"는 제한을 건드리지 않는다.
 - 안전 분류기는 마지막 메시지만이 아니라 바로 앞 대화(최대 4개)를 함께 본다(`buildClassifierPrompt`).
-- IP별 하루 상한 기본값은 100(`RL_PER_DAY`, 전체 `RL_GLOBAL_PER_DAY`의 일부).
+- IP별 하루 상한 기본값은 100(`RL_PER_DAY`, 전체 `RL_GLOBAL_PER_DAY`의 일부). IPv6는 /64로 묶어 센다(`ipKey`).
+  분당 제한은 요청을 읽기 전에, **하루 횟수는 요청이 올바른 것을 확인한 뒤**(`chargeDaily`) 쓴다 — 잘못된 요청으로 전체 상한을 소진할 수 없다.
+- 모델이 답하다 거절하면(`stop_reason: refusal`) 서버가 `{replace}`를 보내 받은 조각을 지우고 안내 문구로 바꾼다.
+  안전 분류기가 쓸 수 없는 답(거절·형식 깨짐)을 주면 `harmful_request`로 본다(시간 초과·연결 오류만 열림).
 
 ## 화면 스타일
 

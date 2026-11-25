@@ -8,8 +8,9 @@ import { eunNeun } from "../lib/josa.js";
 
 const NOW = new Date();
 const CUR_YEAR = NOW.getFullYear();
-// 만 0~13세에 해당하는 출생연도 (최신순)
-const BIRTH_YEARS = Array.from({ length: 14 }, (_, i) => CUR_YEAR - i);
+// 만 1~13세가 될 수 있는 출생연도(최신순): 작년 ~ 14년 전. 올해 태어난 아이(0세)는 빼고,
+// 생일이 아직 안 지난 13세(예: 2026년 11월에 2012년 12월생)가 태어난 해는 넣는다.
+const BIRTH_YEARS = Array.from({ length: 14 }, (_, i) => CUR_YEAR - 1 - i);
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 function ageNote(age) {

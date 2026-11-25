@@ -181,3 +181,21 @@ test("loadStore: 예전 조건으로 잘못 받은 '미션 도전' 배지를 불
   assert.deepEqual(s.kids.a.badges, ["first"], "미션을 한 적 없는 아이는 거둔다");
   assert.deepEqual(s.kids.b.badges, ["mission1"], "미션을 한 아이는 그대로");
 });
+
+test("공간이 부족해 대화 기록을 빼고 저장하면 'lean'으로 알린다 (부모에게 경고하려고)", async () => {
+  const { persistChecked } = await import("../src/lib/store.js");
+  const s = loadStore();
+  s.kids[s.activeKid].histories = { a: [{ role: "user", content: "안녕" }] };
+  globalThis.localStorage.failNext = 1; // 전체 저장만 실패, 대화 기록을 뺀 저장은 성공
+  assert.equal(persistChecked(s), "lean");
+  assert.equal(persistChecked({ ...s, settings: { ...s.settings, x: 1 } }), "ok");
+});
+
+test("다른 창이 저장값을 바꿨는지 안다", async () => {
+  const { changedElsewhere, persistChecked } = await import("../src/lib/store.js");
+  const s = loadStore();
+  assert.equal(persistChecked(s), "ok");
+  assert.equal(changedElsewhere(), false);
+  globalThis.localStorage.setItem("banjjaktalk_v2", JSON.stringify({ ...s, settings: { other: true } }));
+  assert.equal(changedElsewhere(), true);
+});

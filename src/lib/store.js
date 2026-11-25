@@ -187,9 +187,13 @@ export function emptyDecor() {
 // 저장이 통째로 실패한다.
 export const MAX_STORED_MESSAGES = 40;
 
+// 마지막 저장이 공간 부족으로 대화 기록을 빼고 저장됐는지
+let lastPersistLean = false;
+
 export function persist(state) {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    lastPersistLean = false;
     return true;
   } catch {
     // 용량 초과로 추정. 대화 기록은 버리더라도 프로필·별·콜렉션은 지킨다.
@@ -201,6 +205,7 @@ export function persist(state) {
         ),
       };
       localStorage.setItem(STORE_KEY, JSON.stringify(lean));
+      lastPersistLean = true;
       return true;
     } catch {
       return false;
@@ -210,6 +215,7 @@ export function persist(state) {
 
 // 저장하되, 다른 탭이 먼저 바꿔 놓았으면 덮어쓰지 않는다(그러면 그 탭의 기록이 통째로 사라진다).
 // 반환: "ok" | "conflict"(다른 탭이 바꿈 — 새로고침이 필요) | "failed"(이 브라우저에서 저장 불가)
+//       | "lean"(공간이 부족해 모든 아이의 대화 기록을 빼고 저장함 — 부모에게 알린다)
 export function persistChecked(state) {
   if (frozen) return "ok";
   let serialized;
@@ -225,8 +231,20 @@ export function persistChecked(state) {
   try {
     lastRaw = localStorage.getItem(STORE_KEY);
   } catch {}
-  return "ok";
+  return lastPersistLean ? "lean" : "ok";
 }
+
+// 다른 창(홈 화면 앱과 브라우저 탭 등)이 이 창이 마지막으로 읽거나 쓴 뒤에 저장값을 바꿨는가.
+// 그렇다면 이 창의 화면은 옛 상태다(하루 대화 횟수·PIN·제한이 다를 수 있다).
+export function changedElsewhere() {
+  if (frozen || lastRaw === undefined) return false;
+  try {
+    return localStorage.getItem(STORE_KEY) !== lastRaw;
+  } catch {
+    return false;
+  }
+}
+export const STORE_KEY_NAME = STORE_KEY;
 
 // 저장값을 통째로 바꾼다(계정에서 불러오기). 부른 쪽은 바로 새로고침해야 한다.
 // 그때까지 이 탭의 화면은 바꾸기 전 상태를 들고 있으므로, 이 탭의 저장을 멈춰(frozen) 새로고침 직전에

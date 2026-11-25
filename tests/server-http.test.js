@@ -78,14 +78,20 @@ test("그림 요청의 prompt가 객체여도 서버가 죽지 않는다", async
 });
 
 test("하루 전체 상한은 거절된 요청을 세지 않고 정확히 그 수만큼 허용한다", async () => {
-  // 위 테스트에서 채팅이 1번 계산됐다. 상한 5 중 채팅·그림이 2번 썼으니 남은 3번까지 허용되고 그 다음부터 503.
+  // 위 테스트에서 채팅이 1번 계산됐다. 잘못된 그림 요청(400)은 세지 않으므로 상한 5 중 남은 4번까지 허용되고
+  // 그 다음부터 503. 잘못된 요청도 여러 번 보내 본다 — 세지 않아야 한다.
+  for (let i = 0; i < 8; i++) {
+    const bad = await post("/api/chat", { messages: "잘못된 본문" });
+    assert.equal(bad.status, 400);
+    await bad.text();
+  }
   const statuses = [];
   for (let i = 0; i < 6; i++) {
     const r = await post("/api/chat", { activityId: "story_listen", messages: [{ role: "user", content: "안녕" }] });
     statuses.push(r.status);
     r.body?.cancel();
   }
-  assert.deepEqual(statuses, [200, 200, 200, 503, 503, 503]);
+  assert.deepEqual(statuses, [200, 200, 200, 200, 503, 503]);
 });
 
 test("보안 헤더가 붙고 서버 종류는 알리지 않는다", async () => {
@@ -120,5 +126,61 @@ test("IP별 제한은 접속자마다 따로다 (프록시 내부 주소를 함�
     assert.equal((await hit("203.0.113.11")).status, 400, "다른 접속자는 막히지 않는다");
   } finally {
     p2.kill();
+  }
+});
+
+// 선택 기능(STT)을 켠 서버. 바깥 STT 주소는 닿지 않는 곳으로 둔다.
+async function startWith(env) {
+  const port = await freePort();
+  const url = `http://localhost:${port}`;
+  const p = spawn("node", ["server.js"], {
+    env: { PATH: process.env.PATH, PORT: String(port), NODE_ENV: "production", ANTHROPIC_API_KEY: "test-key-not-real", ...env },
+    stdio: "ignore",
+  });
+  for (let i = 0; i < 100; i++) {
+    try { if ((await fetch(url + "/api/health")).ok) break; } catch {}
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  return { p, url };
+}
+
+test("받아쓰기: audio가 문자열이 아니면 큰 메모리를 만들지 않고 바로 400", async () => {
+  const { p, url } = await startWith({ STT_API_KEY: "test-stt-key", STT_API_URL: "http://127.0.0.1:9/never" });
+  try {
+    const t0 = Date.now();
+    const r = await fetch(url + "/api/transcribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audio: { length: 150_000_000 }, mime: { toString: 1 } }),
+    });
+    assert.equal(r.status, 400);
+    assert.ok(Date.now() - t0 < 1500, `응답이 ${Date.now() - t0}ms 걸렸다(큰 버퍼를 만들었다)`);
+    assert.equal((await fetch(url + "/api/health")).status, 200);
+  } finally {
+    p.kill();
+  }
+});
+
+test("IPv6는 /64로 묶어 센다: 같은 대역에서 주소만 바꿔도 IP별 하루 상한을 피하지 못한다", async () => {
+  const { p, url } = await startWith({ RL_PER_DAY: "2", RL_GLOBAL_PER_DAY: "50", RL_PER_MIN: "100" });
+  try {
+    const chat = (client) =>
+      fetch(url + "/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Forwarded-For": `${client}, 172.71.0.1, 10.0.0.1` },
+        body: JSON.stringify({ activityId: "story_listen", messages: [{ role: "user", content: "안녕" }] }),
+      });
+    const statuses = [];
+    for (let i = 1; i <= 4; i++) {
+      const r = await chat(`2001:db8:1:2::${i.toString(16)}`);
+      statuses.push(r.status);
+      r.body?.cancel();
+    }
+    assert.deepEqual(statuses, [200, 200, 429, 429], "같은 /64 안의 다른 주소");
+    const other = await chat("2001:db8:1:3::1"); // 다른 /64는 다른 접속자
+    assert.equal(other.status, 200);
+    other.body?.cancel();
+  } finally {
+    p.kill();
   }
 });

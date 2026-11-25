@@ -86,7 +86,9 @@ export async function streamChat({ body, signal, onText, onSafety, stallMs = STA
           streamError = obj.error;
           continue;
         }
-        acc += obj.text || "";
+        // 서버가 지금까지의 답을 통째로 바꾸라고 하면(모델이 도중에 답을 거절한 경우) 받은 조각을 버린다.
+        if (typeof obj.replace === "string") acc = obj.replace;
+        else acc += obj.text || "";
         onText && onText(acc);
       }
     }

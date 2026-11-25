@@ -17,7 +17,11 @@ function Bubble({ role, children, typing, expr = "happy" }) {
               className="ava-img3d"
               src="/img/chat-ai.png"
               alt=""
-              onError={(e) => e.currentTarget.remove()}
+              // 지우지(remove) 않고 숨긴다. React가 관리하는 노드를 지우면, 기록이 40개를 넘어 칸이 밀릴 때
+              // React가 그 노드를 다시 지우려다 removeChild 오류로 앱 전체가 멈췄다.
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
               onLoad={(e) => {
                 const prev = e.currentTarget.previousElementSibling;
                 if (prev) prev.style.display = "none";

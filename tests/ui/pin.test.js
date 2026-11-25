@@ -195,21 +195,30 @@ test("PIN 입력은 키보드 숫자로도 되고 Esc로 닫힌다", async () =>
   await p2.close();
 });
 
-test("다른 탭이 먼저 기록을 바꿨으면 덮어쓰지 않고 새로고침을 안내한다", async () => {
+test("다른 탭이 바꿨다는 알림을 못 받은 창(멈춰 있던 창)도 덮어쓰지 않고 새로고침을 안내한다", async () => {
   const ctx = await browser.newContext({ viewport: { width: 402, height: 874 } });
   const state = seed({ rewards: { balance: 10 } });
   await ctx.addInitScript((s) => {
     if (!localStorage.getItem("banjjaktalk_v2")) localStorage.setItem("banjjaktalk_v2", JSON.stringify(s));
   }, state);
-  const open = async () => {
+  const open = async ({ frozen = false } = {}) => {
     const p = await ctx.newPage();
+    if (frozen) {
+      // 보통은 알림(storage)이나 다시 보일 때(visibilitychange) 바로 새로 읽는다(robustness.test.js). 모바일의 멈춘
+      // 창처럼 둘 다 못 받는 경우를 흉내 내려고, 앱보다 먼저 리스너를 붙여 앱에 닿지 않게 막는다.
+      // 그래도 저장할 때 충돌을 알아채야 한다.
+      await p.addInitScript(() => {
+        window.addEventListener("storage", (e) => e.stopImmediatePropagation(), true);
+        document.addEventListener("visibilitychange", (e) => e.stopImmediatePropagation(), true);
+      });
+    }
     await p.goto(BASE + "/", { waitUntil: "networkidle" });
     const st = await p.$(".splash-primary");
     if (st) await st.click();
     await p.waitForSelector(".kids-home", { timeout: 10000 });
     return p;
   };
-  const a = await open();
+  const a = await open({ frozen: true });
   const b = await open();
 
   const complete = async (p, idx) => {

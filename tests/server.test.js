@@ -225,3 +225,26 @@ test("계정 설정: 비밀 키(service_role·secret)는 브라우저로 내보�
     assert.equal(normalizeAccountsConfig({ SUPABASE_URL: url, SUPABASE_PUBLISHABLE_KEY: key }), null, key);
   }
 });
+
+import { ipKey, classifierCategory } from "../server.js";
+
+test("요청 제한 키: IPv4는 그대로, IPv6는 /64로 묶는다", () => {
+  assert.equal(ipKey("203.0.113.10"), "203.0.113.10");
+  assert.equal(ipKey("::ffff:203.0.113.10"), "203.0.113.10", "IPv4가 IPv6 형식으로 와도 같은 사람");
+  assert.equal(ipKey("2001:db8:1:2::1"), "2001:db8:1:2::/64");
+  assert.equal(ipKey("2001:0db8:0001:0002:aaaa:bbbb:cccc:dddd"), "2001:db8:1:2::/64");
+  assert.equal(ipKey("2001:db8::1"), "2001:db8:0:0::/64");
+  assert.equal(ipKey("fe80::1%eth0"), "fe80:0:0:0::/64");
+  assert.equal(ipKey("::1"), "0:0:0:0::/64");
+  assert.equal(ipKey(undefined), "unknown");
+});
+
+test("분류기 응답: 쓸 수 없는 답(거절·형식 깨짐·모르는 범주)은 안전으로 열지 않는다", () => {
+  const text = (t) => ({ content: [{ type: "text", text: t }], stop_reason: "end_turn" });
+  assert.equal(classifierCategory(text('{"category":"safe"}')), "safe");
+  assert.equal(classifierCategory(text('{"category":"distress"}')), "distress");
+  assert.equal(classifierCategory({ content: [], stop_reason: "refusal" }), "harmful_request", "분류기가 거절");
+  assert.equal(classifierCategory(text('{"categ')), "harmful_request", "잘린 JSON");
+  assert.equal(classifierCategory(text('{"category":"whatever"}')), "harmful_request");
+  assert.equal(classifierCategory(undefined), "harmful_request");
+});

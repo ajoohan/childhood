@@ -98,6 +98,14 @@ export default function Speak({
   const aliveRef = useRef(true);
   const chatRef = useRef(null);
   const inputRef = useRef(null);
+  // 답을 기다리는(await) 사이에 아이가 소리를 끄거나 모드·목소리를 바꿀 수 있다. 기다린 뒤에는 그 시점의
+  // 값을 읽는다(예전에는 시작할 때의 값을 써서, 소리를 꺼도 답을 읽어 줬다).
+  const modeRef = useRef(mode);
+  const speakerRef = useRef(speakerOn);
+  const voiceRef = useRef(voice);
+  modeRef.current = mode;
+  speakerRef.current = speakerOn;
+  voiceRef.current = voice;
 
   const curVoice = VOICES.find((v) => v.id === voice) || VOICES[0];
 
@@ -136,6 +144,14 @@ export default function Speak({
       window.speechSynthesis && window.speechSynthesis.cancel();
     } catch {}
     if (speech.listening) speech.toggle();
+    // 녹음(서버 받아쓰기) 중이면 마이크를 끄고 녹음은 버린다. 글자 모드에는 끌 버튼이 없어 마이크가 계속 켜져 있었다.
+    try {
+      const r = recRef.current;
+      if (r && r.state !== "inactive") {
+        r.discard = true;
+        r.stop();
+      }
+    } catch {}
     setStatus("idle");
     setStreaming(null);
     setMode(next);
@@ -186,6 +202,7 @@ export default function Speak({
         micRef.current = null;
         if (!aliveRef.current) return; // 나간 뒤에는 받아쓰기·대화를 이어 가지 않는다
         setRecording(false);
+        if (mr.discard) return; // 모드를 바꿔 버린 녹음
         setStatus("thinking");
         try {
           const blob = new Blob(chunks, { type: mr.mimeType || "audio/webm" });
@@ -232,7 +249,13 @@ export default function Speak({
   // 공용 대화 함수 — 음성/텍스트 모드가 같은 스코프·기록을 공유한다.
   async function converse(text) {
     const trimmed = (text || "").trim();
-    if (!trimmed || busyRef.current || !activity) return;
+    if (!trimmed || busyRef.current) return;
+    if (!activity) {
+      // 서버가 깨어나는 중이라 활동 목록이 아직 없다. 들은 말을 조용히 버리지 않고 알려 준다.
+      setLastSaid(trimmed);
+      setFailNote("별이가 아직 깨어나는 중이에요. 조금 뒤에 다시 말해 줄래?");
+      return;
+    }
     if (limitReached()) return;
     busyRef.current = true;
     setNotice(null);
@@ -261,7 +284,7 @@ export default function Speak({
         onText: (t) => {
           acc = t;
           setReply(t);
-          if (mode === "text") setStreaming(t);
+          if (modeRef.current === "text") setStreaming(t);
         },
         onSafety: (category) =>
           onSafety({
@@ -286,7 +309,7 @@ export default function Speak({
       setStreaming(null);
       setStatus("idle");
       busyRef.current = false;
-      if (mode === "text" && inputRef.current) inputRef.current.focus();
+      if (modeRef.current === "text" && inputRef.current) inputRef.current.focus();
       return;
     }
 
@@ -294,10 +317,10 @@ export default function Speak({
     setStreaming(null);
 
     // 음성 모드 + 스피커 켜짐이면 소리로 읽어 준다 (자막 동기화)
-    if (mode === "voice" && speakerOn) {
+    if (modeRef.current === "voice" && speakerRef.current) {
       setStatus("speaking");
       setCapIdx(0);
-      speak(acc, voice, {
+      speak(acc, voiceRef.current, {
         onBoundary: (ci) => setCapIdx(ci),
         onEnd: () => {
           setCapIdx(acc.length);
@@ -308,7 +331,7 @@ export default function Speak({
     } else {
       setStatus("idle");
       busyRef.current = false;
-      if (mode === "text" && inputRef.current) inputRef.current.focus();
+      if (modeRef.current === "text" && inputRef.current) inputRef.current.focus();
     }
   }
 
@@ -317,7 +340,11 @@ export default function Speak({
     if (!t) return;
     // 이전 답이 아직 진행 중이거나 활동이 준비되지 않았으면 converse가 조용히 돌아간다.
     // 그때 입력을 지우면 아이가 쓴 글이 사라지므로, 지우지 않고 남겨 둔다.
-    if (busyRef.current || !activity) return;
+    if (busyRef.current) return;
+    if (!activity) {
+      setFailNote("별이가 아직 깨어나는 중이에요. 조금 뒤에 다시 보내 줄래?");
+      return;
+    }
     setInput("");
     converse(t);
   }

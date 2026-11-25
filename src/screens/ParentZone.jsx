@@ -6,7 +6,9 @@ import { computeAge, ageModeForProfile, MODE_LABEL, CHILD_MIN } from "../lib/age
 
 const NOW = new Date();
 const CUR_YEAR = NOW.getFullYear();
-const BIRTH_YEARS = Array.from({ length: 14 }, (_, i) => CUR_YEAR - i);
+// 만 1~13세가 될 수 있는 출생연도(최신순): 작년 ~ 14년 전. 올해 태어난 아이(0세)는 빼고,
+// 생일이 아직 안 지난 13세(예: 2026년 11월에 2012년 12월생)가 태어난 해는 넣는다.
+const BIRTH_YEARS = Array.from({ length: 14 }, (_, i) => CUR_YEAR - 1 - i);
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 // Parent Zone — 성인 인증 게이트 뒤. 대시보드·하루 대화 횟수·활동 로그·구독·연령·미션.
@@ -127,6 +129,15 @@ export default function ParentZone({
             </p>
           </div>
         )}
+        {storageIssue === "lean" && (
+          <div className="guard-card pin-alert" role="alert">
+            <h3>⚠️ 저장 공간이 부족해요</h3>
+            <p className="guard-hint">
+              이 브라우저의 저장 공간이 가득 차서, 별·콜렉션·프로필은 지키고 아이들의 대화 기록은 빼고 저장했어요. 앱을
+              다시 열면 대화 기록이 비어 있어요. 브라우저의 다른 사이트 데이터를 정리하면 다시 저장돼요.
+            </p>
+          </div>
+        )}
         {storageIssue === "failed" && (
           <div className="guard-card pin-alert" role="alert">
             <h3>⚠️ 기록을 저장할 수 없어요</h3>
@@ -180,7 +191,10 @@ export default function ParentZone({
               }}
             >
               <option value="">선택</option>
-              {BIRTH_YEARS.map((y) => (
+              {(prof.birthYear && !BIRTH_YEARS.includes(prof.birthYear)
+                ? [...BIRTH_YEARS, prof.birthYear].sort((x, z) => z - x)
+                : BIRTH_YEARS
+              ).map((y) => (
                 <option key={y} value={y}>
                   {y}년 (만 {CUR_YEAR - y}살 무렵)
                 </option>

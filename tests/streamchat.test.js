@@ -76,3 +76,13 @@ test("사용자가 직접 끊으면 멈춤 문구가 아니라 AbortError가 그
   setTimeout(() => ctrl.abort(), 20);
   await assert.rejects(p, (e) => e.name === "AbortError");
 });
+
+test("모델이 답하다 거절하면, 이미 받은 조각을 버리고 안내 문구만 남긴다", async () => {
+  const seen = [];
+  const out = await withFetch(
+    async () => sse({ text: "그건 이렇게 하면" }, { text: " 돼요" }, { replace: "미안해, 그건 도와줄 수 없어." }, "[DONE]"),
+    () => streamChat({ body: { messages: [] }, onText: (t) => seen.push(t) })
+  );
+  assert.equal(out, "미안해, 그건 도와줄 수 없어.", "저장될 답에 멈춘 문장이 남았다");
+  assert.equal(seen.at(-1), "미안해, 그건 도와줄 수 없어.", "화면에 멈춘 문장이 남았다");
+});

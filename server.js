@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import Anthropic from "@anthropic-ai/sdk";
+import net from "node:net";
 
 const client = new Anthropic();
 const app = express();
@@ -145,16 +146,42 @@ setInterval(() => {
   }
 }, 5 * RL_WINDOW_MS).unref();
 
-function rateLimit(req, res, next) {
-  const now = Date.now();
+// 요청 제한에 쓰는 접속자 키. IPv6는 앞 64비트(/64)로 묶는다: 한 가정·한 기기가 보통 /64 하나를 받아
+// 그 안의 주소를 마음대로 바꿀 수 있어서, 주소 전체로 세면 주소만 돌려 IP별 하루 상한을 피할 수 있었다.
+function ipKey(ip) {
+  if (typeof ip !== "string" || !ip) return "unknown";
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(ip);
+  if (mapped) return mapped[1];
+  const bare = ip.split("%")[0];
+  if (!net.isIPv6(bare)) return ip;
+  const [head, tail] = bare.split("::");
+  const groups = (part) => {
+    if (!part) return [];
+    const g = part.split(":");
+    // 끝에 IPv4 표기(…:1.2.3.4)가 붙으면 두 칸으로 센다
+    if (g[g.length - 1].includes(".")) g.splice(-1, 1, "0", "0");
+    return g;
+  };
+  const h = groups(head);
+  const t = tail === undefined ? [] : groups(tail);
+  const full = tail === undefined ? h : [...h, ...Array(8 - h.length - t.length).fill("0"), ...t];
+  return full.slice(0, 4).map((x) => parseInt(x, 16).toString(16)).join(":") + "::/64";
+}
+
+function rollRateDay() {
   const day = dayKey();
   if (day !== rlCurrentDay) {
     rlCurrentDay = day;
     rlDay.clear();
     rlGlobalDay = 0;
   }
+}
 
-  const ip = req.ip || "unknown";
+// 1단계(요청을 읽기 전): 분당 제한, 그리고 이미 다 쓴 하루 상한. 하루 횟수는 여기서 쓰지 않는다.
+function rateLimit(req, res, next) {
+  const now = Date.now();
+  rollRateDay();
+  const ip = ipKey(req.ip);
 
   const hits = (rlRecent.get(ip) || []).filter((t) => now - t < RL_WINDOW_MS);
   if (hits.length >= RL_PER_MIN) {
@@ -166,14 +193,30 @@ function rateLimit(req, res, next) {
   if (rlGlobalDay >= RL_GLOBAL_PER_DAY) {
     return res.status(503).json({ error: "지금 친구들이 너무 많아! 조금 뒤에 다시 와 줄래?" });
   }
+  if ((rlDay.get(ip) || 0) >= RL_PER_DAY) {
+    return res.status(429).json({ error: "오늘은 이야기를 많이 나눴어! 내일 또 만나자 😊" });
+  }
+  next();
+}
+
+// 2단계(요청이 올바르다고 확인한 뒤, 유료 호출 직전): 하루 횟수(IP별·전체)를 쓴다.
+// 잘못된 요청(400)까지 세면 서버 호출 없이 전체 하루 상한을 다 써서 모든 아이를 막을 수 있었다.
+// 응답을 보냈으면 false.
+function chargeDaily(req, res) {
+  rollRateDay();
+  const ip = ipKey(req.ip);
+  if (rlGlobalDay >= RL_GLOBAL_PER_DAY) {
+    res.status(503).json({ error: "지금 친구들이 너무 많아! 조금 뒤에 다시 와 줄래?" });
+    return false;
+  }
   const dc = (rlDay.get(ip) || 0) + 1;
   if (dc > RL_PER_DAY) {
-    return res.status(429).json({ error: "오늘은 이야기를 많이 나눴어! 내일 또 만나자 😊" });
+    res.status(429).json({ error: "오늘은 이야기를 많이 나눴어! 내일 또 만나자 😊" });
+    return false;
   }
   rlDay.set(ip, dc);
   rlGlobalDay += 1;
-
-  next();
+  return true;
 }
 
 // 아이 눈높이 대화는 최고 품질 모델, 안전 사전 분류는 빠른 모델을 사용한다.
@@ -398,9 +441,24 @@ function buildClassifierPrompt(text, context = []) {
   );
 }
 
-async function classifySafety(text, { failClosed = false, signal, context = [] } = {}) {
+const SAFETY_CATEGORIES = new Set(["safe", "personal_info", "harmful_request", "distress"]);
+
+// 분류기 응답을 범주로 바꾼다. 분류기가 답을 거절했거나(그만큼 심각한 내용일 수 있다) 형식이 깨졌으면
+// "safe"로 열지 않고 harmful_request로 본다: 채팅은 계속되지만 안전 안내가 붙고 부모 화면에 기록된다.
+function classifierCategory(res) {
+  const block = res?.content?.find?.((b) => b.type === "text");
   try {
-    const res = await client.messages.create(
+    const c = JSON.parse(block.text).category;
+    if (SAFETY_CATEGORIES.has(c)) return c;
+  } catch {}
+  console.error("safety classifier gave no usable answer:", res?.stop_reason);
+  return "harmful_request";
+}
+
+async function classifySafety(text, { failClosed = false, signal, context = [] } = {}) {
+  let res;
+  try {
+    res = await client.messages.create(
       {
         model: SAFETY_MODEL,
         max_tokens: 256,
@@ -410,13 +468,14 @@ async function classifySafety(text, { failClosed = false, signal, context = [] }
       // 분류가 느려도 아이가 몇 분씩 기다리지 않게 한다(실패하면 채팅은 열림, 이미지는 닫힘).
       { timeout: CLASSIFY_TIMEOUT_MS, maxRetries: 1, ...(signal ? { signal } : {}) }
     );
-    const block = res.content.find((b) => b.type === "text");
-    return JSON.parse(block.text).category;
   } catch (err) {
+    // 아이 쪽 연결이 끊겨 우리가 멈춘 것이면 상류 오류가 아니다(/api/health의 진짜 원인을 덮지 않는다).
+    if (signal?.aborted) return failClosed ? "unavailable" : "safe";
     console.error("safety classification failed:", err.message);
     recordUpstreamError("safety", err);
     return failClosed ? "unavailable" : "safe";
   }
+  return classifierCategory(res);
 }
 
 const SAFETY_GUIDANCE = {
@@ -539,8 +598,12 @@ app.post(
   rateLimit,
   express.json({ limit: "6mb" }),
   handle(async (req, res) => {
-    const { audio, mime } = req.body || {};
-    if (!audio) return res.status(400).json({ error: "오디오가 없어요." });
+    const { audio } = req.body || {};
+    // 문자열만 받는다. {"length":150000000} 같은 객체를 Buffer.from에 넘기면 1.5억 바이트를 동기로
+    // 만들어 서버 전체가 몇 초 멈추고 메모리가 수백 MB 늘었다.
+    if (typeof audio !== "string" || !audio) return res.status(400).json({ error: "오디오가 없어요." });
+    const mime = typeof req.body.mime === "string" && req.body.mime.length <= 100 ? req.body.mime : "";
+    if (!chargeDaily(req, res)) return;
     try {
       const bytes = Buffer.from(audio, "base64");
       const form = new FormData();
@@ -576,8 +639,16 @@ app.post(
     // 문자열만 받는다. {"toString":1} 같은 객체는 .toString() 호출에서 던져 프로세스를 죽였다.
     const prompt = clip(typeof req.body?.prompt === "string" ? req.body.prompt : "", 300).trim();
     if (!prompt) return res.status(400).json({ error: "무엇을 그릴지 알려줘!" });
+    if (!chargeDaily(req, res)) return;
 
-    const category = await classifySafety(prompt, { failClosed: true });
+    // 아이가 화면을 나가 연결이 끊기면 분류와 그림 생성(유료, 최대 1분)도 멈춘다.
+    const upstream = new AbortController();
+    res.on("close", () => {
+      if (!res.writableEnded) upstream.abort();
+    });
+
+    const category = await classifySafety(prompt, { failClosed: true, signal: upstream.signal });
+    if (upstream.signal.aborted) return;
     if (category === "unavailable")
       return res
         .status(503)
@@ -593,7 +664,7 @@ app.post(
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${IMAGE_API_KEY}` },
         body: JSON.stringify({ model: IMAGE_MODEL, prompt: safePrompt, size: "1024x1024", n: 1 }),
-        signal: AbortSignal.timeout(IMAGE_TIMEOUT_MS),
+        signal: AbortSignal.any([upstream.signal, AbortSignal.timeout(IMAGE_TIMEOUT_MS)]),
       });
       if (!r.ok) throw new Error("IMG " + r.status);
       const j = await r.json();
@@ -606,6 +677,7 @@ app.post(
       if (!url) throw new Error("no image in response");
       res.json({ url });
     } catch (e) {
+      if (upstream.signal.aborted) return;
       console.error("image:", e.message);
       res.status(502).json({ error: "그림을 만들지 못했어요. 다시 해볼까?" });
     }
@@ -617,6 +689,7 @@ app.post("/api/chat", rateLimit, handle(async (req, res) => {
   if (!messages) {
     return res.status(400).json({ error: "잘못된 요청이에요." });
   }
+  if (!chargeDaily(req, res)) return;
 
   const activityId = activityById(req.body?.activityId);
   const persona = sanitizeProfile(req.body?.profile);
@@ -673,9 +746,11 @@ app.post("/api/chat", rateLimit, handle(async (req, res) => {
     const finalMessage = await stream.finalMessage();
 
     if (finalMessage.stop_reason === "refusal") {
+      // 모델이 답하다가 스스로 멈췄다. 이미 보낸 일부 문장은 화면과 기록에서 지우고 안내 문구로 바꾼다
+      // (예전에는 이어 붙여서 멈춘 문장이 아이에게 보이고 저장돼, 다음 요청에 "내가 한 말"로 다시 갔다).
       res.write(
         `data: ${JSON.stringify({
-          text: `미안해, 그건 ${HELPER_NAME}가 도와줄 수 없어. 우리 다른 걸 해 볼까? ✨`,
+          replace: `미안해, 그건 ${HELPER_NAME}가 도와줄 수 없어. 우리 다른 걸 해 볼까? ✨`,
         })}\n\n`
       );
     }
@@ -755,4 +830,6 @@ export {
   personaBlock,
   systemPromptFor,
   buildClassifierPrompt,
+  ipKey,
+  classifierCategory,
 };

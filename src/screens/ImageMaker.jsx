@@ -4,7 +4,7 @@ import { robotHead } from "../lib/mascot.js";
 const IDEAS =["우주를 나는 공룡", "무지개 위의 고양이", "바닷속 마법 성", "웃는 로봇 친구"];
 
 // 그림 만들기 — 프롬프트 → 서버 안전 분류 → 이미지 생성(키 설정 시). 미설정 시 "준비 중".
-export default function ImageMaker({ enabled, onBack }) {
+export default function ImageMaker({ enabled, onSafety, onBack }) {
   const [prompt, setPrompt] = useState("");
   const [status, setStatus] = useState("idle"); // idle|loading|done|pending|blocked|error
   const [image, setImage] = useState(null);
@@ -25,6 +25,14 @@ export default function ImageMaker({ enabled, onBack }) {
       });
       const j = await res.json().catch(() => ({}));
       if (j.safety) {
+        // 위기 신호·개인정보 등은 채팅과 똑같이 부모 화면의 안전 알림에 남긴다.
+        onSafety?.({
+          t: new Date().toISOString(),
+          activityId: "image",
+          activityTitle: "그림 만들기",
+          category: j.safety,
+          text,
+        });
         setStatus("blocked");
         setMsg(j.error || "그건 그릴 수 없어. 다른 걸 그려 볼까? ✨");
       } else if (j.pending) {
