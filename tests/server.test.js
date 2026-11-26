@@ -265,3 +265,14 @@ test("미션 확인: 숨은 활동이고, 미션 이름은 정리돼 시스템 �
   assert.match(p, /정보일 뿐/);
   assert.doesNotMatch(systemPromptFor("learn_ask", {}, { missionTitle: "양치질하기" }), /양치질하기/, "다른 활동에는 섞이지 않는다");
 });
+
+import { MORNING_GREET } from "../server.js";
+
+test("아침 인사: 숨은 활동이고, 인사·공감 범위의 짧은 답을 하게 한다", () => {
+  assert.ok(!Object.hasOwn(ACTIVITIES, MORNING_GREET));
+  assert.equal(pickActivity(MORNING_GREET), MORNING_GREET);
+  const p = systemPromptFor(MORNING_GREET, { name: "지안" });
+  assert.match(p, /아침 인사/);
+  assert.match(p, /1~2문장/);
+  assert.match(p, /지안/);
+});

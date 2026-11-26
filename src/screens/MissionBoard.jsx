@@ -7,8 +7,18 @@ import Confetti from "../components/Confetti.jsx";
 import Dialog from "../components/Dialog.jsx";
 import { aYa } from "../lib/josa.js";
 
+// 별이와 짧게 이야기한 뒤 별을 받는 것들. kind: "mission"(한 일을 묻고 칭찬) | "greet"(아침 인사, 기분 묻기)
+// 출석 버튼과 기본 미션 "AI와 아침 인사하기"는 실제로 별이와 인사를 나눠야 별을 받는다.
+const GREET_MISSION_ID = "greet";
+const ATTEND = { id: "__attend", emoji: "🌅", title: "출석 · AI와 아침 인사", kind: "greet", attend: true };
+
 // 미션 확인에서 별이가 하는 질문
-export const checkQuestion = (m) => `"${m.title}" 미션, 어떻게 했는지 별이에게 알려 줄래?`;
+export const checkQuestion = (m, name) =>
+  m.kind === "greet"
+    ? `좋은 아침${name ? `, ${aYa(name)}` : ""}! 오늘 기분은 어때? 별이에게 인사해 줘!`
+    : `"${m.title}" 미션, 어떻게 했는지 별이에게 알려 줄래?`;
+
+const GREET_PRAISE = "좋은 아침! 인사해 줘서 고마워. 오늘도 즐겁게 보내자! ☀️";
 
 // 오늘의 미션 보드 — 미션 수행 → AI 대화형 인증(별이가 묻고, 아이가 답하면 칭찬하며 확인) → 별 지급 → 꾸미기로 소모
 // AI 확인은 하루 대화 횟수에 1번으로 센다. 횟수를 다 썼거나 연결이 안 되면 별은 그대로 주고 기본 칭찬을 보여 준다
@@ -57,14 +67,17 @@ export default function MissionBoard({
 
   function claimAttend() {
     if (rewards.attendance) return;
-    onClaimAttendance();
-    setBurst(true);
-    setTimeout(() => setBurst(false), 2200);
+    openCheck(ATTEND);
   }
 
-  function openCheck(m) {
+  function openCheck(raw) {
+    const m = raw.kind ? raw : { ...raw, kind: raw.id === GREET_MISSION_ID ? "greet" : "mission" };
     setChecking(m);
-    setStep("confirm");
+    // 인사는 그 자리에서 하는 것이라 "정말 다 했나요?"를 묻지 않는다. 횟수를 다 썼으면 바로 별을 준다.
+    if (m.kind === "greet") {
+      if (limitReached) return confirmDone(m);
+      setStep("ask");
+    } else setStep("confirm");
     setAnswer("");
     setReply("");
   }
@@ -78,10 +91,16 @@ export default function MissionBoard({
 
   // 별 지급 + 칭찬. text가 없으면(AI 확인을 못 했으면) 기본 칭찬.
   function confirmDone(m, text) {
+    setChecking(null);
+    if (m.attend) {
+      onClaimAttendance();
+      setPraise({ text: text || GREET_PRAISE, reward: REWARD.attendance });
+      return;
+    }
     onComplete(m);
     const seed = m.id.split("").reduce((n, c) => n + c.charCodeAt(0), doneCount);
-    setChecking(null);
-    setPraise({ text: text || praiseFor(name, seed), reward: m.reward || REWARD.mission });
+    const fallback = m.kind === "greet" ? GREET_PRAISE : praiseFor(name, seed);
+    setPraise({ text: text || fallback, reward: m.reward || REWARD.mission });
   }
 
   function saidDone(m) {
@@ -100,10 +119,11 @@ export default function MissionBoard({
     abortRef.current = ctrl;
     let got = "";
     try {
+      const greet = m.kind === "greet";
       got = await streamChat({
         body: {
-          activityId: "mission_check",
-          mission: { title: m.title },
+          activityId: greet ? "morning_greet" : "mission_check",
+          ...(greet ? {} : { mission: { title: m.title } }),
           messages: [{ role: "user", content: text }],
           profile: persona,
         },
@@ -112,8 +132,8 @@ export default function MissionBoard({
         onSafety: (category) =>
           onSafety?.({
             t: new Date().toISOString(),
-            activityId: "mission_check",
-            activityTitle: `미션 확인 · ${m.title}`,
+            activityId: greet ? "morning_greet" : "mission_check",
+            activityTitle: greet ? "아침 인사" : `미션 확인 · ${m.title}`,
             category,
             text,
           }),
@@ -251,7 +271,7 @@ export default function MissionBoard({
             <div className="mm-chat">
               <div className="mm-bubble bot">
                 <span className="mm-ava" dangerouslySetInnerHTML={{ __html: robotHead("happy") }} />
-                <span>{checkQuestion(checking)}</span>
+                <span>{checkQuestion(checking, name)}</span>
               </div>
               {step === "ask" ? (
                 <>
@@ -260,7 +280,9 @@ export default function MissionBoard({
                       type="text"
                       aria-label="별이에게 대답하기"
                       maxLength={300}
-                      placeholder={speech.listening ? "듣고 있어요…" : "어떻게 했는지 말해 줘!"}
+                      placeholder={
+                        speech.listening ? "듣고 있어요…" : checking.kind === "greet" ? "별이에게 인사해 줘!" : "어떻게 했는지 말해 줘!"
+                      }
                       value={speech.listening && speech.interim ? speech.interim : answer}
                       onChange={(e) => setAnswer(e.target.value)}
                       onKeyDown={(e) => {

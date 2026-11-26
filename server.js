@@ -333,7 +333,13 @@ const DEFAULT_ACTIVITY = "story_listen";
 // 미션 확인: 활동 목록(/api/activities)에는 없는 숨은 활동. 미션 화면에서 아이가 "다 했어요"라고 하면 별이가
 // 미션에 맞는 질문을 하고, 아이의 대답을 듣고 칭찬하며 확인해 준다(별은 앱이 따로 준다).
 const MISSION_CHECK = "mission_check";
+// 아침 인사: 출석 버튼과 "AI와 아침 인사하기" 미션. 별이가 인사하며 기분을 묻고, 아이의 말에 짧게 답한다.
+const MORNING_GREET = "morning_greet";
 const MISSION_CHECK_MAX_TOKENS = 300; // 한두 문장이면 된다(비용)
+const GREET_SCOPE =
+  `아이와 아침 인사를 나누는 짧은 시간이야. 별이가 "좋은 아침! 오늘 기분은 어때?" 하고 물었고, 아이가 인사하거나 ` +
+  `기분을 알려 줄 거야. 1~2문장으로 따뜻하게 인사하고 아이의 기분에 공감해 줘. 기분이 좋지 않다고 하면 다정하게 ` +
+  `공감하고, 부모님께도 이야기해 보라고 권해도 좋아. 질문으로 끝내지 말고, 별이나 보상 이야기는 하지 마(앱이 따로 준다).`;
 
 function missionCheckScope(missionTitle) {
   const mission = missionTitle ? `"${missionTitle}"` : "오늘의 생활 미션";
@@ -353,7 +359,7 @@ function sanitizeMissionTitle(raw) {
 }
 
 function activityById(id) {
-  if (id === MISSION_CHECK) return MISSION_CHECK;
+  if (id === MISSION_CHECK || id === MORNING_GREET) return id;
   return typeof id === "string" && Object.hasOwn(ACTIVITIES, id) ? id : DEFAULT_ACTIVITY;
 }
 
@@ -381,7 +387,9 @@ function systemPromptFor(activityId, persona = {}, { missionTitle = "" } = {}) {
   const a =
     id === MISSION_CHECK
       ? { title: "미션 확인", scope: missionCheckScope(missionTitle) }
-      : ACTIVITIES[id];
+      : id === MORNING_GREET
+        ? { title: "아침 인사", scope: GREET_SCOPE }
+        : ACTIVITIES[id];
   const disclosure = AI_DISCLOSURE.replace("<ACTIVITY>", a.title);
   return `너는 만 1~13세 어린이를 위한 안전한 AI 도우미 "${HELPER_NAME}"야.
 
@@ -759,7 +767,7 @@ app.post("/api/chat", rateLimit, handle(async (req, res) => {
     const stream = client.messages.stream(
       {
         model: CHAT_MODEL,
-        max_tokens: activityId === MISSION_CHECK ? MISSION_CHECK_MAX_TOKENS : 2048,
+        max_tokens: activityId === MISSION_CHECK || activityId === MORNING_GREET ? MISSION_CHECK_MAX_TOKENS : 2048,
         output_config: { effort: "low" },
         system: systemPromptFor(activityId, persona, { missionTitle }),
         messages,
@@ -862,4 +870,5 @@ export {
   classifierCategory,
   sanitizeMissionTitle,
   MISSION_CHECK,
+  MORNING_GREET,
 };

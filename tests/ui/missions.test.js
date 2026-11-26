@@ -152,3 +152,80 @@ test("그림 만들기: 하루 대화 횟수에 1번으로 세고, 다 쓰면 �
   assert.equal((await saved(page)).rewards.msgsToday, 2);
   await page.close();
 });
+
+test("출석: 누르기만 해서는 별을 주지 않고, 별이와 아침 인사를 나눠야 +1", async () => {
+  const bodies = [];
+  const { page } = await openApp(browser, seed({ rewards: { balance: 10 } }), {
+    beforeLoad: (p) =>
+      p.route("**/api/chat", (r) => {
+        bodies.push(r.request().postDataJSON());
+        r.fulfill({ status: 200, contentType: "text/event-stream", body: sse({ text: "좋은 아침, 지안아! 기분이 좋다니 나도 신나!" }, "[DONE]") });
+      }),
+  });
+  await page.locator(".tab-bar .tab").nth(1).click();
+  await page.waitForSelector(".missions", { timeout: 8000 });
+  await page.click(".mb-attend");
+  await page.waitForSelector(".mm-answer input", { timeout: 8000 });
+  assert.match(await page.innerText(".mission-modal"), /좋은 아침, 지안아! 오늘 기분은 어때\?/);
+  assert.equal(await page.$("text=정말 다 했나요?"), null, "인사는 '정말 다 했나요?'를 묻지 않는다");
+  assert.equal((await saved(page)).rewards.balance, 10, "인사하기 전에는 별을 주지 않는다");
+
+  await page.fill(".mm-answer input", "안녕 별이야! 오늘 기분 좋아");
+  await page.click("text=알려 주기");
+  await page.waitForSelector(".mission-modal.praise", { timeout: 8000 });
+  assert.match(await page.innerText(".mission-modal.praise"), /\+1 별!/);
+  assert.match(await page.innerText(".mission-modal.praise"), /기분이 좋다니 나도 신나/);
+  assert.equal(bodies.length, 1);
+  assert.equal(bodies[0].activityId, "morning_greet");
+  assert.equal(bodies[0].mission, undefined);
+  const k = await saved(page);
+  assert.equal(k.rewards.balance, 11);
+  assert.equal(k.rewards.attendance, true);
+  assert.equal(k.rewards.msgsToday, 1);
+  await page.click("text=좋아!");
+  assert.equal(await page.isDisabled(".mb-attend"), true, "하루 한 번");
+  await page.close();
+});
+
+test("'AI와 아침 인사하기' 미션도 '어떻게 했는지'가 아니라 별이와 인사를 나눠서 완료한다", async () => {
+  const bodies = [];
+  const { page } = await openApp(browser, seed({ rewards: { balance: 10 } }), {
+    beforeLoad: (p) =>
+      p.route("**/api/chat", (r) => {
+        bodies.push(r.request().postDataJSON());
+        r.fulfill({ status: 200, contentType: "text/event-stream", body: sse({ text: "반가워! 오늘도 화이팅!" }, "[DONE]") });
+      }),
+  });
+  await page.locator(".tab-bar .tab").nth(1).click();
+  await page.waitForSelector(".missions", { timeout: 8000 });
+  await page.locator(".mb-item", { hasText: "AI와 아침 인사하기" }).locator(".mb-do").click();
+  await page.waitForSelector(".mm-answer input", { timeout: 8000 });
+  assert.match(await page.innerText(".mission-modal"), /오늘 기분은 어때/);
+  assert.doesNotMatch(await page.innerText(".mission-modal"), /어떻게 했는지/);
+  await page.fill(".mm-answer input", "안녕!");
+  await page.click("text=알려 주기");
+  await page.waitForSelector(".mission-modal.praise", { timeout: 8000 });
+  assert.equal(bodies[0].activityId, "morning_greet");
+  const k = await saved(page);
+  assert.equal(k.rewards.balance, 12);
+  assert.deepEqual(k.rewards.doneToday, ["greet"]);
+  assert.equal(k.rewards.attendance, false, "미션과 출석은 따로다");
+  await page.close();
+});
+
+test("출석: 오늘 대화 횟수를 다 썼으면 AI 없이 기본 인사로 별 +1", async () => {
+  let calls = 0;
+  const { page } = await openApp(browser, seed({ settings: { limitPerDay: 2 }, rewards: { balance: 10, msgsToday: 2 } }), {
+    beforeLoad: (p) => p.route("**/api/chat", (r) => { calls++; r.abort(); }),
+  });
+  await page.locator(".tab-bar .tab").nth(1).click();
+  await page.waitForSelector(".missions", { timeout: 8000 });
+  await page.click(".mb-attend");
+  await page.waitForSelector(".mission-modal.praise", { timeout: 8000 });
+  assert.equal(calls, 0);
+  const k = await saved(page);
+  assert.equal(k.rewards.balance, 11);
+  assert.equal(k.rewards.attendance, true);
+  assert.equal(k.rewards.msgsToday, 2);
+  await page.close();
+});
