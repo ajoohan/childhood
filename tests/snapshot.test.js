@@ -115,3 +115,29 @@ test("sameSnapshot: 키 순서와 무관하고 값이 다르면 다르다", () =
   assert.ok(sameSnapshot({ a: 1, b: { c: [1, 2] } }, { b: { c: [1, 2] }, a: 1 }));
   assert.ok(!sameSnapshot({ a: 1 }, { a: 2 }));
 });
+
+test("불러오기: 모양이 틀린 값(이름이 객체 등)과 내장 속성 이름의 id는 걸러, 앱이 멈추지 않게 한다", () => {
+  const bad = buildSnapshot(store());
+  bad.kids.k_a.profile.name = { evil: true };
+  bad.kids.k_a.profile.interests = ["art", 3, { x: 1 }];
+  bad.kids.k_a.rewards = { balance: "많이", doneToday: "brush" };
+  bad.kids.k_a.parentMissions = [{ id: "p1", title: "책 읽기", reward: 999 }, { title: 5 }];
+  bad.kids.k_a.stickers = { star: "two", moon: 3 };
+  bad.kids["__proto__"] = bad.kids.k_b;
+  bad.kids.constructor = bad.kids.k_b;
+  bad.activeKid = "constructor";
+  bad.settings.voice = { x: 1 };
+  bad.settings.sound = "yes";
+  const out = applySnapshot(store(), bad);
+  assert.deepEqual(Object.keys(out.kids).sort(), ["k_a", "k_b"], "내장 속성 이름의 id는 받지 않는다");
+  assert.ok(Object.prototype.hasOwnProperty.call(out.kids, out.activeKid), "activeKid가 실제 아이를 가리킨다");
+  const k = out.kids.k_a;
+  assert.equal(typeof k.profile.name, "string");
+  assert.deepEqual(k.profile.interests, ["art"]);
+  assert.equal(typeof k.rewards.balance, "number");
+  assert.ok(Array.isArray(k.rewards.doneToday));
+  assert.deepEqual(k.parentMissions.map((m) => [m.id, m.reward]), [["p1", 2]], "범위를 벗어난 보상은 기본값");
+  assert.deepEqual(k.stickers, { moon: 3 });
+  assert.equal(out.settings.voice, "shimmer", "모양이 틀린 설정은 기기 값을 유지");
+  assert.equal(out.settings.sound, true);
+});

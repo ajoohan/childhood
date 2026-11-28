@@ -68,6 +68,16 @@ end $$;
 select pg_temp.expect_error($$update public.account_state set parent_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'$$, '42501');
 select pg_temp.expect_error($$insert into public.account_state (parent_id, data) values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '{}')$$, '42501');
 
+-- 자기 행이라도 표에 직접 쓰지 못한다(저장 함수로만): rev를 꾸며 다른 기기의 충돌 확인을 속일 수 없다
+select pg_temp.expect_error($$update public.account_state set rev = 999999$$, '42501');
+select pg_temp.expect_error($$insert into public.account_state (data) values ('{}')$$, '42501');
+do $$ begin
+  assert (select rev from public.account_state) = 2, '직접 쓰기가 rev를 바꿨다';
+end $$;
+
+-- 동의 기록은 문서·버전만 넣는다: 동의 시각이나 부모를 꾸며 넣을 수 없다
+select pg_temp.expect_error($$insert into public.consents (document, version, accepted_at) values ('terms', 'x', '2001-01-01')$$, '42501');
+
 -- ── B로 전환: A의 것이 보이지 않는다 ──
 select set_config('request.jwt.claim.sub', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', false);
 do $$
@@ -75,8 +85,6 @@ declare n int;
 begin
   assert (select count(*) from public.consents) = 0, 'B가 A의 동의 기록을 본다';
   assert (select count(*) from public.account_state) = 0, 'B가 A의 스냅샷을 본다';
-  update public.account_state set data = '{"hacked":true}'; get diagnostics n = row_count;
-  assert n = 0, 'B가 A의 스냅샷을 수정했다';
   delete from public.account_state; get diagnostics n = row_count;
   assert n = 0, 'B가 A의 스냅샷을 삭제했다';
   assert public.save_account_state(0, '{"kids":{}}'::jsonb) = 1, 'B는 자기 스냅샷을 rev 1로 시작한다';

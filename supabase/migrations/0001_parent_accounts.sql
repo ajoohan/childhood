@@ -22,7 +22,10 @@ create policy consents_insert_own on public.consents
   for insert to authenticated with check ((select auth.uid()) = parent_id);
 -- 수정·삭제는 정책도 권한도 두지 않는다: 동의 기록은 고칠 수 없다. 계정을 삭제하면 함께 지워진다.
 revoke all on table public.consents from public, anon, authenticated;
-grant select, insert on table public.consents to authenticated;
+-- 넣을 수 있는 칸은 문서와 버전뿐이다. 동의 시각(accepted_at)·부모(parent_id)는 서버 기본값으로만 정해진다
+-- (모든 칸을 열어 두면 동의 시각을 과거로 꾸며 넣을 수 있었다).
+grant select on table public.consents to authenticated;
+grant insert (document, version) on table public.consents to authenticated;
 
 -- 한 부모가 남길 수 있는 동의 기록 수의 상한. 문서 3종 × 버전 몇 개면 충분하다.
 -- 상한이 없으면 로그인한 누구나 요청을 반복해 데이터베이스를 채울 수 있다.
@@ -62,13 +65,14 @@ create policy account_state_update_own on public.account_state
 create policy account_state_delete_own on public.account_state
   for delete to authenticated using ((select auth.uid()) = parent_id);
 revoke all on table public.account_state from public, anon, authenticated;
-grant select, insert, update, delete on table public.account_state to authenticated;
+-- 쓰기는 save_account_state 함수로만 한다(직접 쓰면 rev·updated_at을 마음대로 정해 다른 기기의 충돌 확인을 속일 수 있었다).
+grant select, delete on table public.account_state to authenticated;
 
 -- 저장: 내가 마지막으로 본 rev(처음이면 0)와 서버 rev가 같을 때만 쓴다. 다르면 다른 기기가 먼저 저장한 것이다.
 create or replace function public.save_account_state(expected_rev integer, new_data jsonb)
 returns integer
 language plpgsql
-security invoker
+security definer -- 표에 직접 쓰기 권한이 없으므로 함수가 대신 쓴다. 행은 auth.uid() 본인 것으로만 정한다.
 set search_path = ''
 as $$
 declare

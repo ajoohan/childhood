@@ -51,7 +51,15 @@ export default function MissionBoard({
       abortRef.current?.abort();
     };
   }, []);
-  const speech = useSpeech({ onResult: (t) => setAnswer((a) => (a ? a + " " : "") + t.trim()) });
+  // 대답을 보낸 뒤 늦게 도착한 음성 인식 결과는 버린다(보내지 않은 글이 아이 말풍선에 붙었다).
+  const stepRef = useRef(step);
+  stepRef.current = step;
+  const speech = useSpeech({
+    onResult: (t) => {
+      if (stepRef.current !== "ask") return;
+      setAnswer((a) => (a ? a + " " : "") + t.trim());
+    },
+  });
   const [praise, setPraise] = useState(null); // {text, reward}
   const [burst, setBurst] = useState(false); // 출석 등 짧은 컨페티
   const [chestReward, setChestReward] = useState(null); // 보물상자 개봉 결과
@@ -90,17 +98,19 @@ export default function MissionBoard({
   }
 
   // 별 지급 + 칭찬. text가 없으면(AI 확인을 못 했으면) 기본 칭찬.
-  function confirmDone(m, text) {
+  // gentle: 아이의 대답에서 안전 신호(속상함 등)가 나왔다 — 별은 주되 축하(폭죽·"+2 별!")로 보여 주지 않는다.
+  function confirmDone(m, text, { gentle = false } = {}) {
     setChecking(null);
-    if (m.attend) {
-      onClaimAttendance();
-      setPraise({ text: text || GREET_PRAISE, reward: REWARD.attendance });
-      return;
-    }
-    onComplete(m);
+    // 다른 창 등에서 이미 받았으면 주지 않았으니 "+별"도 보여 주지 않는다.
+    const granted = m.attend ? onClaimAttendance() : onComplete(m);
+    if (granted === false) return;
     const seed = m.id.split("").reduce((n, c) => n + c.charCodeAt(0), doneCount);
-    const fallback = m.kind === "greet" ? GREET_PRAISE : praiseFor(name, seed);
-    setPraise({ text: text || fallback, reward: m.reward || REWARD.mission });
+    const fallback = m.kind === "greet" || m.attend ? GREET_PRAISE : praiseFor(name, seed);
+    setPraise({
+      text: text || fallback,
+      reward: m.attend ? REWARD.attendance : m.reward || REWARD.mission,
+      gentle: gentle && !!text,
+    });
   }
 
   function saidDone(m) {
@@ -109,15 +119,18 @@ export default function MissionBoard({
   }
 
   async function sendAnswer(m) {
-    const text = answer.trim();
+    // 말하는 중에 보내면 아직 확정되지 않은 말까지 함께 보낸다.
+    const text = [answer, speech.listening ? speech.interim : ""].join(" ").trim();
     if (!text || step !== "ask") return;
-    if (speech.listening) speech.toggle();
+    if (speech.listening) speech.stop();
+    setAnswer(text);
     setStep("reply");
     setReply("");
     onCountMessage?.();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
     let got = "";
+    let flagged = false;
     try {
       const greet = m.kind === "greet";
       got = await streamChat({
@@ -129,14 +142,16 @@ export default function MissionBoard({
         },
         signal: ctrl.signal,
         onText: (t) => aliveRef.current && setReply(t),
-        onSafety: (category) =>
+        onSafety: (category) => {
+          flagged = true;
           onSafety?.({
             t: new Date().toISOString(),
             activityId: greet ? "morning_greet" : "mission_check",
             activityTitle: greet ? "아침 인사" : `미션 확인 · ${m.title}`,
             category,
             text,
-          }),
+          });
+        },
       });
     } catch {
       if (ctrl.signal.aborted) return; // 창을 닫았거나 화면을 나갔다 — 별을 주지 않는다
@@ -144,7 +159,7 @@ export default function MissionBoard({
     }
     if (!aliveRef.current || abortRef.current !== ctrl) return;
     abortRef.current = null;
-    confirmDone(m, got.trim());
+    confirmDone(m, got.trim(), { gentle: flagged });
   }
 
   return (
@@ -326,22 +341,38 @@ export default function MissionBoard({
       {/* 칭찬 + 별 지급 모달 */}
       {praise && (
         <div className="modal-backdrop" onClick={() => setPraise(null)}>
-          <Confetti />
-          <div className="mission-modal praise" role="dialog" aria-modal="true" aria-label="별 받기" onClick={(e) => e.stopPropagation()}>
+          {!praise.gentle && <Confetti />}
+          <div
+            className={`mission-modal praise ${praise.gentle ? "gentle" : ""}`}
+            role="dialog"
+            aria-modal="true"
+            aria-label={praise.gentle ? "별이의 말" : "별 받기"}
+            onClick={(e) => e.stopPropagation()}
+          >
             <span
               className="mm-robot"
-              dangerouslySetInnerHTML={{ __html: robotMascot("excited") }}
+              dangerouslySetInnerHTML={{ __html: robotMascot(praise.gentle ? "happy" : "excited") }}
             />
-            <div className="star-burst">
-              <span className="mm-star">⭐</span>
-              {Array.from({ length: 8 }).map((_, i) => (
-                <i key={i} className="sb" style={{ "--a": `${i * 45}deg` }} />
-              ))}
-            </div>
-            <h2>+{praise.reward} 별!</h2>
-            <p>{praise.text}</p>
+            {praise.gentle ? (
+              <>
+                <h2>이야기해 줘서 고마워</h2>
+                <p>{praise.text}</p>
+                <small className="mm-gentle-star">별 {praise.reward}개는 받았어요 ⭐</small>
+              </>
+            ) : (
+              <>
+                <div className="star-burst">
+                  <span className="mm-star">⭐</span>
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <i key={i} className="sb" style={{ "--a": `${i * 45}deg` }} />
+                  ))}
+                </div>
+                <h2>+{praise.reward} 별!</h2>
+                <p>{praise.text}</p>
+              </>
+            )}
             <button className="mm-yes wide" onClick={() => setPraise(null)}>
-              좋아!
+              {praise.gentle ? "응, 고마워" : "좋아!"}
             </button>
           </div>
         </div>

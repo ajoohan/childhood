@@ -15,6 +15,7 @@ export default function Settings({
   onSetVoice,
   onSetPin,
   onClear,
+  canRemovePin = true,
 }) {
   const [limitInput, setLimitInput] = useState(
     settings.limitPerDay != null ? String(settings.limitPerDay) : ""
@@ -53,6 +54,10 @@ export default function Settings({
   }
 
   function removePin() {
+    if (!canRemovePin) {
+      setPinMsg("PIN을 잊어 다시 정한 지금은 잠금을 해제할 수 없어요. PIN으로 다시 열어 주세요.");
+      return;
+    }
     if (!window.confirm("부모 잠금(PIN)을 해제할까요?")) return;
     onSetPin(null);
     setPinEdit(false);

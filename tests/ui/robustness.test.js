@@ -228,11 +228,12 @@ test("PIN 재설정 경고: 계산 문제로 연 그 자리에서는 설정으�
   await boxes[0].fill("2468");
   await boxes[1].fill("2468");
   await page.click(".set-pin-edit >> text=저장");
-  page.once("dialog", (d) => d.accept());
+  // 잠금 해제도 막는다: 풀고 나서 PIN 없는 상태에서 다시 정하는 식으로 경고를 지울 수 있었다
   await page.click("text=잠금 해제");
-  await page.waitForTimeout(300);
+  await page.waitForFunction(() => document.body.innerText.includes("잠금을 해제할 수 없어요"), null, { timeout: 4000 });
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")).settings);
   assert.ok(saved.pinResetAt, "계산 문제로 연 사람이 경고를 지웠다");
+  assert.equal(saved.pin, "2468", "계산 문제로 연 자리에서 잠금이 풀렸다");
   await page.click(".back-btn");
   await page.waitForSelector(".pin-alert", { timeout: 8000 });
   await page.close();
@@ -302,5 +303,54 @@ test("그림 만들기: 서버가 안전 신호를 주면 부모 화면 안전 �
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")).kids.k.safety);
   assert.equal(saved.length, 1);
   assert.equal(saved[0].category, "distress");
+  await page.close();
+});
+
+test("PIN 재설정 경고: PIN이 없는 상태에서 새로 정해도 남아 있던 경고는 지워지지 않는다", async () => {
+  const { page } = await openApp(browser, seed({ settings: { pin: null, pinResetAt: "2026-11-20T00:00:00Z" } }));
+  await page.click(".tab >> text=부모");
+  await page.waitForSelector(".pin-card", { timeout: 8000 });
+  await pinKeys(page, "5555");
+  await pinKeys(page, "5555");
+  await page.waitForSelector(".guard-screen", { timeout: 8000 });
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")).settings);
+  assert.equal(saved.pin, "5555");
+  assert.equal(saved.pinResetAt, "2026-11-20T00:00:00Z");
+  await page.close();
+});
+
+test("부모 화면: 아이 이름을 비우고 저장할 수 없다", async () => {
+  const { page } = await openApp(browser, seed({ settings: { pin: "1234" } }));
+  await page.click(".tab >> text=부모");
+  await pinKeys(page, "1234");
+  await page.waitForSelector(".guard-screen", { timeout: 8000 });
+  await page.fill('.prof-row input[placeholder="아이 이름"]', "   ");
+  await page.click("text=프로필 저장");
+  await page.waitForFunction(() => document.body.innerText.includes("이름을 입력해 주세요"), null, { timeout: 4000 });
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("banjjaktalk_v2")).kids.k.profile.name);
+  assert.equal(saved, "지안");
+  await page.close();
+});
+
+test("말하기: 깨우기를 끝내 실패하면 '깨어나는 중'에 멈추지 않고 다시 시도를 보여 준다", async () => {
+  const page = await browser.newPage({ viewport: { width: 402, height: 874 } });
+  await page.clock.install();
+  await page.addInitScript((s) => localStorage.setItem("banjjaktalk_v2", JSON.stringify(s)), seed());
+  let fail = true;
+  await page.route("**/api/activities", (route) => (fail ? route.fulfill({ status: 503, body: "" }) : route.continue()));
+  await page.goto(BASE + "/");
+  const st = await page.waitForSelector(".splash-primary", { timeout: 8000 }).catch(() => null);
+  if (st) await st.click();
+  await page.waitForSelector(".kids-home", { timeout: 10000 });
+  await page.click(".tab.speak");
+  await page.waitForSelector(".voice-status", { timeout: 8000 });
+  for (let i = 0; i < 8 && !(await page.$(".voice-retry")); i++) {
+    await page.clock.runFor(16_000);
+    await page.waitForTimeout(150);
+  }
+  assert.match(await page.innerText(".voice-status"), /연결이 잘 안 돼요/);
+  fail = false;
+  await page.click(".voice-retry");
+  await page.waitForFunction(() => !document.querySelector(".voice-retry") && !/깨어나는|연결이/.test(document.querySelector(".voice-status").innerText), null, { timeout: 8000 });
   await page.close();
 });

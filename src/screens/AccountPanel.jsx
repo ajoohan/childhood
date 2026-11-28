@@ -74,6 +74,9 @@ export default function AccountPanel({ buildStore }) {
   const [err, setErr] = useState("");
   const [conflict, setConflict] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false); // 로그인은 돼 있는데 계정의 기록을 확인하지 못함
+  const sessionRef = useRef(null);
+  sessionRef.current = session;
+  const phaseRef = useRef("loading");
   const [cooldown, setCooldown] = useState(0);
   const alive = useRef(true);
 
@@ -98,7 +101,17 @@ export default function AccountPanel({ buildStore }) {
         }
         unsub = await onAuthChange((next) => {
           if (!alive.current) return;
+          // 다른 탭에서 다른 계정으로 로그인했다: 이 탭의 요청도 그 계정의 토큰으로 나가므로, 화면도 그 계정으로 다시 연다.
+          const cur = sessionRef.current?.user?.id;
+          if (next && cur && next.user?.id && next.user.id !== cur) {
+            setConflict(false);
+            setAgreed({});
+            setMsg("다른 창에서 다른 계정으로 로그인해서, 그 계정으로 바꿨어요.");
+            enter(next, false);
+            return;
+          }
           if (!next) {
+            if (phaseRef.current !== "code") setAgreed({}); // 로그아웃되면 다음 사람이 동의 칸을 직접 고르게 한다
             setSession(null);
             setRemote(undefined);
             setConflict(false);
@@ -170,6 +183,7 @@ export default function AccountPanel({ buildStore }) {
     if (alive.current) setBusy(false);
   };
 
+  phaseRef.current = phase;
   const allAgreed = CONSENTS.every((c) => agreed[c.id]);
   const emailOk = EMAIL_OK.test(email.trim());
 
@@ -284,6 +298,7 @@ export default function AccountPanel({ buildStore }) {
       setRemote(undefined);
       setConflict(false);
       setLoadFailed(false);
+      setAgreed({}); // 다음 사람이 동의 칸을 직접 고르게 한다(체크된 채 남으면 다른 부모의 동의가 그냥 기록됐다)
       setPhase("out");
       setMsg("로그아웃했어요. 이 기기의 기록은 그대로예요.");
     });

@@ -78,6 +78,8 @@ export default function Speak({
   onSafety,
   onBack,
   waking = false, // 서버가 깨어나는 중(활동 목록을 아직 못 받음)
+  loadFailed = false, // 깨우기를 끝내 실패함 — "다시 시도"를 보여 준다
+  onRetryLoad,
 }) {
   const [mode, setMode] = useState(defaultMode); // voice | text
   const [status, setStatus] = useState("idle"); // idle|thinking|speaking
@@ -352,7 +354,9 @@ export default function Speak({
 
   const statusText = notice
     ? "오늘은 여기까지!"
-    : waking && !activity
+    : waking && !activity && loadFailed
+      ? "별이와 연결이 잘 안 돼요"
+      : waking && !activity
       ? "별이가 깨어나는 중…"
       : speech.listening
       ? "듣고 있어요…"
@@ -363,7 +367,9 @@ export default function Speak({
           : "준비됐어요!";
   const statusSub = notice
     ? "내일 또 만나요"
-    : waking && !activity
+    : waking && !activity && loadFailed
+      ? "인터넷을 확인하고 다시 해 볼까?"
+      : waking && !activity
       ? "잠깐만 기다려 줘. 곧 이야기할 수 있어요"
     : `별이와 이야기하는 중 · ${curVoice.name} 목소리`;
 
@@ -517,6 +523,11 @@ export default function Speak({
         />
         <h1 className="voice-status">{statusText}</h1>
         <p className="voice-sub">{statusSub}</p>
+        {waking && !activity && loadFailed && onRetryLoad && (
+          <button className="voice-retry" onClick={onRetryLoad}>
+            다시 시도
+          </button>
+        )}
         <div className="voice-note">🤖 나는 AI 도우미예요. 진짜 사람은 아니에요!</div>
 
         {/* 자막(캡션) — 아이가 읽기 쉽게 */}

@@ -293,7 +293,8 @@ export default function App() {
   function completeMission(mission) {
     // 이미 오늘 끝낸 미션이면 아무것도 지급하지 않는다. 별만 막고 스티커·알림을 막지 않으면
     // 같은 미션을 다시 눌렀을 때 스티커가 계속 나온다.
-    if (rollDay(rewards).doneToday.includes(mission.id)) return;
+    // 반환: 실제로 별을 줬는지(화면이 "+2 별!"을 보여 줄지 정한다)
+    if (rollDay(rewards).doneToday.includes(mission.id)) return false;
     setRewards((r0) => {
       const r = rollDay(r0);
       if (r.doneToday.includes(mission.id)) return r; // 하루 1회
@@ -333,6 +334,7 @@ export default function App() {
       );
     }
     sfx.success();
+    return true;
   }
 
   // 보물상자 개봉 — 하루 미션 올클리어 시 1회. 랜덤 보상(별 또는 스티커).
@@ -361,6 +363,7 @@ export default function App() {
 
   // 출석 + AI 첫인사 (하루 1회)
   function claimAttendance() {
+    if (rollDay(rewards).attendance) return false; // 반환: 실제로 별을 줬는지
     setRewards((r0) => {
       const r = rollDay(r0);
       if (r.attendance) return r;
@@ -372,6 +375,7 @@ export default function App() {
       };
     });
     sfx.star();
+    return true;
   }
 
   const addParentMission = (m) => setParentMissions((p) => [...p, m]);
@@ -494,7 +498,9 @@ export default function App() {
       savedPin={settings.pin}
       onSetPin={(pin, meta) => {
         viaForgotRef.current = !!meta?.viaForgot;
-        setSettings((s) => ({ ...s, pin, pinResetAt: meta?.viaForgot ? new Date().toISOString() : null }));
+        // PIN이 없는 상태에서 새로 정할 때는 남아 있던 재설정 경고를 지우지 않는다(계산 문제로 연 사람이 잠금을 풀고
+        // 다시 정하는 식으로 경고를 지울 수 있었다). 경고는 PIN으로 연 설정 화면에서만 지워진다.
+        setSettings((s) => ({ ...s, pin, pinResetAt: meta?.viaForgot ? new Date().toISOString() : s.pinResetAt || null }));
       }}
       onUnlock={() => {
         setPinOpen(false);
@@ -676,6 +682,8 @@ export default function App() {
           <Speak
             activity={data.activities.find((a) => a.id === "learn_ask")}
             waking={dataStatus !== "ready"}
+            loadFailed={dataStatus === "failed"}
+            onRetryLoad={retryLoad}
             history={histories["learn_ask"] || []}
             histories={histories}
             usedToday={usedToday}
@@ -811,6 +819,7 @@ export default function App() {
             onSetPin={(pin) =>
               setSettings((s) => ({ ...s, pin, pinResetAt: forgotSession ? s.pinResetAt : null }))
             }
+            canRemovePin={!forgotSession}
             onClear={() => {
               // 이 아이의 것만 지운다. 하루 대화 횟수 제한은 기기 전체(모든 아이) 설정이라 건드리지 않는다
               // (예전에는 한 아이의 기록을 지우면 모든 아이의 제한이 풀렸다).

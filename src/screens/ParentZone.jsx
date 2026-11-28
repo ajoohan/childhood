@@ -77,6 +77,11 @@ export default function ParentZone({
   }
   function saveProfile() {
     const name = nameInput.trim().slice(0, 20);
+    if (!name) {
+      // 가입 때처럼 이름은 꼭 있어야 한다(아이 목록과 별이의 호칭이 비었다)
+      setProfSaved("이름을 입력해 주세요.");
+      return;
+    }
     const birthYear = yearInput ? parseInt(yearInput, 10) : null;
     const birthMonth = monthInput ? parseInt(monthInput, 10) : null;
     const age = birthYear ? computeAge({ birthYear, birthMonth }, NOW) : null;

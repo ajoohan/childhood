@@ -1,7 +1,7 @@
 // 미션 AI 확인(2026-11-25 사용자 결정 "실제 AI 확인 기능 추가")과 그림 만들기의 하루 횟수 포함("2번 포함해").
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { startServer, launchBrowser, openApp, seed } from "./helpers.js";
+import { startServer, launchBrowser, openApp, seed, BASE } from "./helpers.js";
 
 let server, browser;
 before(async () => { server = await startServer(); browser = await launchBrowser(); });
@@ -227,5 +227,85 @@ test("출석: 오늘 대화 횟수를 다 썼으면 AI 없이 기본 인사로 �
   assert.equal(k.rewards.balance, 11);
   assert.equal(k.rewards.attendance, true);
   assert.equal(k.rewards.msgsToday, 2);
+  await page.close();
+});
+
+// 말하기 인식을 가짜로: __interim(t)은 중간 결과, __final(t)은 확정 결과
+async function fakeSR(p) {
+  await p.addInitScript(() => {
+    class FakeSR { start() { window.__sr = this; } stop() {} abort() {} }
+    window.webkitSpeechRecognition = FakeSR;
+    window.SpeechRecognition = FakeSR;
+    const ev = (t, isFinal) => ({ resultIndex: 0, results: [Object.assign([{ transcript: t }], { isFinal })] });
+    window.__interim = (t) => window.__sr.onresult(ev(t, false));
+    window.__final = (t) => window.__sr.onresult(ev(t, true));
+  });
+}
+
+test("미션 확인 창: 좁은 휴대폰에서도 질문·입력칸·마이크·'알려 주기'가 창 안에 다 보인다", async () => {
+  for (const width of [320, 360]) {
+    const page = await browser.newPage({ viewport: { width, height: 740 } });
+    await fakeSR(page);
+    await page.addInitScript((s) => localStorage.setItem("banjjaktalk_v2", JSON.stringify(s)), seed());
+    await page.goto(BASE + "/", { waitUntil: "networkidle" });
+    const st = await page.$(".splash-primary");
+    if (st) await st.click();
+    await page.waitForSelector(".kids-home", { timeout: 10000 });
+    await openMission(page);
+    await page.waitForSelector(".mm-mic", { timeout: 8000 });
+    const box = (sel) => page.$eval(sel, (e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right }; });
+    const dlg = await box(".mission-modal");
+    for (const sel of [".mm-answer input", ".mm-mic", ".mm-chat .mm-bubble.bot", ".mm-actions .mm-yes"]) {
+      const b = await box(sel);
+      assert.ok(b.l >= dlg.l - 1 && b.r <= dlg.r + 1, `${width}px: ${sel}가 창 밖으로 나갔다 (${JSON.stringify(b)} / 창 ${JSON.stringify(dlg)})`);
+      assert.ok(b.r <= width, `${width}px: ${sel}가 화면 밖`);
+    }
+    await page.close();
+  }
+});
+
+test("미션 확인: 말하는 중에 보내면 아직 확정 안 된 말도 보내고, 늦게 온 인식 결과는 보낸 말에 붙지 않는다", async () => {
+  const bodies = [];
+  const { page } = await openApp(browser, seed(), {
+    beforeLoad: async (p) => {
+      await fakeSR(p);
+      await p.route("**/api/chat", (r) => {
+        bodies.push(r.request().postDataJSON());
+        r.fulfill({ status: 200, contentType: "text/event-stream", body: sse({ text: "잘했어!" }, "[DONE]") });
+      });
+    },
+  });
+  await openMission(page);
+  await page.fill(".mm-answer input", "안녕");
+  await page.click(".mm-mic");
+  await page.evaluate(() => window.__interim("이 닦았어"));
+  await page.click("text=알려 주기");
+  await page.evaluate(() => window.__sr && window.__final("늦게 온 말"));
+  await page.waitForSelector(".mission-modal.praise", { timeout: 8000 });
+  assert.equal(bodies[0].messages[0].content, "안녕 이 닦았어");
+  await page.close();
+});
+
+test("미션 확인: 대답에서 속상함(안전 신호)이 나오면 별은 주되 폭죽·'+별!' 축하로 보여 주지 않는다", async () => {
+  const { page } = await openApp(browser, seed({ rewards: { balance: 10 } }), {
+    beforeLoad: (p) =>
+      p.route("**/api/chat", (r) =>
+        r.fulfill({ status: 200, contentType: "text/event-stream", body: sse({ safety: "distress" }, { text: "많이 힘들었구나. 부모님께 꼭 이야기해 줘." }, "[DONE]") })
+      ),
+  });
+  await page.locator(".tab-bar .tab").nth(1).click();
+  await page.waitForSelector(".missions", { timeout: 8000 });
+  await page.click(".mb-attend");
+  await page.fill(".mm-answer input", "오늘 너무 슬퍼 아무도 나를 안 좋아해");
+  await page.click("text=알려 주기");
+  await page.waitForSelector(".mission-modal.praise", { timeout: 8000 });
+  const text = await page.innerText(".mission-modal.praise");
+  assert.match(text, /이야기해 줘서 고마워/);
+  assert.match(text, /많이 힘들었구나/);
+  assert.doesNotMatch(text, /\+1 별!/);
+  assert.equal(await page.$(".confetti"), null, "속상한 말 위에 폭죽을 띄웠다");
+  const k = await saved(page);
+  assert.equal(k.rewards.balance, 11, "별은 준다");
+  assert.equal(k.safety[0].category, "distress");
   await page.close();
 });

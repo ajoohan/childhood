@@ -93,7 +93,7 @@ export function loadStore() {
       // (버리면 새 빈 저장값이 다음 persist에서 기존 데이터를 덮어쓴다.)
       return {
         settings: s.settings && typeof s.settings === "object" ? s.settings : { limitPerDay: null },
-        activeKid: kids[s.activeKid] ? s.activeKid : ids[0],
+        activeKid: Object.prototype.hasOwnProperty.call(kids, s.activeKid) ? s.activeKid : ids[0],
         kids,
       };
     }

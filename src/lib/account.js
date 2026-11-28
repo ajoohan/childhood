@@ -107,9 +107,15 @@ export async function verifyLoginCode(email, token) {
   return data.session;
 }
 
+// 로그아웃. supabase-js는 연결 오류를 던지지 않고 {error}만 돌려주며 이 기기의 로그인을 그대로 둔다.
+// 그러면 화면은 "로그아웃했어요"인데 다시 열면 로그인돼 있었다. 서버 쪽이 실패하면 이 기기에서만이라도 지운다.
 export async function signOut() {
   const c = await client();
-  await c.auth.signOut();
+  const { error } = await c.auth.signOut();
+  if (error) {
+    const local = await c.auth.signOut({ scope: "local" });
+    if (local?.error) throw local.error;
+  }
 }
 
 // 이미 이 버전에 동의한 기록이 있으면 다시 쓰지 않는다. 없는 문서만 추가한다.

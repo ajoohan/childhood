@@ -376,3 +376,74 @@ test("터치 영역: 동의 체크와 '내용 보기'는 세로 44px 이상 눌�
   assert.equal(await page.getAttribute(".acct-more >> nth=0", "aria-expanded"), "true");
   await page.close();
 });
+
+test("로그아웃: 서버 요청이 실패해도 이 기기에서는 로그아웃되고, 동의 칸도 비워진다", async () => {
+  const { page } = await openParent();
+  await login(page);
+  await page.waitForSelector("text=아직 없어요", { timeout: 8000 });
+  await page.route("**/auth/v1/logout**", (r) => r.abort());
+  await page.click(".acct-card >> text=로그아웃");
+  await page.waitForSelector(".acct-card input[type=email]", { timeout: 8000 });
+  assert.deepEqual(
+    await page.$$eval(".acct-consent input[type=checkbox]", (els) => els.map((e) => e.checked)),
+    [false, false, false],
+    "다음 사람을 위해 동의 칸을 비운다"
+  );
+  // 다시 열어도 로그인돼 있지 않다
+  await page.reload({ waitUntil: "networkidle" });
+  const start = await page.$(".splash-primary");
+  if (start) await start.click();
+  await page.click(".tab >> text=부모");
+  await pinKeys(page, "1234");
+  await page.waitForSelector(".acct-card input[type=email]", { timeout: 15000 });
+  assert.equal(await page.evaluate(() => localStorage.getItem("childhood_auth")), null, "로그인 정보가 남았다");
+  await page.close();
+});
+
+test("다른 탭에서 로그아웃하고 다른 계정으로 로그인하면, 이 탭에 옛 계정 화면이 남지 않는다 (엉뚱한 계정에 저장하지 않게)", async () => {
+  const ctx = await browser.newContext({ viewport: { width: 402, height: 874 } });
+  const db = newFakeDb();
+  await ctx.addInitScript((s) => {
+    if (!localStorage.getItem("banjjaktalk_v2")) localStorage.setItem("banjjaktalk_v2", JSON.stringify(s));
+  }, seed({ settings: { pin: "1234" } }));
+  const openTab = async () => {
+    const p = await ctx.newPage();
+    await installFakeSupabase(p, db);
+    await p.goto(BASE + "/", { waitUntil: "networkidle" });
+    const st = await p.$(".splash-primary");
+    if (st) await st.click();
+    await p.waitForSelector(".kids-home", { timeout: 10000 });
+    await p.click(".tab >> text=부모");
+    await pinKeys(p, "1234");
+    await p.waitForSelector(".acct-card", { timeout: 15000 });
+    return p;
+  };
+  const loginAs = async (p, email) => {
+    await p.waitForSelector(".acct-card input[type=email]", { timeout: 15000 });
+    await p.fill(".acct-card input[type=email]", email);
+    for (const box of await p.$$(".acct-consent input[type=checkbox]")) await box.check();
+    await p.click("text=로그인 코드 받기");
+    await p.waitForSelector(".acct-card input[inputmode=numeric]", { timeout: 8000 });
+    await p.fill(".acct-card input[inputmode=numeric]", GOOD_CODE);
+    await p.click(".acct-card >> text=확인");
+    await p.waitForSelector(`.acct-card .set-info-row >> text=${email}`, { timeout: 8000 });
+  };
+  const a = await openTab();
+  await loginAs(a, EMAIL);
+  const b = await openTab();
+  await b.waitForSelector(".acct-card >> text=로그아웃", { timeout: 15000 }); // B는 A의 로그인을 이어받는다
+  await b.click(".acct-card >> text=로그아웃");
+  await loginAs(b, "other@example.com");
+  // A는 옛 계정(parent@)을 보여 주며 새 계정의 토큰으로 저장·불러오기를 하게 두면 안 된다.
+  // (B의 로그아웃이 A에도 전해져 A는 로그아웃 화면이 되거나, 새 계정으로 다시 열린다.)
+  await a.waitForFunction(
+    (old) => {
+      const card = document.querySelector(".acct-card");
+      return card && !card.innerText.includes(old);
+    },
+    EMAIL,
+    { timeout: 10000 }
+  );
+  assert.equal(await a.$(".acct-card >> text=이 기기 기록을 계정에 저장"), null, "옛 계정 화면에서 저장 버튼이 남았다");
+  await ctx.close();
+});

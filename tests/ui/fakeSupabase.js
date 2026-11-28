@@ -56,7 +56,7 @@ export async function installFakeSupabase(page, db, { accounts = true } = {}) {
     } catch {}
 
     const user = () => ({
-      id: "u-1", aud: "authenticated", role: "authenticated", email: db.email,
+      id: db.email === "other@example.com" ? "u-2" : "u-1", aud: "authenticated", role: "authenticated", email: db.email,
       app_metadata: {}, user_metadata: {}, created_at: "2026-11-19T00:00:00Z",
     });
 
@@ -69,7 +69,7 @@ export async function installFakeSupabase(page, db, { accounts = true } = {}) {
     if (path === "/auth/v1/verify") {
       if (body.token !== GOOD_CODE) return send(403, { code: 403, error_code: "otp_expired", msg: "Token has expired or is invalid" });
       const now = Math.floor(Date.now() / 1000);
-      const jwt = `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ sub: "u-1", role: "authenticated", exp: now + 3600 })}.sig`;
+      const jwt = `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ sub: user().id, role: "authenticated", exp: now + 3600 })}.sig`;
       return send(200, { access_token: jwt, token_type: "bearer", expires_in: 3600, expires_at: now + 3600, refresh_token: "r-1", user: user() });
     }
     if (path === "/auth/v1/user") return send(200, user());
