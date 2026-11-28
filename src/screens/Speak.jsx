@@ -77,6 +77,7 @@ export default function Speak({
   onBotMessage,
   onSafety,
   onBack,
+  waking = false, // 서버가 깨어나는 중(활동 목록을 아직 못 받음)
 }) {
   const [mode, setMode] = useState(defaultMode); // voice | text
   const [status, setStatus] = useState("idle"); // idle|thinking|speaking
@@ -351,7 +352,9 @@ export default function Speak({
 
   const statusText = notice
     ? "오늘은 여기까지!"
-    : speech.listening
+    : waking && !activity
+      ? "별이가 깨어나는 중…"
+      : speech.listening
       ? "듣고 있어요…"
       : status === "thinking"
         ? "생각 중이에요…"
@@ -360,6 +363,8 @@ export default function Speak({
           : "준비됐어요!";
   const statusSub = notice
     ? "내일 또 만나요"
+    : waking && !activity
+      ? "잠깐만 기다려 줘. 곧 이야기할 수 있어요"
     : `별이와 이야기하는 중 · ${curVoice.name} 목소리`;
 
   const mascotExpr = notice
@@ -576,7 +581,7 @@ export default function Speak({
           <button
             className={`call-btn mic ${speech.listening ? "on" : ""}`}
             onClick={speech.toggle}
-            disabled={status === "thinking" || status === "speaking"}
+            disabled={status === "thinking" || status === "speaking" || (waking && !activity)}
             aria-label="말하기"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -588,7 +593,7 @@ export default function Speak({
           <button
             className={`call-btn mic ${recording ? "on" : ""}`}
             onClick={toggleRecord}
-            disabled={status === "thinking" || status === "speaking"}
+            disabled={status === "thinking" || status === "speaking" || (waking && !activity)}
             aria-label="녹음해서 말하기"
           >
             {recording ? (

@@ -1,3 +1,4 @@
+import { JournalSkeleton } from "../components/Skeleton.jsx";
 import { userMsgCount, lastTime } from "../lib/store.js";
 
 // 활동 카테고리별 폴라로이드 사진 배경 (아이 활동을 담는 오리지널 구성)
@@ -23,7 +24,7 @@ function photoDate(iso) {
 }
 
 // Collection — 아이가 한 활동을 폴라로이드로 모아 보는 "저널"
-export default function Collection({ activities, histories, name, stars, onPick, onBack }) {
+export default function Collection({ activities, histories, name, stars, onPick, onBack, loading = false, failed = false, onRetry }) {
   const done = activities
     .map((a) => ({ a, n: userMsgCount(histories[a.id]), last: lastTime(histories[a.id]) }))
     .filter((x) => x.n > 0)
@@ -50,7 +51,10 @@ export default function Collection({ activities, histories, name, stars, onPick,
 
       <div className="journal-pad">
         <span className="journal-clip" aria-hidden="true" />
-        {done.length === 0 ? (
+        {loading ? (
+          // 활동 목록을 받기 전에는 기록이 있어도 "아직 사진이 없어요"로 보였다
+          <JournalSkeleton failed={failed} onRetry={onRetry} />
+        ) : done.length === 0 ? (
           <p className="journal-empty">
             아직 사진이 없어요.{"\n"}홈에서 재미있는 걸 해 보면{"\n"}여기에 하나씩
             담겨요 ✨

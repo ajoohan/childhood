@@ -4959,3 +4959,29 @@ input, textarea { word-break: normal; }
 .mm-mic { flex: none; width: 48px; height: 48px; border: none; border-radius: 14px; background: #F7F2FC; font-size: 22px; }
 .mm-mic.on { background: #7C59BA; }
 .mm-yes:disabled { opacity: 0.5; }
+
+/* ── 스켈레톤 화면 (서버가 깨어나는 동안의 자리 모양) ── */
+.sk {
+  display: block; border-radius: 16px;
+  background: linear-gradient(90deg, #EFE7F7 0%, #F8F3FC 40%, #EFE7F7 80%);
+  background-size: 200% 100%;
+  animation: sk-shine 1.4s ease-in-out infinite;
+}
+@keyframes sk-shine { from { background-position: 120% 0; } to { background-position: -80% 0; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+.sk-tile { height: 140px; }
+.sk-line { height: 14px; border-radius: 7px; margin: 0 0 12px; }
+.sk-row { overflow: hidden; }
+.sk-card { flex: 0 0 100px; height: 140px; }
+.sk-qrow { height: 45px; }
+.sk-note { margin: 14px 0 0; font-size: 14px; line-height: 1.5; color: #6B5A8A; text-align: center; word-break: keep-all; }
+.sk-note.quiet { color: transparent; }
+.sk-note.failed { padding: 14px; border-radius: 16px; background: #fff; border: 1px solid #EDE6F5; color: #3A2A5C; }
+.sk-note.failed p { margin: 0; }
+.sk-retry {
+  margin-top: 10px; min-height: 44px; padding: 0 20px; border: none; border-radius: 22px;
+  background: #7C59BA; color: #fff; font: inherit; font-weight: 700;
+}
+.sk-journal .polaroids { margin-top: 8px; }
+.sk-polaroid { display: flex; flex-direction: column; gap: 10px; padding: 9px 9px 12px; border-radius: 6px; background: #fff; box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08); }
+.sk-photo { height: 120px; border-radius: 4px; }

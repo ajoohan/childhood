@@ -99,7 +99,7 @@ test("말하기: 답을 기다리는 사이 소리를 끄면 답을 읽어 주�
   await page.close();
 });
 
-test("말하기: 서버가 깨어나는 중(활동 목록 없음)에 한 말은 조용히 버리지 않고 알려 준다", async () => {
+test("말하기: 서버가 깨어나는 중(활동 목록 없음)에는 그렇다고 보여 주고 마이크를 막으며, 글로 보내도 알려 준다", async () => {
   const page = await browser.newPage({ viewport: { width: 402, height: 874 } });
   await page.addInitScript((s) => localStorage.setItem("banjjaktalk_v2", JSON.stringify(s)), seed());
   await fakeSpeech(page);
@@ -110,9 +110,14 @@ test("말하기: 서버가 깨어나는 중(활동 목록 없음)에 한 말은 
   await page.waitForSelector(".kids-home", { timeout: 10000 });
   await page.click(".tab.speak");
   await page.waitForSelector(".call-btn.mic", { timeout: 8000 });
-  await page.click(".call-btn.mic");
-  await page.evaluate(() => window.__say("안녕 별이야"));
-  await page.waitForFunction(() => document.body.innerText.includes("깨어나는 중"), null, { timeout: 4000 });
+  assert.match(await page.innerText(".voice-status"), /깨어나는 중/, "준비되지 않았는데 '준비됐어요'라고 했다");
+  assert.equal(await page.isDisabled(".call-btn.mic"), true, "깨어나는 중에는 마이크를 막는다");
+  // 글자 모드로 보내도 조용히 버리지 않는다
+  await page.click('[aria-label="글자로 이야기하기"]');
+  await page.fill(".composer input", "안녕 별이야");
+  await page.click('[aria-label="보내기"]');
+  await page.waitForFunction(() => document.body.innerText.includes("아직 깨어나는 중"), null, { timeout: 4000 });
+  assert.equal(await page.inputValue(".composer input"), "안녕 별이야", "보내지 못한 글은 지우지 않는다");
   await page.close();
 });
 

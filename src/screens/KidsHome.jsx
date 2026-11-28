@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { HomeSkeleton } from "../components/Skeleton.jsx";
 import { recommendActivities } from "../lib/data.js";
 import Confetti from "../components/Confetti.jsx";
 import { iEge } from "../lib/josa.js";
@@ -61,6 +62,9 @@ export default function KidsHome({
   onImageMaker,
   onBadges,
   imageEnabled,
+  loading = false,
+  failed = false,
+  onRetry,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false); // 유저 변경 시트
@@ -162,7 +166,11 @@ export default function KidsHome({
       </button>
       )}
 
+      {/* 활동 목록을 받기 전: 빈 화면 대신 자리 모양(스켈레톤) */}
+      {loading && <HomeSkeleton failed={failed} onRetry={onRetry} />}
+
       {/* 큰 타일 2개 */}
+      {!loading && (
       <div className="fx-tiles">
         {bigTiles.map((c) => {
           const t = TILE[c.id] || {};
@@ -178,6 +186,7 @@ export default function KidsHome({
           );
         })}
       </div>
+      )}
 
       {/* 추천 — 마스코트가 헤딩 오른쪽에 살짝 걸침 */}
       {recommended.length > 0 && (
@@ -213,6 +222,7 @@ export default function KidsHome({
       )}
 
       {/* 바로가기 리스트 3행 */}
+      {!loading && (
       <div className="fx-quick">
         {quick.map((r) => (
           <button key={r.id} className="fx-qrow" onClick={() => onPickActivity(r.act)}>
@@ -227,6 +237,7 @@ export default function KidsHome({
           </button>
         ))}
       </div>
+      )}
 
       {/* 하단 입력 바 — 탭바와 하나의 다크 그라데이션 패널을 이룬다 */}
       {ask && (

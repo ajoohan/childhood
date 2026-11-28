@@ -51,6 +51,9 @@ let splashSeen = false;
 
 export default function App() {
   const [data, setData] = useState({ categories: [], activities: [] });
+  // 활동 목록을 받는 중인가: loading(스켈레톤) | ready | failed(다시 시도). 다시 시도하면 loadTry가 올라간다.
+  const [dataStatus, setDataStatus] = useState("loading");
+  const [loadTry, setLoadTry] = useState(0);
   const [zone, setZone] = useState("kids"); // kids | parent
   const [view, setView] = useState({ name: "home" }); // home | list | session | collection
 
@@ -449,16 +452,21 @@ export default function App() {
           if (!alive) return;
           configureAccounts(d?.features?.accounts || null); // 서버에 SUPABASE_* 설정이 없으면 null → 계정 기능 꺼짐
           setData(d);
+          setDataStatus("ready");
         })
         .catch(() => {
-          if (alive && i < delays.length) timer = setTimeout(() => load(i + 1), delays[i]);
+          if (!alive) return;
+          if (i < delays.length) timer = setTimeout(() => load(i + 1), delays[i]);
+          else setDataStatus("failed"); // 30초 넘게 못 받았다 — 스켈레톤을 계속 돌리지 않고 다시 시도를 보여 준다
         });
+    setDataStatus("loading");
     load(0);
     return () => {
       alive = false;
       clearTimeout(timer);
     };
-  }, []);
+  }, [loadTry]);
+  const retryLoad = () => setLoadTry((n) => n + 1);
 
   // 앱이 가려지면(다른 앱으로 전환·화면 끔) 부모 존을 다시 잠근다. 부모가 연 채로 폰을 내려놓으면
   // 아이가 PIN 없이 부모 화면을 쓸 수 있었다.
@@ -620,6 +628,9 @@ export default function App() {
             onImageMaker={() => setView({ name: "image" })}
             onBadges={() => setView({ name: "badges" })}
             imageEnabled={!!data.features?.image}
+            loading={dataStatus !== "ready"}
+            failed={dataStatus === "failed"}
+            onRetry={retryLoad}
           />
         )}
 
@@ -649,6 +660,9 @@ export default function App() {
         {zone === "kids" && view.name === "history" && (
           <Collection
             activities={data.activities}
+            loading={dataStatus !== "ready"}
+            failed={dataStatus === "failed"}
+            onRetry={retryLoad}
             histories={histories}
             usedToday={usedToday}
             name={profile.name}
@@ -661,6 +675,7 @@ export default function App() {
         {zone === "kids" && view.name === "voice" && (
           <Speak
             activity={data.activities.find((a) => a.id === "learn_ask")}
+            waking={dataStatus !== "ready"}
             history={histories["learn_ask"] || []}
             histories={histories}
             usedToday={usedToday}

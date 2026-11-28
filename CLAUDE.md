@@ -118,6 +118,9 @@
 
 ## 화면 스타일
 
+- **스켈레톤 화면(2026-11-28):** 활동 목록(`/api/activities`)을 받기 전에는 홈·저널에 자리 모양(`components/Skeleton.jsx`)을 보여 준다.
+  3초가 넘으면 "별이가 깨어나는 중" 안내, 재시도(약 30초)를 다 실패하면 "다시 시도" 버튼. 말하기 화면은 "깨어나는 중"으로 표시하고 마이크를 막는다.
+  상태는 `App.jsx`의 `dataStatus`(loading|ready|failed). 움직임 줄이기 설정에서는 반짝임을 끈다. `tests/ui/skeleton.test.js`.
 - 터치 영역은 44px 이상(작은 아이콘은 `::after`로 눌리는 범위만 넓힌다), 한국어 글은 `word-break: keep-all`, 꺼진 탭 글자 대비 4.5:1 이상. `tests/ui/polish.test.js`가 지킨다.
 
 홈·채팅(Figma 시안)과 같은 디자인 언어를 쓴다: 라벤더 배경(`#FFFDEF → #F7EFFF`), 흰 카드 + 연보라 테두리
